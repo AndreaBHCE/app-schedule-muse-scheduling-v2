@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 
@@ -50,7 +52,7 @@ export default function DashboardPage() {
             Need help? <a className="underline" href="#">Support</a>
           </div>
           <div className="mt-4">
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </div>
         </div>
       </aside>
