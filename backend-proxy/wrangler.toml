@@ -1,0 +1,18 @@
+name = "schedule-muse-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "app_schedule_muse_db"
+database_id = "b7748943-2f81-4771-9468-417f45474118"
+
+# KV namespace binding
+[[kv_namespaces]]
+binding = "CACHE"
+id = "a68a87699d1340e1a342e2a698dadf55"
+
+# Environment variables
+[vars]
+API_KEY = "5Z5Go0Byj9KsaNiElr4xT4f_aleYAq9SXGTKqZG2"
