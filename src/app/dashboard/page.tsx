@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useUser, UserButton } from "@clerk/nextjs";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", active: true },
@@ -6,6 +7,20 @@ const navItems = [
 ];
 
 export default function DashboardPage() {
+  const { user, isLoaded } = useUser();
+
+  if (!isLoaded) {
+    return (
+      <div className="app-layout">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-white">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const userName = user?.firstName || user?.username || "there";
+
   return (
     <div className="app-layout">
       <aside className="app-sidebar" aria-label="Primary navigation">
@@ -34,13 +49,16 @@ export default function DashboardPage() {
           <div className="mt-2">
             Need help? <a className="underline" href="#">Support</a>
           </div>
+          <div className="mt-4">
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
       </aside>
 
       <main className="app-main">
         <header className="app-header">
           <div>
-            <h2 className="app-title">Welcome back, Andrea.</h2>
+            <h2 className="app-title">Welcome back, {userName}.</h2>
             <p className="app-subtitle">
               Your scheduling dashboard gives you full control over booking pages, availability, and reminders — all powered by ScheduleMuse AI.
             </p>
