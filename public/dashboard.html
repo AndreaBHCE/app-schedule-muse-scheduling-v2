@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScheduleMuse AI · Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1f25;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-strong: rgba(255, 255, 255, 0.12);
+      --border: rgba(255, 255, 255, 0.12);
+      --teal: #00bfa5;
+      --teal-2: #00dab0;
+      --text: #f7fbff;
+      --muted: rgba(247, 251, 255, 0.72);
+      --shadow: 0 18px 45px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, rgba(0, 191, 165, 0.18), transparent 55%),
+                  radial-gradient(circle at 98% 10%, rgba(0, 191, 165, 0.22), transparent 58%),
+                  linear-gradient(130deg, #071215 0%, #0f2a35 42%, #071215 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      padding: 32px 24px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      background: rgba(0, 56, 62, 0.88);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+      object-fit: cover;
+    }
+
+    .brand h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    .nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,0.05);
+      transition: all 0.18s ease;
+      font-weight: 600;
+    }
+
+    .nav a:hover {
+      transform: translateY(-1px);
+      border-color: rgba(0, 191, 165, 0.4);
+      background: rgba(0, 191, 165, 0.12);
+    }
+
+    .nav a.active {
+      background: rgba(0, 191, 165, 0.22);
+      border-color: rgba(0, 191, 165, 0.45);
+      color: #fff;
+    }
+
+    .nav a span {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav a svg {
+      width: 18px;
+      height: 18px;
+      opacity: 0.82;
+      fill: currentColor;
+      transition: opacity 0.18s ease;
+    }
+
+    .nav a:hover svg {
+      opacity: 1;
+    }
+
+    .footer {
+      margin-top: auto;
+      padding-top: 16px;
+      font-size: 12px;
+      color: rgba(247, 251, 255, 0.6);
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .main {
+      padding: 32px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .headline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .headline h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .headline p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      max-width: 520px;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      justify-content: center;
+      min-width: 168px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal), var(--teal-2));
+      color: #042a2f;
+      box-shadow: 0 18px 42px rgba(0, 191, 165, 0.28);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 22px 48px rgba(0, 191, 165, 0.36);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.12);
+      transform: translateY(-1px);
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .card p {
+      margin: 0;
+      color: rgba(247, 251, 255, 0.75);
+      line-height: 1.55;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .stat .number {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .stat .label {
+      font-size: 13px;
+      color: rgba(247, 251, 255, 0.72);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .timeline {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 14px;
+    }
+
+    .timeline li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .timeline li strong {
+      font-weight: 700;
+    }
+
+    .timeline li span {
+      color: rgba(247, 251, 255, 0.6);
+      font-size: 13px;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        flex-direction: row;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 16px;
+      }
+
+      .nav {
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .nav a {
+        flex: 1;
+        white-space: nowrap;
+      }
+
+      .footer {
+        display: none;
+      }
+
+      .main {
+        padding: 24px;
+      }
+
+      .headline {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .cta-group {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <img src="/schedulemuseai-logo-teal.jpg" alt="ScheduleMuse AI logo" />
+        <div>
+          <h1>ScheduleMuse AI</h1>
+          <div style="font-size:12px; color: rgba(247,251,255,0.65);">Subscriber Dashboard</div>
+        </div>
+      </div>
+
+      <nav>
+        <ul class="nav">
+          <li><a href="dashboard.html" class="active"><span>🏠 Dashboard</span></a></li>
+          <li><a href="meeting-setup.html"><span>📅 Booking setup</span></a></li>
+          <li><a href="#"><span>📈 Analytics</span></a></li>
+          <li><a href="#"><span>🧩 Integrations</span></a></li>
+          <li><a href="#"><span>⚙️ Settings</span></a></li>
+        </ul>
+      </nav>
+
+      <div class="footer">
+        <div>Version 1.0 • 2027</div>
+        <div style="margin-top:8px;">Need help? <a href="#" style="color: rgba(255,255,255,0.9);">Support</a></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="headline">
+        <div>
+          <h2>Welcome back, Andrea.</h2>
+          <p>Your scheduling dashboard gives you full control over booking pages, availability, and reminders — all powered by ScheduleMuse AI.</p>
+        </div>
+        <div class="cta-group">
+          <a href="meeting-setup.html" class="btn btn-primary">Create new booking</a>
+          <a href="#" class="btn btn-secondary">View analytics</a>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <div class="stat">
+            <div>
+              <div class="number">24</div>
+              <div class="label">New bookings</div>
+            </div>
+            <div style="color: var(--teal); font-weight: 700;">+18%</div>
+          </div>
+          <p>Keep the rhythm — you’ve got 24 upcoming meetings scheduled this week. Jump in to see who’s coming and lock in your schedule.</p>
+        </article>
+
+        <article class="card">
+          <div class="stat">
+            <div>
+              <div class="number">5</div>
+              <div class="label">Active booking pages</div>
+            </div>
+            <div style="color: var(--teal); font-weight: 700;">New</div>
+          </div>
+          <p>Each booking page is a self-serve entry point for clients — customize messaging, questions, and branding in seconds.</p>
+        </article>
+
+        <article class="card">
+          <div class="stat">
+            <div>
+              <div class="number">3</div>
+              <div class="label">Reminders set</div>
+            </div>
+            <div style="color: var(--teal); font-weight: 700;">Auto</div>
+          </div>
+          <p>Automatic reminder emails keep no-shows low and meetings high-converting. Edit schedules anytime in Booking Settings.</p>
+        </article>
+      </section>
+
+      <section class="card">
+        <h3>Recent activity</h3>
+        <ul class="timeline">
+          <li><div><strong>New booking</strong> confirmed</div><span>Today, 11:30 AM</span></li>
+          <li><div><strong>Reminder sent</strong> (1 hour before)</div><span>Today, 10:30 AM</span></li>
+          <li><div><strong>Booking page updated</strong> (availability)</div><span>Yesterday, 4:20 PM</span></li>
+          <li><div><strong>New booking</strong> confirmed</div><span>Yesterday, 3:10 PM</span></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

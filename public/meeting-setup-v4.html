@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Page Builder · ScheduleMuse AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f2b34;
+      --panel: rgba(255, 255, 255, 0.92);
+      --border: rgba(255, 255, 255, 0.16);
+      --teal: #00bfa5;
+      --teal-2: #00dab0;
+      --text: #0b1f25;
+      --muted: rgba(11, 31, 34, 0.7);
+      --shadow: 0 20px 44px rgba(0, 0, 0, 0.18);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 25% 18%, rgba(0, 191, 165, 0.26), transparent 52%),
+                  radial-gradient(circle at 82% 10%, rgba(0, 218, 176, 0.20), transparent 56%),
+                  linear-gradient(140deg, #0f2b34 0%, #102f39 55%, #0f2b34 100%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 36px 24px 56px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      object-fit: cover;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.16);
+    }
+
+    .brand h1 {
+      font-size: 22px;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: rgba(11, 31, 34, 0.7);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-width: 160px;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal), var(--teal-2));
+      color: #042a2f;
+      box-shadow: 0 18px 42px rgba(0, 191, 165, 0.25);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(13, 63, 57, 0.15);
+      color: var(--text);
+      box-shadow: 0 12px 32px rgba(10, 33, 36, 0.1);
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .hero {
+      margin-top: 22px;
+      padding: 24px 26px;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(11, 31, 34, 0.16);
+      padding-bottom: 12px;
+    }
+
+    .tab {
+      padding: 10px 16px;
+      border-radius: 14px 14px 0 0;
+      background: rgba(255,255,255,0.84);
+      border: 1px solid transparent;
+      border-bottom: 1px solid rgba(11, 31, 34, 0.12);
+      color: rgba(11, 31, 34, 0.75);
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s ease, border 0.15s ease, color 0.15s ease;
+    }
+
+    .tab.active {
+      background: rgba(0, 191, 165, 0.18);
+      border-color: rgba(0, 191, 165, 0.38);
+      color: #062023;
+    }
+
+    .tab:hover { background: rgba(255,255,255,0.9); }
+
+    .panel { display: none; padding: 18px 0 4px; gap: 18px; }
+    .panel.active { display: grid; }
+
+    .fieldset {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid rgba(11, 31, 34, 0.14);
+      border-radius: 16px;
+    }
+
+    .fieldset legend {
+      font-weight: 700;
+      font-size: 15px;
+      padding: 0 8px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(11, 31, 34, 0.85);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(11, 31, 34, 0.14);
+      background: rgba(255,255,255,0.92);
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(0, 191, 165, 0.65);
+      box-shadow: 0 0 0 4px rgba(0, 191, 165, 0.18);
+    }
+
+    .inline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 600;
+      color: rgba(11, 31, 34, 0.78);
+    }
+
+    .toggle input {
+      width: 0;
+      height: 0;
+      opacity: 0;
+      position: absolute;
+    }
+
+    .switch {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(11, 31, 34, 0.16);
+      transition: background 0.15s ease, border 0.15s ease;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.9);
+      transition: transform 0.18s ease;
+      box-shadow: 0 10px 18px rgba(10, 33, 36, 0.22);
+    }
+
+    .toggle input:checked + .switch {
+      background: rgba(0, 191, 165, 0.22);
+      border-color: rgba(0, 191, 165, 0.45);
+    }
+
+    .toggle input:checked + .switch::after {
+      transform: translateX(18px);
+    }
+
+    .subtle {
+      font-size: 13px;
+      color: rgba(11, 31, 34, 0.6);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 820px) {
+      .hero { padding: 18px; }
+      .page { padding: 24px 18px 48px; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .actions { width: 100%; justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand">
+        <img src="/schedulemuseai-logo-teal.jpg" alt="ScheduleMuse AI logo" />
+        <div>
+          <h1>Booking page builder</h1>
+          <p>Fine-tune your booking flow with modular settings, forms, reminders, and styling.</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-secondary" href="dashboard-v4.html">← Back to dashboard</a>
+        <a class="btn btn-primary" href="#">Publish changes</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="settings" role="tab" aria-selected="true">Booking Settings</button>
+        <button class="tab" data-tab="form" role="tab" aria-selected="false">Booking Form</button>
+        <button class="tab" data-tab="notifications" role="tab" aria-selected="false">Notifications</button>
+        <button class="tab" data-tab="designer" role="tab" aria-selected="false">Page Designer</button>
+        <button class="tab" data-tab="embed" role="tab" aria-selected="false">Embed Options</button>
+      </div>
+
+      <div class="panel active" id="settings" role="tabpanel">
+        <div class="fieldset">
+          <legend>Meeting basics</legend>
+          <label>
+            Meeting subject
+            <input type="text" placeholder="e.g. 30‑minute strategy session" value="Meeting with Andrea from ScheduleMuse AI" />
+          </label>
+          <div class="inline">
+            <label>
+              Duration
+              <select>
+                <option>15 minutes</option>
+                <option selected>30 minutes</option>
+                <option>45 minutes</option>
+                <option>60 minutes</option>
+              </select>
+            </label>
+            <label>
+              Buffer
+              <select>
+                <option>0 minutes</option>
+                <option>10 minutes</option>
+                <option>15 minutes</option>
+                <option>30 minutes</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="fieldset">
+          <legend>Availability</legend>
+          <label class="toggle">
+            <input type="checkbox" checked />
+            <span class="switch"></span>
+            Show availability calendar
+          </label>
+          <p class="subtle">Use your connected calendars to surface only real free time. Turning this off hides the page from your public link.</p>
+        </div>
+
+        <div class="fieldset">
+          <legend>Timeframe & rules</legend>
+          <div class="inline">
+            <label>
+              Advance scheduling
+              <select>
+                <option>1 day</option>
+                <option selected>3 days</option>
+                <option>1 week</option>
+              </select>
+            </label>
+            <label>
+              Minimum notice
+              <select>
+                <option>30 minutes</option>
+                <option selected>2 hours</option>
+                <option>4 hours</option>
+                <option>1 day</option>
+              </select>
+            </label>
+          </div>
+          <div class="inline">
+            <label>
+              Max bookings per day
+              <input type="number" min="1" value="3" />
+            </label>
+            <label>
+              Allow overbookings
+              <label class="toggle">
+                <input type="checkbox" />
+                <span class="switch"></span>
+                Enabled
+              </label>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="form" role="tabpanel">
+        <div class="fieldset">
+          <legend>Guest fields</legend>
+          <label>
+            Full name
+            <input type="text" placeholder="Enter full name" />
+          </label>
+          <label>
+            Email address
+            <input type="email" placeholder="Enter email address" />
+          </label>
+          <label>
+            Phone number
+            <input type="tel" placeholder="Optional" />
+          </label>
+          <label>
+            What would you like to discuss?
+            <textarea rows="3" placeholder="Type a brief summary"></textarea>
+          </label>
+          <p class="subtle">You can re-order fields, make them optional or required, and add custom questions.</p>
+        </div>
+
+        <div class="fieldset">
+          <legend>After booking</legend>
+          <label class="toggle">
+            <input type="checkbox" checked />
+            <span class="switch"></span>
+            Redirect to a custom URL after booking
+          </label>
+          <label>
+            Redirect URL
+            <input type="url" placeholder="https://your-site.com/thank-you" />
+          </label>
+        </div>
+      </div>
+
+      <div class="panel" id="notifications" role="tabpanel">
+        <div class="fieldset">
+          <legend>Guest notifications</legend>
+          <label class="toggle">
+            <input type="checkbox" checked />
+            <span class="switch"></span>
+            Send email confirmations
+          </label>
+          <label class="toggle">
+            <input type="checkbox" />
+            <span class="switch"></span>
+            Send SMS confirmations
+          </label>
+          <label>
+            Reminder timing
+            <select>
+              <option>15 minutes before</option>
+              <option selected>1 hour before</option>
+              <option>1 day before</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="fieldset">
+          <legend>Host notifications</legend>
+          <p class="subtle">Host notifications are managed in your profile settings. Ensure notifications are enabled so you receive calendar invites.</p>
+        </div>
+      </div>
+
+      <div class="panel" id="designer" role="tabpanel">
+        <div class="fieldset">
+          <legend>Page style</legend>
+          <label>
+            Page background
+            <select>
+              <option>Soft gradient</option>
+              <option selected>Light texture</option>
+              <option>Solid color</option>
+            </select>
+          </label>
+          <label>
+            Primary accent
+            <input type="color" value="#00bfa5" />
+          </label>
+          <label>
+            Accent intensity
+            <input type="range" min="0" max="100" value="82" />
+          </label>
+        </div>
+
+        <div class="fieldset">
+          <legend>Hero pane</legend>
+          <label>
+            Page heading
+            <input type="text" value="Book a time with Andrea" />
+          </label>
+          <label>
+            Subheading
+            <textarea rows="2">Pick a slot that works for you and the meeting will be added to your calendar instantly.</textarea>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel" id="embed" role="tabpanel">
+        <div class="fieldset">
+          <legend>Embed options</legend>
+          <label>
+            Embed style
+            <select>
+              <option selected>Inline (full width)</option>
+              <option>Pop-up modal</option>
+              <option>Button trigger</option>
+            </select>
+          </label>
+          <div class="subtle">Copy the code snippet below and drop it into your website template.</div>
+          <pre style="background: rgba(255,255,255,0.8); padding: 14px; border-radius: 14px; overflow-x: auto;
+`
