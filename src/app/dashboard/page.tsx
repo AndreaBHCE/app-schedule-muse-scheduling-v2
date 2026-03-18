@@ -14,7 +14,7 @@ export default function DashboardPage() {
     <div className="app-layout">
       <aside className="app-sidebar" aria-label="Primary navigation">
         <div className="app-sidebar__brand">
-          <img src="/schedulemuseai-logo-teal.jpg" alt="ScheduleMuse AI logo" />
+          <img src="/schedulemuseai-logo-1-teal.jpg" alt="ScheduleMuse AI logo" />
           <div>
             <h1 className="text-lg font-bold">ScheduleMuse AI</h1>
             <div className="text-sm text-white/70">Subscriber Dashboard</div>
