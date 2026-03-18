@@ -15,12 +15,6 @@ export default function SignInPage() {
           appearance={{
             variables: {
               fontSize: '18px'
-            },
-            elements: {
-              card: {
-                width: '100%',
-                maxWidth: '56rem'
-              }
             }
           }}
         />
