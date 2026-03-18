@@ -30,8 +30,8 @@ export default function SignInPage() {
           <div className="flex h-18 w-18 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500">
             <img src="/schedulemuseai-logo-teal.svg" alt="ScheduleMuse logo" className="h-12 w-12" />
           </div>
-          <p className="text-xl font-semibold text-white/70">Schedule Muse</p>
-          <h1 className="text-6xl font-semibold text-white leading-tight">Sign in</h1>
+          <p className="text-6xl font-semibold text-white/70">Schedule Muse</p>
+          <h1 className="text-xl font-semibold text-white leading-tight">Sign in</h1>
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-teal-100 shadow-lg shadow-teal-500/10">
             <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-teal-300"></span>
             Updated UI (v2)
