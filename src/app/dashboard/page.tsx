@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useUser, UserButton } from "@clerk/nextjs";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", active: true },
@@ -9,19 +8,7 @@ const navItems = [
 ];
 
 export default function DashboardPage() {
-  const { user, isLoaded } = useUser();
-
-  if (!isLoaded) {
-    return (
-      <div className="app-layout">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-white">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  const userName = user?.firstName || user?.username || "there";
+  const userName = "there";
 
   return (
     <div className="app-layout">
@@ -52,7 +39,7 @@ export default function DashboardPage() {
             Need help? <a className="underline" href="#">Support</a>
           </div>
           <div className="mt-4">
-            <UserButton />
+            <div className="text-sm text-white/70">Signed in as: you</div>
           </div>
         </div>
       </aside>
