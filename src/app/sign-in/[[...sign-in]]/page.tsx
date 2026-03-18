@@ -7,9 +7,13 @@ export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = useMemo(() => email.trim().length > 0 && password.trim().length > 0, [email, password]);
+  const canSubmit = useMemo(
+    () => email.trim().length > 0 && password.trim().length > 0,
+    [email, password]
+  );
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -18,8 +22,13 @@ export default function SignInPage() {
       return;
     }
 
+    const storage = rememberMe ? localStorage : sessionStorage;
+    const otherStorage = rememberMe ? sessionStorage : localStorage;
+
     // Save user session locally (demo-only)
-    localStorage.setItem("scheduleMuseUser", JSON.stringify({ email }));
+    otherStorage.removeItem("scheduleMuseUser");
+    storage.setItem("scheduleMuseUser", JSON.stringify({ email }));
+
     router.push("/dashboard");
   };
 
@@ -60,6 +69,16 @@ export default function SignInPage() {
               required
             />
           </div>
+
+          <label className="flex items-center gap-3 text-lg text-white/80">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-5 w-5 rounded border-white/20 bg-white/10 text-teal-400 focus:ring-teal-300"
+            />
+            Remember me
+          </label>
 
           {error && <div className="text-xl text-rose-200">{error}</div>}
 
