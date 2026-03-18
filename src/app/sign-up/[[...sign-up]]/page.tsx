@@ -5,21 +5,37 @@ import { useMemo, useState } from "react";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = useMemo(() => email.trim().length > 0 && password.trim().length > 0, [email, password]);
+  const canSubmit = useMemo(
+    () =>
+      firstName.trim().length > 0 &&
+      lastName.trim().length > 0 &&
+      email.trim().length > 0 &&
+      password.trim().length > 0 &&
+      confirmPassword.trim().length > 0 &&
+      password === confirmPassword,
+    [firstName, lastName, email, password, confirmPassword]
+  );
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+
     if (!canSubmit) {
-      setError("Please enter both email and password.");
+      setError("Please fill in all fields and ensure passwords match.");
       return;
     }
 
     // Save user session locally (demo-only)
-    localStorage.setItem("scheduleMuseUser", JSON.stringify({ email }));
+    localStorage.setItem(
+      "scheduleMuseUser",
+      JSON.stringify({ firstName, lastName, email })
+    );
     router.push("/dashboard");
   };
 
@@ -37,9 +53,31 @@ export default function SignUpPage() {
             Updated UI (v2)
           </div>
         </div>
-        <p className="text-xl text-white/70 mb-10">Enter an email and password to get started.</p>
+        <p className="text-xl text-white/70 mb-10">Enter your details to get started.</p>
 
         <form onSubmit={onSubmit} className="space-y-8">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <label className="block text-2xl font-semibold text-white/80 mb-3">First name</label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full rounded-2xl border border-white/20 bg-white/10 px-8 py-5 text-2xl text-white focus:border-teal-300 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-2xl font-semibold text-white/80 mb-3">Last name</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full rounded-2xl border border-white/20 bg-white/10 px-8 py-5 text-2xl text-white focus:border-teal-300 focus:outline-none"
+                required
+              />
+            </div>
+          </div>
           <div>
             <label className="block text-2xl font-semibold text-white/80 mb-3">Email address</label>
             <input
@@ -50,15 +88,27 @@ export default function SignUpPage() {
               required
             />
           </div>
-          <div>
-            <label className="block text-2xl font-semibold text-white/80 mb-3">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border border-white/20 bg-white/10 px-8 py-5 text-2xl text-white focus:border-teal-300 focus:outline-none"
-              required
-            />
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <label className="block text-2xl font-semibold text-white/80 mb-3">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-2xl border border-white/20 bg-white/10 px-8 py-5 text-2xl text-white focus:border-teal-300 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-2xl font-semibold text-white/80 mb-3">Confirm password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-2xl border border-white/20 bg-white/10 px-8 py-5 text-2xl text-white focus:border-teal-300 focus:outline-none"
+                required
+              />
+            </div>
           </div>
 
           {error && <div className="text-xl text-rose-200">{error}</div>}
