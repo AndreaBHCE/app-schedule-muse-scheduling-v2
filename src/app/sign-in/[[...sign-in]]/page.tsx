@@ -12,7 +12,7 @@ export default function SignInPage() {
         background: "rgba(243, 244, 246, 0.75)",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 520, minWidth: 320 }}>
+      <div style={{ width: "100%", maxWidth: 520, minWidth: 320, fontSize: 18 }}>
         <SignIn />
       </div>
     </div>
