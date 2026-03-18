@@ -7,6 +7,11 @@ export default function SignInPage() {
         <SignIn appearance={{
           variables: {
             fontSize: '18px'
+          },
+          elements: {
+            card: {
+              width: '100%'
+            }
           }
         }} />
       </div>
