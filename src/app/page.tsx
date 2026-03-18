@@ -1,26 +1,47 @@
 export default function HomePage() {
   return (
-    <main className="flex items-center justify-center min-h-screen text-center">
-      <div className="max-w-xl px-6 py-12 rounded-2xl bg-white/10 backdrop-blur">
-        <h1 className="text-3xl font-bold mb-4">ScheduleMuse AI</h1>
-        <p className="text-white/70 mb-6">
-          Welcome! Authentication has been removed from this demo app, so you can use the dashboard without signing in.
-        </p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8">
+        <div className="flex items-center gap-4">
+          <img src="/schedulemuseai-logo-teal.jpg" alt="ScheduleMuse AI" className="h-10 w-10 rounded-xl" />
+          <span className="text-xl font-bold text-white">Schedule Muse AI</span>
+        </div>
+        <div className="flex items-center gap-4">
           <a
-            href="/dashboard"
-            className="inline-flex justify-center rounded-full bg-gradient-to-r from-teal-400 to-teal-500 px-6 py-3 font-semibold text-slate-900 shadow-lg shadow-teal-500/20"
+            href="/sign-in"
+            className="text-sm font-medium text-white/80 hover:text-white"
           >
-            Go to dashboard
+            Log In
           </a>
           <a
-            href="/meeting-setup"
-            className="inline-flex justify-center rounded-full border border-white/20 px-6 py-3 font-semibold text-white"
+            href="/sign-up"
+            className="rounded-lg bg-teal-500 px-6 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-teal-500/30 hover:bg-teal-400"
           >
-            Booking setup
+            Get Started Free
           </a>
         </div>
-      </div>
+      </header>
+
+      <section className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 pb-20 pt-10 text-center">
+        <h1 className="text-4xl font-bold text-white sm:text-5xl">AI-powered scheduling that works for you</h1>
+        <p className="mt-4 max-w-2xl text-lg text-white/70">
+          Create booking pages, sync calendars, and automate reminders — all without the back-and-forth.
+        </p>
+        <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
+          <a
+            href="/sign-up"
+            className="rounded-full bg-gradient-to-r from-teal-400 to-teal-500 px-8 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-teal-500/30"
+          >
+            Get Started Free
+          </a>
+          <a
+            href="/sign-in"
+            className="rounded-full border border-white/20 px-8 py-3 text-sm font-semibold text-white hover:border-white"
+          >
+            Log In
+          </a>
+        </div>
+      </section>
     </main>
   );
 }
