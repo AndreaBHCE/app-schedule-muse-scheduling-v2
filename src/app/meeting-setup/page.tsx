@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { FormEvent, useMemo, useState } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", active: false },
@@ -8,7 +9,38 @@ const navItems = [
 ];
 
 export default function MeetingSetupPage() {
-  const userName = "there";
+  const [title, setTitle] = useState("");
+  const [duration, setDuration] = useState(30);
+  const [buffer, setBuffer] = useState(0);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const canSubmit = useMemo(() => title.trim().length > 0 && duration > 0 && buffer >= 0, [title, duration, buffer]);
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+
+    if (!canSubmit) {
+      setStatus("Please fill in all fields correctly.");
+      return;
+    }
+
+    const response = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title.trim(), durationMinutes: duration, bufferMinutes: buffer }),
+    });
+
+    if (!response.ok) {
+      const json = await response.json();
+      setStatus(`Failed to create booking: ${json.error || response.statusText}`);
+      return;
+    }
+
+    setTitle("");
+    setDuration(30);
+    setBuffer(0);
+    setStatus("Booking created successfully.");
+  }
 
   return (
     <div className="app-layout">
@@ -19,11 +51,7 @@ export default function MeetingSetupPage() {
 
         <nav className="app-sidebar__nav" aria-label="Secondary navigation">
           {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`app-sidebar__link ${item.active ? "app-sidebar__link--active" : ""}`}
-            >
+            <Link key={item.href} href={item.href} className={`app-sidebar__link ${item.active ? "app-sidebar__link--active" : ""}`}>
               <span>{item.label}</span>
             </Link>
           ))}
@@ -43,71 +71,59 @@ export default function MeetingSetupPage() {
       <main className="app-main">
         <header className="app-header">
           <div>
-            <h2 className="app-title">Booking page builder</h2>
-            <p className="app-subtitle">
-              Fine-tune your booking flow with modular settings, forms, reminders, and styling.
-            </p>
+            <h2 className="app-title">Create Booking Page</h2>
+            <p className="app-subtitle">Set up a new meeting to publish to your scheduling page.</p>
           </div>
           <div className="app-cta">
             <Link href="/dashboard" className="btn-secondary">
               ← Back to dashboard
             </Link>
-            <button className="btn-primary">Publish changes</button>
           </div>
         </header>
 
         <section className="card">
-          <h3 className="card-title">Meeting basics</h3>
-          <div className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-2">
-                Meeting subject
-              </label>
+              <label className="block text-sm font-medium text-white/70 mb-2">Meeting title</label>
               <input
-                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
                 className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50"
-                placeholder="e.g. 30-minute strategy session"
-                defaultValue="Meeting with Andrea from ScheduleMuse AI"
+                placeholder="E.g. 30-minute strategy session"
               />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-white/70 mb-2">
-                  Duration
-                </label>
-                <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white">
-                  <option>15 minutes</option>
-                  <option selected>30 minutes</option>
-                  <option>45 minutes</option>
-                  <option>60 minutes</option>
-                </select>
+                <label className="block text-sm font-medium text-white/70 mb-2">Duration (minutes)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-white/70 mb-2">
-                  Buffer
-                </label>
-                <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white">
-                  <option>0 minutes</option>
-                  <option>10 minutes</option>
-                  <option>15 minutes</option>
-                  <option>30 minutes</option>
-                </select>
+                <label className="block text-sm font-medium text-white/70 mb-2">Buffer (minutes)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={buffer}
+                  onChange={(e) => setBuffer(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
+                />
               </div>
             </div>
-          </div>
-        </section>
 
-        <section className="card">
-          <h3 className="card-title">Availability</h3>
-          <div className="space-y-4">
-            <label className="flex items-center space-x-3">
-              <input type="checkbox" defaultChecked className="rounded" />
-              <span className="text-white/70">Show availability calendar</span>
-            </label>
-            <p className="text-white/70 text-sm">
-              Use your connected calendars to surface only real free time. Turning this off hides the page from your public link.
-            </p>
-          </div>
+            {status && <div className="text-sm text-teal-300">{status}</div>}
+
+            <button type="submit" disabled={!canSubmit} className="btn-primary">
+              Create booking
+            </button>
+          </form>
         </section>
       </main>
     </div>

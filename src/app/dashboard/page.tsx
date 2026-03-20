@@ -1,14 +1,50 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", active: true },
   { href: "/meeting-setup", label: "Booking setup", active: false },
 ];
 
+type Booking = {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  bufferMinutes: number;
+  createdAt: string;
+};
+
 export default function DashboardPage() {
-  const userName = "there";
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let canceled = false;
+
+    async function loadBookings() {
+      try {
+        const response = await fetch("/api/bookings");
+        if (!response.ok) throw new Error("Failed to load bookings");
+        const json = await response.json();
+        if (!canceled) {
+          setBookings(json.bookings || []);
+          setError(null);
+        }
+      } catch (err) {
+        if (!canceled) setError((err as Error).message);
+      } finally {
+        if (!canceled) setLoading(false);
+      }
+    }
+
+    loadBookings();
+    return () => {
+      canceled = true;
+    };
+  }, []);
 
   return (
     <div className="app-layout">
@@ -43,88 +79,39 @@ export default function DashboardPage() {
       <main className="app-main">
         <header className="app-header">
           <div>
-            <h2 className="app-title">Welcome back, {userName}.</h2>
+            <h2 className="app-title">Welcome back.</h2>
             <p className="app-subtitle">
               Your scheduling dashboard gives you full control over booking pages, availability, and reminders — all powered by ScheduleMuse AI.
             </p>
           </div>
           <div className="app-cta">
             <Link href="/meeting-setup" className="btn-primary">
-              Create new booking
+              Create booking page
             </Link>
             <button className="btn-secondary">View analytics</button>
           </div>
         </header>
 
-        <section className="grid gap-6 sm:grid-cols-3">
-          <div className="card">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-2xl font-bold">24</div>
-                <div className="text-xs text-white/70 uppercase tracking-wide">New bookings</div>
-              </div>
-              <div className="text-teal-400 font-semibold">+18%</div>
-            </div>
-            <p className="mt-3 text-white/70">
-              Keep the rhythm — you’ve got 24 upcoming meetings scheduled this week.
-            </p>
-          </div>
-
-          <div className="card">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-2xl font-bold">5</div>
-                <div className="text-xs text-white/70 uppercase tracking-wide">Active booking pages</div>
-              </div>
-              <div className="text-teal-400 font-semibold">New</div>
-            </div>
-            <p className="mt-3 text-white/70">
-              Each booking page is a self-serve entry point for clients — customize messaging, questions, and branding in seconds.
-            </p>
-          </div>
-
-          <div className="card">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-2xl font-bold">3</div>
-                <div className="text-xs text-white/70 uppercase tracking-wide">Reminders set</div>
-              </div>
-              <div className="text-teal-400 font-semibold">Auto</div>
-            </div>
-            <p className="mt-3 text-white/70">
-              Automatic reminder emails keep no-shows low and meetings high-converting.
-            </p>
-          </div>
-        </section>
-
         <section className="card">
-          <h3 className="card-title">Recent activity</h3>
-          <ul className="mt-4 space-y-3">
-            <li className="flex justify-between rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <div>
-                <strong>New booking</strong> confirmed
-              </div>
-              <span className="text-xs text-white/60">Today, 11:30 AM</span>
-            </li>
-            <li className="flex justify-between rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <div>
-                <strong>Reminder sent</strong> (1 hour before)
-              </div>
-              <span className="text-xs text-white/60">Today, 10:30 AM</span>
-            </li>
-            <li className="flex justify-between rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <div>
-                <strong>Booking page updated</strong> (availability)
-              </div>
-              <span className="text-xs text-white/60">Yesterday, 4:20 PM</span>
-            </li>
-            <li className="flex justify-between rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <div>
-                <strong>New booking</strong> confirmed
-              </div>
-              <span className="text-xs text-white/60">Yesterday, 3:10 PM</span>
-            </li>
-          </ul>
+          <h3 className="card-title">Your booking pages</h3>
+
+          {loading && <p className="text-white/70">Loading...</p>}
+          {error && <p className="text-rose-300">{error}</p>}
+
+          {!loading && !error && bookings.length === 0 && (
+            <p className="text-white/70">No bookings yet. Create one with the button above.</p>
+          )}
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {bookings.map((booking) => (
+              <article key={booking.id} className="card bg-slate-900 p-4">
+                <h4 className="text-lg font-semibold text-white">{booking.title}</h4>
+                <p className="text-sm text-white/70">Duration: {booking.durationMinutes}m</p>
+                <p className="text-sm text-white/70">Buffer: {booking.bufferMinutes}m</p>
+                <p className="text-xs text-white/50">Created: {new Date(booking.createdAt).toLocaleString()}</p>
+              </article>
+            ))}
+          </div>
         </section>
       </main>
     </div>
