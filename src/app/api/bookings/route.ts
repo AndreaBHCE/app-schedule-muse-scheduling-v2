@@ -10,11 +10,12 @@ export type Booking = {
   createdAt: string;
   bookingsLast7Days: number;
   conversionDeltaPercent: number;
+  config?: Record<string, unknown>;
 };
 
 let bookings: Booking[] = [];
 
-function isBookingInput(value: any): value is { title: string; durationMinutes: number; bufferMinutes: number } {
+function isBookingInput(value: any): value is { title: string; durationMinutes: number; bufferMinutes: number; config?: Record<string, unknown> } {
   return (
     value &&
     typeof value.title === "string" &&
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       updatedAt: now,
       bookingsLast7Days: Math.floor(Math.random() * 12),
       conversionDeltaPercent: Math.floor(Math.random() * 21) - 10,
+      config: payload.config || undefined,
     };
 
     bookings.unshift(newBooking); // most recent first

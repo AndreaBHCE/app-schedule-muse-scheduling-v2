@@ -72,6 +72,14 @@
   color: white;
 }
 
+/* Booking setup — inline-edit section hover */
+.setup-section-btn {
+  transition: background 0.15s;
+}
+.setup-section-btn:hover {
+  background: var(--cal-hover);
+}
+
 /* Global defaults for the app (dark teal theme) */
 html {
   height: 100%;
