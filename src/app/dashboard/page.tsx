@@ -32,6 +32,26 @@ type MeetingEvent = {
   locationDetails: string;
 };
 
+const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  confirmed: { bg: "bg-emerald-500/20", text: "text-emerald-300", border: "border-emerald-500" },
+  pending:   { bg: "bg-amber-500/20",   text: "text-amber-300",   border: "border-amber-500" },
+  canceled:  { bg: "bg-rose-500/20",    text: "text-rose-300",    border: "border-rose-500" },
+};
+
+const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7 AM – 8 PM
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function formatHour(hour: number): string {
+  if (hour === 0) return "12 AM";
+  if (hour < 12) return `${hour} AM`;
+  if (hour === 12) return "12 PM";
+  return `${hour - 12} PM`;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 export default function DashboardPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +60,10 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<MeetingEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
-  const [range, setRange] = useState("day");
+  const [range, setRange] = useState<"day" | "week" | "month">("day");
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+
+  const today = new Date();
 
   useEffect(() => {
     let canceled = false;
@@ -69,29 +92,170 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let canceled = false;
-
     async function loadEvents() {
       try {
         setEventsLoading(true);
-        const response = await fetch(`/api/events?range=${range}`);
+        const dateStr = currentDate.toISOString().split("T")[0];
+        const response = await fetch(`/api/events?range=${range}&date=${dateStr}`);
         if (!response.ok) throw new Error("Failed to load upcoming meetings");
         const json = await response.json();
-        if (!canceled) {
-          setEvents(json.events || []);
-          setEventsError(null);
-        }
-      } catch (err) {
-        if (!canceled) setEventsError((err as Error).message);
-      } finally {
-        if (!canceled) setEventsLoading(false);
-      }
+        if (!canceled) { setEvents(json.events || []); setEventsError(null); }
+      } catch (err) { if (!canceled) setEventsError((err as Error).message); }
+      finally { if (!canceled) setEventsLoading(false); }
     }
-
     loadEvents();
-    return () => {
-      canceled = true;
-    };
-  }, [range]);
+    return () => { canceled = true; };
+  }, [range, currentDate]);
+
+  /* ---------- navigation ---------- */
+  function navigate(direction: -1 | 1) {
+    setCurrentDate((prev) => {
+      const d = new Date(prev);
+      if (range === "day") d.setDate(d.getDate() + direction);
+      else if (range === "week") d.setDate(d.getDate() + 7 * direction);
+      else d.setMonth(d.getMonth() + direction);
+      return d;
+    });
+  }
+
+  function goToToday() { setCurrentDate(new Date()); }
+
+  function getCalendarLabel(): string {
+    if (range === "day") {
+      return currentDate.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    }
+    if (range === "week") {
+      const ws = new Date(currentDate);
+      ws.setDate(ws.getDate() - ws.getDay());
+      const we = new Date(ws);
+      we.setDate(we.getDate() + 6);
+      return `${ws.toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${we.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+    }
+    return currentDate.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  /* ---------- event card ---------- */
+  function eventCard(event: MeetingEvent, compact = false) {
+    const colors = STATUS_COLORS[event.status] || STATUS_COLORS.confirmed;
+    const time = new Date(event.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    if (compact) {
+      return (
+        <div key={event.id} className={`truncate rounded px-1.5 py-0.5 mb-0.5 text-[10px] leading-tight border-l-2 ${colors.bg} ${colors.text} ${colors.border}`}>
+          {time} {event.meetingType}
+        </div>
+      );
+    }
+    return (
+      <div key={event.id} className={`rounded-lg px-3 py-2 mb-1 border-l-4 ${colors.bg} ${colors.border}`}>
+        <div className="flex items-center justify-between gap-2">
+          <span className={`font-semibold text-sm ${colors.text}`}>{event.meetingType}</span>
+          <span className="text-[10px] text-white/50">{time}</span>
+        </div>
+        <div className="text-xs text-white/60 mt-0.5">{event.guestName}</div>
+        <div className="text-[10px] text-white/40">{event.location} • {event.locationDetails}</div>
+      </div>
+    );
+  }
+
+  /* ---------- Day view ---------- */
+  function renderDayView() {
+    return (
+      <div className="divide-y divide-slate-700/50">
+        {HOURS.map((hour) => {
+          const hourEvents = events.filter((e) => new Date(e.startTime).getHours() === hour);
+          return (
+            <div key={hour} className="grid grid-cols-[64px,1fr] min-h-[52px] group hover:bg-slate-700/20 transition-colors">
+              <div className="text-[11px] text-slate-500 pr-3 pt-2 text-right font-medium">{formatHour(hour)}</div>
+              <div className="border-l border-slate-700 pl-3 py-1">
+                {hourEvents.map((e) => eventCard(e))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ---------- Week view ---------- */
+  function renderWeekView() {
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+    return (
+      <div className="grid grid-cols-7 divide-x divide-slate-700">
+        {days.map((day) => {
+          const dayEvents = events.filter((e) => isSameDay(new Date(e.startTime), day));
+          const isToday_ = isSameDay(day, today);
+          return (
+            <div key={day.toISOString()} className="min-h-[220px]">
+              <div className={`text-center py-2 border-b border-slate-700 ${isToday_ ? "bg-emerald-500/10" : ""}`}>
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{DAY_NAMES[day.getDay()]}</div>
+                <div className={`text-lg font-bold mt-0.5 ${isToday_ ? "text-emerald-400" : "text-white"}`}>{day.getDate()}</div>
+              </div>
+              <div className="p-1.5 space-y-1">
+                {dayEvents.map((e) => eventCard(e, true))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ---------- Month view ---------- */
+  function renderMonthView() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDow = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < firstDow; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    const weeks: (number | null)[][] = [];
+    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+    return (
+      <div>
+        <div className="grid grid-cols-7 text-center border-b border-slate-700">
+          {DAY_NAMES.map((d) => (
+            <div key={d} className="py-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{d}</div>
+          ))}
+        </div>
+        {weeks.map((week, wi) => (
+          <div key={wi} className="grid grid-cols-7 divide-x divide-slate-700/50 border-b border-slate-700/50">
+            {week.map((day, di) => {
+              const dayEvents = day
+                ? events.filter((e) => { const ed = new Date(e.startTime); return ed.getDate() === day && ed.getMonth() === month; })
+                : [];
+              const isToday_ = day !== null && today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+              return (
+                <div key={di} className={`min-h-[80px] p-1 ${day === null ? "bg-slate-900/40" : "hover:bg-slate-700/20 transition-colors"}`}>
+                  {day !== null && (
+                    <>
+                      <div className={`text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center ${isToday_ ? "bg-emerald-500 text-slate-900 rounded-full" : "text-slate-400"}`}>
+                        {day}
+                      </div>
+                      {dayEvents.slice(0, 3).map((e) => eventCard(e, true))}
+                      {dayEvents.length > 3 && (
+                        <div className="text-[9px] text-slate-500 pl-1">+{dayEvents.length - 3} more</div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="app-layout">
@@ -181,58 +345,46 @@ export default function DashboardPage() {
         </section>
 
         <section className="card">
-          <h3 className="card-title">My Upcoming Meetings</h3>
-          <div className="mt-3 flex gap-2">
-            {(["day", "week", "month"] as const).map((target) => (
-              <button
-                key={target}
-                onClick={() => setRange(target)}
-                className={`rounded px-3 py-1 text-xs font-semibold ${range === target ? "bg-emerald-500 text-slate-900" : "bg-slate-700 text-white"}`}
-              >
-                {target === "day" ? "Day" : target === "week" ? "7 Days" : "Month"}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h3 className="card-title mb-0">My Upcoming Meetings</h3>
+            <div className="flex items-center gap-2">
+              {(["day", "week", "month"] as const).map((target) => (
+                <button
+                  key={target}
+                  onClick={() => setRange(target)}
+                  className={`rounded px-3 py-1 text-xs font-semibold transition-colors ${range === target ? "bg-emerald-500 text-slate-900" : "bg-slate-700 text-white hover:bg-slate-600"}`}
+                >
+                  {target === "day" ? "Day" : target === "week" ? "Week" : "Month"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="rounded p-1.5 bg-slate-700 text-white hover:bg-slate-600 transition-colors" aria-label="Previous">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+            </button>
+            <button onClick={goToToday} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600 transition-colors">Today</button>
+            <button onClick={() => navigate(1)} className="rounded p-1.5 bg-slate-700 text-white hover:bg-slate-600 transition-colors" aria-label="Next">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+            </button>
+            <span className="text-sm font-semibold text-white">{getCalendarLabel()}</span>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[2fr,1fr]">
-            <div>
-              {eventsLoading && <p className="text-white/70">Loading meetings...</p>}
-              {eventsError && <p className="text-rose-300">{eventsError}</p>}
-              {!eventsLoading && !eventsError && events.length === 0 && (
-                <p className="text-white/70">No upcoming meetings found for this range.</p>
-              )}
-
-              {!eventsLoading && !eventsError && events.length > 0 && (
-                <div className="bg-slate-800 rounded-xl p-3">
-                  <div className="grid grid-cols-[100px,1fr] gap-2 text-xs text-slate-300 mb-2">
-                    <div className="font-semibold">Time</div>
-                    <div className="font-semibold">Event</div>
-                  </div>
-                  {events.map((event) => {
-                    const eventDate = new Date(event.startTime);
-                    const timeStr = eventDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                    return (
-                      <div key={event.id} className="grid grid-cols-[100px,1fr] gap-2 border-y border-slate-700 py-2">
-                        <div className="text-white/70">{timeStr}</div>
-                        <div>
-                          <div className="font-semibold text-white">{event.meetingType}</div>
-                          <div className="text-xs text-white/60">{event.guestName} ({event.guestEmail})</div>
-                          <div className="text-xs text-white/60">{event.location} • {event.status}</div>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            <button onClick={() => alert(`Reschedule ${event.meetingType}`)} className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Reschedule</button>
-                            <button onClick={() => alert(`Cancel ${event.meetingType}`)} className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Cancel</button>
-                            {event.location === "virtual" && <a href={event.locationDetails} target="_blank" rel="noreferrer" className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Join</a>}
-                            <button onClick={() => alert(`Details for ${event.meetingType}`)} className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Details</button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="bg-slate-800 rounded-xl overflow-hidden">
+              {eventsLoading && <div className="p-8 text-center text-white/70">Loading meetings…</div>}
+              {eventsError && <div className="p-8 text-center text-rose-300">{eventsError}</div>}
+              {!eventsLoading && !eventsError && (
+                <>
+                  {range === "day" && renderDayView()}
+                  {range === "week" && renderWeekView()}
+                  {range === "month" && renderMonthView()}
+                </>
               )}
             </div>
 
-            <aside className="card bg-slate-900 p-4 border border-slate-700">
+            <aside className="card bg-slate-900 p-4 border border-slate-700 self-start">
               <h4 className="text-base font-semibold text-white">Right panel (coming soon)</h4>
               <p className="mt-2 text-sm text-white/70">Place KPI cards, scheduling shortcuts, and quick actions here once the full layout solidifies.</p>
             </aside>
