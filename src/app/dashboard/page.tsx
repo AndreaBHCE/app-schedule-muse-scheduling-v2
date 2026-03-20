@@ -33,9 +33,9 @@ type MeetingEvent = {
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  confirmed: { bg: "bg-emerald-500/20", text: "text-emerald-300", border: "border-emerald-500" },
-  pending:   { bg: "bg-amber-500/20",   text: "text-amber-300",   border: "border-amber-500" },
-  canceled:  { bg: "bg-rose-500/20",    text: "text-rose-300",    border: "border-rose-500" },
+  confirmed: { bg: "var(--cal-hover)",  text: "var(--cal-heading)", border: "var(--cal-primary)" },
+  pending:   { bg: "#fef3c7",           text: "#92400e",            border: "#f59e0b" },
+  canceled:  { bg: "#ffe4e6",           text: "#9f1239",            border: "#f43f5e" },
 };
 
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7 AM – 8 PM
@@ -140,19 +140,19 @@ export default function DashboardPage() {
     const time = new Date(event.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     if (compact) {
       return (
-        <div key={event.id} className={`truncate rounded px-1.5 py-0.5 mb-0.5 text-[10px] leading-tight border-l-2 ${colors.bg} ${colors.text} ${colors.border}`}>
+        <div key={event.id} className="truncate rounded px-1.5 py-0.5 mb-0.5 text-[10px] leading-tight border-l-2" style={{ background: colors.bg, color: colors.text, borderLeftColor: colors.border }}>
           {time} {event.meetingType}
         </div>
       );
     }
     return (
-      <div key={event.id} className={`rounded-lg px-3 py-2 mb-1 border-l-4 ${colors.bg} ${colors.border}`}>
+      <div key={event.id} className="rounded-lg px-3 py-2 mb-1 border-l-4" style={{ background: colors.bg, borderLeftColor: colors.border }}>
         <div className="flex items-center justify-between gap-2">
-          <span className={`font-semibold text-sm ${colors.text}`}>{event.meetingType}</span>
-          <span className="text-[10px] text-white/50">{time}</span>
+          <span className="font-semibold text-sm" style={{ color: colors.text }}>{event.meetingType}</span>
+          <span className="text-[10px]" style={{ color: 'var(--cal-mid)' }}>{time}</span>
         </div>
-        <div className="text-xs text-white/60 mt-0.5">{event.guestName}</div>
-        <div className="text-[10px] text-white/40">{event.location} • {event.locationDetails}</div>
+        <div className="text-xs mt-0.5" style={{ color: 'var(--cal-text)' }}>{event.guestName}</div>
+        <div className="text-[10px]" style={{ color: 'var(--cal-mid)' }}>{event.location} • {event.locationDetails}</div>
       </div>
     );
   }
@@ -160,13 +160,13 @@ export default function DashboardPage() {
   /* ---------- Day view ---------- */
   function renderDayView() {
     return (
-      <div className="divide-y divide-slate-700/50">
+      <div>
         {HOURS.map((hour) => {
           const hourEvents = events.filter((e) => new Date(e.startTime).getHours() === hour);
           return (
-            <div key={hour} className="grid grid-cols-[64px,1fr] min-h-[52px] group hover:bg-slate-700/20 transition-colors">
-              <div className="text-[11px] text-slate-500 pr-3 pt-2 text-right font-medium">{formatHour(hour)}</div>
-              <div className="border-l border-slate-700 pl-3 py-1">
+            <div key={hour} className="cal-row grid grid-cols-[64px,1fr] min-h-[52px]" style={{ borderBottom: '1px solid var(--cal-border)' }}>
+              <div className="pr-3 pt-2 text-right font-medium text-[11px]" style={{ color: 'var(--cal-mid)' }}>{formatHour(hour)}</div>
+              <div className="pl-3 py-1" style={{ borderLeft: '1px solid var(--cal-border)' }}>
                 {hourEvents.map((e) => eventCard(e))}
               </div>
             </div>
@@ -186,15 +186,15 @@ export default function DashboardPage() {
       return d;
     });
     return (
-      <div className="grid grid-cols-7 divide-x divide-slate-700">
-        {days.map((day) => {
+      <div className="grid grid-cols-7">
+        {days.map((day, i) => {
           const dayEvents = events.filter((e) => isSameDay(new Date(e.startTime), day));
           const isToday_ = isSameDay(day, today);
           return (
-            <div key={day.toISOString()} className="min-h-[220px]">
-              <div className={`text-center py-2 border-b border-slate-700 ${isToday_ ? "bg-emerald-500/10" : ""}`}>
-                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{DAY_NAMES[day.getDay()]}</div>
-                <div className={`text-lg font-bold mt-0.5 ${isToday_ ? "text-emerald-400" : "text-white"}`}>{day.getDate()}</div>
+            <div key={day.toISOString()} className="min-h-[220px]" style={{ borderRight: i < 6 ? '1px solid var(--cal-border)' : undefined }}>
+              <div className="text-center py-2" style={{ borderBottom: '1px solid var(--cal-border)', background: isToday_ ? 'var(--cal-today-bg)' : undefined }}>
+                <div className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'var(--cal-mid)' }}>{DAY_NAMES[day.getDay()]}</div>
+                <div className="text-lg font-bold mt-0.5" style={{ color: isToday_ ? 'var(--cal-primary)' : 'var(--cal-heading)' }}>{day.getDate()}</div>
               </div>
               <div className="p-1.5 space-y-1">
                 {dayEvents.map((e) => eventCard(e, true))}
@@ -223,28 +223,28 @@ export default function DashboardPage() {
 
     return (
       <div>
-        <div className="grid grid-cols-7 text-center border-b border-slate-700">
+        <div className="grid grid-cols-7 text-center" style={{ borderBottom: '1px solid var(--cal-border)' }}>
           {DAY_NAMES.map((d) => (
-            <div key={d} className="py-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{d}</div>
+            <div key={d} className="py-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'var(--cal-mid)' }}>{d}</div>
           ))}
         </div>
         {weeks.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 divide-x divide-slate-700/50 border-b border-slate-700/50">
+          <div key={wi} className="grid grid-cols-7" style={{ borderBottom: '1px solid var(--cal-border)' }}>
             {week.map((day, di) => {
               const dayEvents = day
                 ? events.filter((e) => { const ed = new Date(e.startTime); return ed.getDate() === day && ed.getMonth() === month; })
                 : [];
               const isToday_ = day !== null && today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
               return (
-                <div key={di} className={`min-h-[80px] p-1 ${day === null ? "bg-slate-900/40" : "hover:bg-slate-700/20 transition-colors"}`}>
+                <div key={di} className={`min-h-[80px] p-1 ${day === null ? "" : "cal-cell"}`} style={{ borderRight: di < 6 ? '1px solid var(--cal-border)' : undefined, background: day === null ? 'var(--cal-bg-alt)' : undefined }}>
                   {day !== null && (
                     <>
-                      <div className={`text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center ${isToday_ ? "bg-emerald-500 text-slate-900 rounded-full" : "text-slate-400"}`}>
+                      <div className="text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center" style={isToday_ ? { background: 'var(--cal-primary)', color: 'white', borderRadius: '50%' } : { color: 'var(--cal-text)' }}>
                         {day}
                       </div>
                       {dayEvents.slice(0, 3).map((e) => eventCard(e, true))}
                       {dayEvents.length > 3 && (
-                        <div className="text-[9px] text-slate-500 pl-1">+{dayEvents.length - 3} more</div>
+                        <div className="text-[9px] pl-1" style={{ color: 'var(--cal-mid)' }}>+{dayEvents.length - 3} more</div>
                       )}
                     </>
                   )}
@@ -345,36 +345,38 @@ export default function DashboardPage() {
         </section>
 
         <section className="card">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h3 className="card-title mb-0">My Upcoming Meetings</h3>
-            <div className="flex items-center gap-2">
-              {(["day", "week", "month"] as const).map((target) => (
-                <button
-                  key={target}
-                  onClick={() => setRange(target)}
-                  className={`rounded px-3 py-1 text-xs font-semibold transition-colors ${range === target ? "bg-emerald-500 text-slate-900" : "bg-slate-700 text-white hover:bg-slate-600"}`}
-                >
-                  {target === "day" ? "Day" : target === "week" ? "Week" : "Month"}
-                </button>
-              ))}
-            </div>
-          </div>
+          <h3 className="card-title mb-3">My Upcoming Meetings</h3>
 
-          <div className="mt-3 flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="rounded p-1.5 bg-slate-700 text-white hover:bg-slate-600 transition-colors" aria-label="Previous">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-            </button>
-            <button onClick={goToToday} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600 transition-colors">Today</button>
-            <button onClick={() => navigate(1)} className="rounded p-1.5 bg-slate-700 text-white hover:bg-slate-600 transition-colors" aria-label="Next">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
-            </button>
-            <span className="text-sm font-semibold text-white">{getCalendarLabel()}</span>
-          </div>
+          <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
+            <div className="cal-grid">
+              {/* Calendar header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--cal-border)' }}>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => navigate(-1)} className="cal-nav-btn" aria-label="Previous">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  </button>
+                  <button onClick={goToToday} className="cal-view-btn">Today</button>
+                  <button onClick={() => navigate(1)} className="cal-nav-btn" aria-label="Next">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                  </button>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--cal-heading)' }}>{getCalendarLabel()}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {(["day", "week", "month"] as const).map((target) => (
+                    <button
+                      key={target}
+                      onClick={() => setRange(target)}
+                      className={`cal-view-btn ${range === target ? "cal-view-btn--active" : ""}`}
+                    >
+                      {target === "day" ? "Day" : target === "week" ? "Week" : "Month"}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[2fr,1fr]">
-            <div className="bg-slate-800 rounded-xl overflow-hidden">
-              {eventsLoading && <div className="p-8 text-center text-white/70">Loading meetings…</div>}
-              {eventsError && <div className="p-8 text-center text-rose-300">{eventsError}</div>}
+              {/* Calendar body */}
+              {eventsLoading && <div className="p-8 text-center" style={{ color: 'var(--cal-mid)' }}>Loading meetings…</div>}
+              {eventsError && <div className="p-8 text-center text-rose-500">{eventsError}</div>}
               {!eventsLoading && !eventsError && (
                 <>
                   {range === "day" && renderDayView()}
