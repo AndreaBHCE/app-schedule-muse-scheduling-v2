@@ -143,7 +143,7 @@ function defaultConfig(): BookingConfig {
     sessionType: "one-on-one",
     groupMaxSize: 10,
     minNoticeHours: 2,
-    maxAdvanceDays: 60,
+    maxAdvanceDays: 3,
     slotIntervalMinutes: 15,
     bufferBeforeMinutes: 0,
     bufferAfterMinutes: 5,
@@ -193,11 +193,25 @@ function ChevronDown({ open }: { open: boolean }) {
   );
 }
 
+function InfoIcon({ tip }: { tip: string }) {
+  return (
+    <span className="hint-icon" title={tip} aria-label="Info">
+      ?
+    </span>
+  );
+}
+
 function Section({
-  label, summary, expanded, onToggle, children,
+  label,
+  summary,
+  tooltip,
+  expanded,
+  onToggle,
+  children,
 }: {
   label: string;
   summary: string;
+  tooltip?: string;
   expanded: boolean;
   onToggle: () => void;
   children: React.ReactNode;
@@ -210,10 +224,13 @@ function Section({
         className="setup-section-btn w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
         style={{ background: expanded ? "var(--cal-hover)" : undefined }}
       >
-        <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
           <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--cal-mid)" }}>
             {label}
           </div>
+          {tooltip && <InfoIcon tip={tooltip} />}
+        </div>
+        <div className="flex-1 min-w-0">
           {!expanded && (
             <div className="text-sm mt-0.5 truncate" style={{ color: "var(--cal-heading)" }}>
               {summary}
@@ -424,7 +441,13 @@ export default function MeetingSetupPage() {
         </Section>
 
         {/* ---- Availability ---- */}
-        <Section label="Availability" summary={availSummary} expanded={isOpen("availability")} onToggle={() => toggle("availability")}>
+        <Section
+          label="Availability"
+          summary={availSummary}
+          tooltip="Set the weekly hours when you are actually bookable. Use this to prevent outside-office meetings."
+          expanded={isOpen("availability")}
+          onToggle={() => toggle("availability")}
+        >
           <div className="mb-3">
             <FieldLabel>Timezone</FieldLabel>
             <Input value={config.timezone} onChange={(e) => update("timezone", e.target.value)} />
@@ -477,7 +500,13 @@ export default function MeetingSetupPage() {
         </Section>
 
         {/* ---- Location (SINGLE — no multi-location anywhere) ---- */}
-        <Section label="Location" summary={locSummary} expanded={isOpen("location")} onToggle={() => toggle("location")}>
+        <Section
+          label="Location"
+          summary={locSummary}
+          tooltip="Pick one meeting location type for this booking calendar. Then provide the link/number/address."
+          expanded={isOpen("location")}
+          onToggle={() => toggle("location")}
+        >
           <FieldLabel>Meeting location</FieldLabel>
           <div className="flex gap-2 mt-1">
             {(["video", "phone", "in-person"] as LocationType[]).map((type) => (
@@ -565,6 +594,7 @@ export default function MeetingSetupPage() {
         <Section
           label="Scheduling Window"
           summary={`${config.minNoticeHours}h notice · up to ${config.maxAdvanceDays} days ahead`}
+          tooltip="Minimum notice prevents last-minute bookings; how far ahead controls the maximum advance scheduling horizon."
           expanded={isOpen("window")}
           onToggle={() => toggle("window")}
         >
@@ -584,6 +614,7 @@ export default function MeetingSetupPage() {
         <Section
           label="Buffer & Intervals"
           summary={`${config.slotIntervalMinutes} min slots · ${config.bufferBeforeMinutes}/${config.bufferAfterMinutes} min buffer`}
+          tooltip="Slot interval sets step size for available times; buffer before/after keeps breathing room between meetings."
           expanded={isOpen("buffer")}
           onToggle={() => toggle("buffer")}
         >
