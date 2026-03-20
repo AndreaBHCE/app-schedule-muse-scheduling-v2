@@ -309,7 +309,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 export default function MeetingSetupPage() {
   const [config, setConfig] = useState<BookingConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState<TabId>("settings");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(["subject"]));
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 

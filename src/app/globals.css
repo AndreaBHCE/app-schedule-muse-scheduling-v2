@@ -80,6 +80,21 @@
   background: var(--cal-hover);
 }
 
+.hint-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(0, 191, 165, 0.16);
+  color: var(--cal-primary);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--cal-primary);
+  cursor: help;
+}
+
 /* Global defaults for the app (dark teal theme) */
 html {
   height: 100%;
