@@ -180,37 +180,53 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {eventsLoading && <p className="mt-4 text-white/70">Loading meetings...</p>}
-          {eventsError && <p className="mt-4 text-rose-300">{eventsError}</p>}
+          <div className="mt-4 grid gap-4 lg:grid-cols-[2fr,1fr]">
+            <div>
+              {eventsLoading && <p className="text-white/70">Loading meetings...</p>}
+              {eventsError && <p className="text-rose-300">{eventsError}</p>}
+              {!eventsLoading && !eventsError && events.length === 0 && (
+                <p className="text-white/70">No upcoming meetings found for this range.</p>
+              )}
 
-          {!eventsLoading && !eventsError && events.length === 0 && (
-            <p className="mt-4 text-white/70">No upcoming meetings found for this range.</p>
-          )}
+              {!eventsLoading && !eventsError && events.length > 0 && (
+                <table className="w-full text-left text-sm text-white/80 border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-700/60">
+                      <th className="py-2">Start</th>
+                      <th>Meeting</th>
+                      <th>Guest</th>
+                      <th>Status</th>
+                      <th>Location</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {events.map((event) => (
+                      <tr key={event.id} className="align-top border-b border-slate-700/40">
+                        <td className="py-2">{new Date(event.startTime).toLocaleString()}</td>
+                        <td>{event.meetingType}</td>
+                        <td>{event.guestName} <span className="text-xs text-white/50">({event.guestEmail})</span></td>
+                        <td className={`text-xs font-semibold ${event.status === "confirmed" ? "text-emerald-300" : event.status === "pending" ? "text-amber-300" : "text-rose-300"}`}>
+                          {event.status}
+                        </td>
+                        <td>{event.location} {event.location === "virtual" ? `(${event.locationDetails})` : event.locationDetails}</td>
+                        <td className="space-x-1">
+                          <button onClick={() => alert(`Reschedule ${event.meetingType}`)} className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Reschedule</button>
+                          <button onClick={() => alert(`Cancel ${event.meetingType}`)} className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Cancel</button>
+                          {event.location === "virtual" && <a href={event.locationDetails} target="_blank" rel="noreferrer" className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Join</a>}
+                          <button onClick={() => alert(`Details for ${event.meetingType}`)} className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Details</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
 
-          <div className="mt-4 space-y-3">
-            {events.map((event) => (
-              <article key={event.id} className="card bg-slate-900 p-4 border border-slate-700">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h4 className="font-semibold text-white">{event.meetingType}</h4>
-                    <p className="text-sm text-white/70">{new Date(event.startTime).toLocaleString()}</p>
-                    <p className="text-sm text-white/70">Guest: {event.guestName} ({event.guestEmail})</p>
-                    <p className="text-sm text-white/70">Location: {event.location} — {event.locationDetails}</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded ${event.status === "confirmed" ? "bg-emerald-500 text-slate-900" : event.status === "pending" ? "bg-amber-400 text-slate-900" : "bg-rose-500 text-white"}`}>
-                    {event.status}
-                  </span>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button onClick={() => alert(`Reschedule ${event.meetingType}`)} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Reschedule</button>
-                  <button onClick={() => alert(`Cancel ${event.meetingType}`)} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Cancel</button>
-                  {event.location === "virtual" && (
-                    <a href={event.locationDetails} target="_blank" rel="noreferrer" className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Join</a>
-                  )}
-                  <button onClick={() => alert(`Details for ${event.meetingType}`)} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Details</button>
-                </div>
-              </article>
-            ))}
+            <aside className="card bg-slate-900 p-4 border border-slate-700">
+              <h4 className="text-base font-semibold text-white">Right panel (coming soon)</h4>
+              <p className="mt-2 text-sm text-white/70">Place KPI cards, scheduling shortcuts, and quick actions here once the full layout solidifies.</p>
+            </aside>
           </div>
         </section>
 
