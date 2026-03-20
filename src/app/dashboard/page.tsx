@@ -328,7 +328,8 @@ export default function DashboardPage() {
       <main className="app-main">
         <header className="app-header">
           <div>
-            <h2 className="app-title">Welcome back.</h2>
+            <h1 className="app-company-name">ScheduleMuseAI</h1>
+            <h2 className="app-page-name">Welcome back.</h2>
             <p className="app-subtitle">
               Your scheduling dashboard gives you full control over booking pages, availability, and reminders — all powered by ScheduleMuse AI.
             </p>

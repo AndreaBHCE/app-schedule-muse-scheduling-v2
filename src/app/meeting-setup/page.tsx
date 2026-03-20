@@ -151,8 +151,9 @@ function defaultConfig(): BookingConfig {
     paymentAmount: 0,
     paymentCurrency: "USD",
     formFields: [
-      { id: "name",  label: "Full Name", type: "text", required: true, isDefault: true },
-      { id: "email", label: "Email",     type: "text", required: true, isDefault: true },
+      { id: "first_name", label: "First Name", type: "text", required: true, isDefault: true },
+      { id: "last_name",  label: "Last Name",  type: "text", required: true, isDefault: true },
+      { id: "email",      label: "Email",      type: "text", required: true, isDefault: true },
     ],
     afterBookingRedirect: "",
     notifications: [
@@ -1163,7 +1164,8 @@ export default function MeetingSetupPage() {
       <main className="app-main">
         <header className="app-header">
           <div>
-            <h2 className="app-title">Booking Setup</h2>
+            <h1 className="app-company-name">ScheduleMuseAI</h1>
+            <h2 className="app-page-name">Booking Setup</h2>
             <p className="app-subtitle">
               Configure every aspect of your booking page — settings, form, notifications, branding, embedding, and phone.
             </p>
