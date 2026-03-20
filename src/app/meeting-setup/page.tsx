@@ -1609,7 +1609,7 @@ export default function MeetingSetupPage() {
             <div className="relative mx-auto" style={{ width: 240 }}>
               {/* Your iPhone image IS the phone */}
               <img
-                src="/iphone-icon-sunset-transparent.png"
+                src="/iphone-icon-sunset-transparent-overlay.png"
                 alt="Phone preview"
                 style={{ width: "100%", height: "auto", display: "block" }}
               />
