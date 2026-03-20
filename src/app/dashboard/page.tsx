@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", active: true },
   { href: "/meeting-setup", label: "Booking setup", active: false },
+  { href: "/your-bookings", label: "Your bookings", active: false },
 ];
 
 type Booking = {
@@ -161,6 +162,19 @@ export default function DashboardPage() {
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Share</button>
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Archive</button>
                 </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="card">
+          <h3 className="card-title">Your Bookings</h3>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {bookings.map((booking) => (
+              <article key={booking.id} className="card bg-slate-900 p-4 border border-slate-700">
+                <h4 className="font-semibold text-white">{booking.title}</h4>
+                <p className="text-sm text-white/70">Status: {booking.status}</p>
+                <p className="text-xs text-white/50">Updated {new Date(booking.updatedAt).toLocaleDateString()}</p>
               </article>
             ))}
           </div>
