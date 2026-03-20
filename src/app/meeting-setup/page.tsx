@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useCallback, useState } from "react";
+import AppSidebar from "@/components/layout/AppSidebar";
 
 /* ================================================================
    TYPES
@@ -107,12 +108,6 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: "page",          label: "Page Designer",    icon: "🎨" },
   { id: "embed",         label: "Embed Designer",   icon: "🖥️" },
   { id: "phone",         label: "Phone Settings",   icon: "📞" },
-];
-
-const navItems = [
-  { href: "/dashboard",     label: "Dashboard",      active: false },
-  { href: "/meeting-setup", label: "Booking setup",  active: true },
-  { href: "/your-bookings", label: "Your bookings",  active: false },
 ];
 
 const DURATION_PRESETS = [15, 30, 45, 60, 90, 120];
@@ -1637,23 +1632,7 @@ export default function MeetingSetupPage() {
      ================================================================ */
   return (
     <div className="app-layout">
-      <aside className="app-sidebar" aria-label="Primary navigation">
-        <div className="app-sidebar__brand">
-          <img src="/schedulemuseai-logo-transparent-01.png" alt="ScheduleMuse AI logo" />
-        </div>
-        <nav className="app-sidebar__nav" aria-label="Secondary navigation">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className={`app-sidebar__link ${item.active ? "app-sidebar__link--active" : ""}`}>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-        <div className="text-xs text-white/70">
-          Version 1.0 • 2027
-          <div className="mt-2">Need help? <a className="underline" href="#">Support</a></div>
-          <div className="mt-4"><div className="text-sm text-white/70">Signed in as: you</div></div>
-        </div>
-      </aside>
+      <AppSidebar />
 
       <main className="app-main">
         <header className="app-header">

@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", active: true },
-  { href: "/meeting-setup", label: "Booking setup", active: false },
-  { href: "/your-bookings", label: "Your bookings", active: false },
-];
+import AppSidebar from "@/components/layout/AppSidebar";
 
 type Booking = {
   id: string;
@@ -297,33 +292,7 @@ export default function DashboardPage() {
 
   return (
     <div className="app-layout">
-      <aside className="app-sidebar" aria-label="Primary navigation">
-        <div className="app-sidebar__brand">
-          <img src="/schedulemuseai-logo-transparent-01.png" alt="ScheduleMuse AI logo" />
-        </div>
-
-        <nav className="app-sidebar__nav" aria-label="Secondary navigation">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`app-sidebar__link ${item.active ? "app-sidebar__link--active" : ""}`}
-            >
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="text-xs text-white/70">
-          Version 1.0 • 2027
-          <div className="mt-2">
-            Need help? <a className="underline" href="#">Support</a>
-          </div>
-          <div className="mt-4">
-            <div className="text-sm text-white/70">Signed in as: you</div>
-          </div>
-        </div>
-      </aside>
+      <AppSidebar />
 
       <main className="app-main">
         <header className="app-header">
@@ -338,7 +307,7 @@ export default function DashboardPage() {
             <Link href="/meeting-setup" className="btn-primary">
               Create booking page
             </Link>
-            <button className="btn-secondary">View analytics</button>
+            <Link href="/analytics" className="btn-secondary">View analytics</Link>
           </div>
         </header>
 
