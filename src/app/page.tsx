@@ -3,7 +3,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8">
         <div className="flex items-center gap-4">
-          <img src="/schedulemuseai-logo-1-teal.jpg" alt="ScheduleMuse AI" className="h-10 w-10 rounded-xl" />
+          <img src="/schedulemuseai-logo-transparent-01.png" alt="ScheduleMuse AI" className="h-10 w-10 rounded-xl" />
           <span className="text-xl font-bold text-white">Schedule Muse AI</span>
         </div>
         <div className="flex items-center gap-4">

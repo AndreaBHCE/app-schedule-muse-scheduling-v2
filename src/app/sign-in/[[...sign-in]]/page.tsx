@@ -37,7 +37,7 @@ export default function SignInPage() {
       <div className="w-full max-w-5xl rounded-3xl bg-white/10 p-14 backdrop-blur">
         <div className="flex flex-col items-center gap-4 mb-10 text-center">
           <div className="flex h-18 w-18 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500">
-            <img src="/schedulemuseai-logo-1-teal.jpg" alt="ScheduleMuse logo" className="h-12 w-12" />
+            <img src="/schedulemuseai-logo-transparent-01.png" alt="ScheduleMuse logo" className="h-12 w-12" />
           </div>
           <p className="text-6xl font-semibold text-white/70">Schedule Muse</p>
           <h1 className="text-xl font-semibold text-white leading-tight">Sign in</h1>
