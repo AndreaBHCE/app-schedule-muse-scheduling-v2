@@ -1606,54 +1606,23 @@ export default function MeetingSetupPage() {
             <h4 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "var(--cal-heading)" }}>
               Preview
             </h4>
-            <div
-              className="rounded-[2rem] border-4 overflow-hidden mx-auto"
-              style={{ borderColor: "#1a1a1a", width: 240, height: 420 }}
-            >
-              {/* Status bar */}
+            <div className="relative mx-auto" style={{ width: 240 }}>
+              {/* Your iPhone image IS the phone */}
+              <img
+                src="/iphone-icon-sunset-transparent.png"
+                alt="Phone preview"
+                style={{ width: "100%", height: "auto", display: "block" }}
+              />
+              {/* Text overlay */}
               <div
-                className="flex items-center justify-between px-4 py-1.5 text-[10px] font-semibold"
-                style={{ background: "rgba(0,0,0,0.5)", color: "white", position: "relative", zIndex: 2 }}
+                className="absolute inset-0 flex flex-col items-center justify-center text-center p-8"
+                style={{ paddingTop: "45%" }}
               >
-                <span>9:41</span>
-                <span>📶 🔋</span>
-              </div>
-              {/* Call screen with iPhone background image */}
-              <div
-                className="flex flex-col items-center justify-center p-6 text-center"
-                style={{
-                  height: "calc(100% - 28px)",
-                  position: "relative",
-                  background: "#1a1a2e",
-                }}
-              >
-                {/* Background image layer */}
-                <img
-                  src="/iphone-icon-sunset-transparent.png"
-                  alt=""
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "center",
-                  }}
-                />
-                {/* Content on top */}
-                <div style={{ position: "relative", zIndex: 1 }}>
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3 mx-auto"
-                    style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(6px)" }}
-                  >
-                    📞
-                  </div>
-                  <div className="text-sm font-bold mb-1 text-white">
-                    {config.phoneNumber || "+1 (555) 000-0000"}
-                  </div>
-                  <div className="text-xs px-4 leading-relaxed text-white/90">
-                    {config.phoneWelcomeMessage || "Welcome message will appear here."}
-                  </div>
+                <div className="text-sm font-bold mb-1 text-white">
+                  {config.phoneNumber || "+1 (555) 000-0000"}
+                </div>
+                <div className="text-xs px-4 leading-relaxed text-white/90">
+                  {config.phoneWelcomeMessage || "Welcome message will appear here."}
                 </div>
               </div>
             </div>
