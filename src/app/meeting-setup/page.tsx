@@ -714,7 +714,7 @@ export default function MeetingSetupPage() {
                       />
                     </div>
                     <div>
-                      <FieldLabel>Type</FieldLabel>
+                      <FieldLabel>Type of field</FieldLabel>
                       <Select
                         value={field.type}
                         onChange={(e) => updateField(field.id, { type: e.target.value as FormField["type"] })}
