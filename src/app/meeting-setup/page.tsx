@@ -1622,23 +1622,38 @@ export default function MeetingSetupPage() {
               <div
                 className="flex flex-col items-center justify-center p-6 text-center"
                 style={{
-                  backgroundImage: "url(/IPHONE-ICON-SUNSET-TRANSPARENT.png)",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
                   height: "calc(100% - 28px)",
+                  position: "relative",
+                  background: "#1a1a2e",
                 }}
               >
-                <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3 mx-auto"
-                  style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(6px)" }}
-                >
-                  📞
-                </div>
-                <div className="text-sm font-bold mb-1 text-white">
-                  {config.phoneNumber || "+1 (555) 000-0000"}
-                </div>
-                <div className="text-xs px-4 leading-relaxed text-white/90">
-                  {config.phoneWelcomeMessage || "Welcome message will appear here."}
+                {/* Background image layer */}
+                <img
+                  src="/IPHONE-ICON-SUNSET-TRANSPARENT.png"
+                  alt=""
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                  }}
+                />
+                {/* Content on top */}
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3 mx-auto"
+                    style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(6px)" }}
+                  >
+                    📞
+                  </div>
+                  <div className="text-sm font-bold mb-1 text-white">
+                    {config.phoneNumber || "+1 (555) 000-0000"}
+                  </div>
+                  <div className="text-xs px-4 leading-relaxed text-white/90">
+                    {config.phoneWelcomeMessage || "Welcome message will appear here."}
+                  </div>
                 </div>
               </div>
             </div>
