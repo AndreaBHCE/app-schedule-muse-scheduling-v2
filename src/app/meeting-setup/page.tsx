@@ -111,7 +111,7 @@ const REMINDER_OPTIONS = [
 ];
 
 const NOTIFICATION_LABELS: Record<NotificationEvent, { title: string; desc: string }> = {
-  scheduled:   { title: "Booking Scheduled",  desc: "Sent when a guest books a meeting" },
+  scheduled:   { title: "Meeting Scheduled",  desc: "Sent when a guest books a meeting" },
   reminder:    { title: "Reminder",           desc: "Sent before the meeting starts" },
   rescheduled: { title: "Rescheduled",        desc: "Sent when a meeting is rescheduled" },
   reassigned:  { title: "Reassigned",         desc: "Sent when a meeting is reassigned to another host" },
@@ -840,7 +840,13 @@ export default function MeetingSetupPage() {
     return (
       <div className="p-5 space-y-3">
         <p className="text-sm mb-4" style={{ color: "var(--cal-text)" }}>
-          Configure which notifications are sent to guests for each booking event.
+          Configure which notifications are sent to guests for each booking calendar.
+        </p>
+        <p className="text-sm font-semibold" style={{ color: "var(--cal-heading)" }}>
+          Meeting Scheduled
+        </p>
+        <p className="text-xs" style={{ color: "var(--cal-mid)" }}>
+          Sent when a guest books a meeting
         </p>
         {config.notifications.map((notif) => {
           const meta = NOTIFICATION_LABELS[notif.event];
