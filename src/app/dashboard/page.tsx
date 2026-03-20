@@ -20,10 +20,26 @@ type Booking = {
   conversionDeltaPercent: number;
 };
 
+type MeetingEvent = {
+  id: string;
+  startTime: string;
+  guestName: string;
+  guestEmail: string;
+  meetingType: string;
+  status: "confirmed" | "pending" | "canceled";
+  location: "virtual" | "phone" | "in-person";
+  locationDetails: string;
+};
+
 export default function DashboardPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [events, setEvents] = useState<MeetingEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [range, setRange] = useState("day");
 
   useEffect(() => {
     let canceled = false;
@@ -49,6 +65,32 @@ export default function DashboardPage() {
       canceled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let canceled = false;
+
+    async function loadEvents() {
+      try {
+        setEventsLoading(true);
+        const response = await fetch(`/api/events?range=${range}`);
+        if (!response.ok) throw new Error("Failed to load upcoming meetings");
+        const json = await response.json();
+        if (!canceled) {
+          setEvents(json.events || []);
+          setEventsError(null);
+        }
+      } catch (err) {
+        if (!canceled) setEventsError((err as Error).message);
+      } finally {
+        if (!canceled) setEventsLoading(false);
+      }
+    }
+
+    loadEvents();
+    return () => {
+      canceled = true;
+    };
+  }, [range]);
 
   return (
     <div className="app-layout">
@@ -118,6 +160,54 @@ export default function DashboardPage() {
                   <Link href={`/meeting-setup?edit=${booking.id}`} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Edit</Link>
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Share</button>
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Archive</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="card">
+          <h3 className="card-title">My Upcoming Meetings</h3>
+          <div className="mt-3 flex gap-2">
+            {(["day", "week", "month"] as const).map((target) => (
+              <button
+                key={target}
+                onClick={() => setRange(target)}
+                className={`rounded px-3 py-1 text-xs font-semibold ${range === target ? "bg-emerald-500 text-slate-900" : "bg-slate-700 text-white"}`}
+              >
+                {target === "day" ? "Day" : target === "week" ? "7 Days" : "Month"}
+              </button>
+            ))}
+          </div>
+
+          {eventsLoading && <p className="mt-4 text-white/70">Loading meetings...</p>}
+          {eventsError && <p className="mt-4 text-rose-300">{eventsError}</p>}
+
+          {!eventsLoading && !eventsError && events.length === 0 && (
+            <p className="mt-4 text-white/70">No upcoming meetings found for this range.</p>
+          )}
+
+          <div className="mt-4 space-y-3">
+            {events.map((event) => (
+              <article key={event.id} className="card bg-slate-900 p-4 border border-slate-700">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h4 className="font-semibold text-white">{event.meetingType}</h4>
+                    <p className="text-sm text-white/70">{new Date(event.startTime).toLocaleString()}</p>
+                    <p className="text-sm text-white/70">Guest: {event.guestName} ({event.guestEmail})</p>
+                    <p className="text-sm text-white/70">Location: {event.location} — {event.locationDetails}</p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded ${event.status === "confirmed" ? "bg-emerald-500 text-slate-900" : event.status === "pending" ? "bg-amber-400 text-slate-900" : "bg-rose-500 text-white"}`}>
+                    {event.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button onClick={() => alert(`Reschedule ${event.meetingType}`)} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Reschedule</button>
+                  <button onClick={() => alert(`Cancel ${event.meetingType}`)} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Cancel</button>
+                  {event.location === "virtual" && (
+                    <a href={event.locationDetails} target="_blank" rel="noreferrer" className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Join</a>
+                  )}
+                  <button onClick={() => alert(`Details for ${event.meetingType}`)} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Details</button>
                 </div>
               </article>
             ))}
