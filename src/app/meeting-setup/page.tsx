@@ -351,7 +351,7 @@ export default function MeetingSetupPage() {
         {/* ---- Meeting Subject ---- */}
         <Section label="Meeting Subject" summary={config.meetingSubject} expanded={isOpen("subject")} onToggle={() => toggle("subject")}>
           <FieldLabel>Subject line</FieldLabel>
-          <Input value={config.meetingSubject} onChange={(e) => update("meetingSubject", e.target.value)} placeholder="E.g. 30-Minute Strategy Call" />
+          <Input value={config.meetingSubject} onChange={(e) => update("meetingSubject", e.target.value)} placeholder="Meeting with John Smith from Acme Builders" />
         </Section>
 
         {/* ---- Duration ---- */}
