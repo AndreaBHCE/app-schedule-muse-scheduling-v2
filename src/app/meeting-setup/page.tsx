@@ -15,10 +15,6 @@ export default function MeetingSetupPage() {
       <aside className="app-sidebar" aria-label="Primary navigation">
         <div className="app-sidebar__brand">
           <img src="/schedulemuseai-logo-transparent-01.png" alt="ScheduleMuse AI logo" />
-          <div>
-            <h1 className="text-lg font-bold">ScheduleMuse AI</h1>
-            <div className="text-sm text-white/70">Booking page builder</div>
-          </div>
         </div>
 
         <nav className="app-sidebar__nav" aria-label="Secondary navigation">
