@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-
-// For now, use the demo user. Once Clerk is wired in per-request, swap for auth().userId
-const DEMO_USER_ID = "user_demo_000";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 interface BookingPageRow {
   id: string;
@@ -24,9 +22,10 @@ interface BookingPageRow {
 
 export async function GET() {
   try {
+    const userId = await getAuthUserId();
     const result = await d1Query<BookingPageRow>(
       `SELECT * FROM booking_pages WHERE user_id = ? ORDER BY updated_at DESC`,
-      [DEMO_USER_ID],
+      [userId],
     );
 
     const bookings = result.results.map((row) => ({
@@ -49,6 +48,7 @@ export async function GET() {
 
     return NextResponse.json({ bookings });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/bookings error:", err);
     return NextResponse.json({ bookings: [], error: (err as Error).message }, { status: 500 });
   }
@@ -56,6 +56,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const payload = await request.json();
 
     if (!payload.title?.trim() || !payload.durationMinutes || payload.durationMinutes <= 0) {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
       `INSERT INTO booking_pages (id, user_id, title, slug, description, duration_minutes, buffer_minutes, status, color, location_type, location_details, config)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, DEMO_USER_ID, payload.title.trim(), slug,
+        id, userId, payload.title.trim(), slug,
         payload.description || "", payload.durationMinutes, payload.bufferMinutes || 0,
         "published", payload.color || "#0d9488",
         payload.locationType || "virtual", payload.locationDetails || "",
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ booking: { id, title: payload.title.trim(), status: "Published" } }, { status: 201 });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("POST /api/bookings error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

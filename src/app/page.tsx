@@ -1,4 +1,14 @@
-export default function HomePage() {
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+
+export default async function HomePage() {
+  const { userId } = await auth();
+
+  // Authenticated users go straight to dashboard
+  if (userId) {
+    redirect("/dashboard");
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8">

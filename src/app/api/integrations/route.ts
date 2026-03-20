@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-
-const DEMO_USER_ID = "user_demo_000";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 interface IntegrationRow {
   id: string;
@@ -16,9 +15,10 @@ interface IntegrationRow {
 
 export async function GET() {
   try {
+    const userId = await getAuthUserId();
     const result = await d1Query<IntegrationRow>(
       `SELECT * FROM integrations WHERE user_id = ? ORDER BY provider ASC`,
-      [DEMO_USER_ID],
+      [userId],
     );
 
     const integrations = result.results.map((row) => ({
@@ -34,6 +34,7 @@ export async function GET() {
 
     return NextResponse.json({ integrations });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/integrations error:", err);
     return NextResponse.json({ integrations: [], error: (err as Error).message }, { status: 500 });
   }
@@ -41,6 +42,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { provider, externalId, config } = await request.json();
     if (!provider) return NextResponse.json({ error: "provider required" }, { status: 400 });
 
@@ -49,11 +51,12 @@ export async function POST(request: Request) {
     await d1Query(
       `INSERT INTO integrations (id, user_id, provider, status, external_id, config, last_synced_at)
        VALUES (?, ?, ?, 'connected', ?, ?, datetime('now'))`,
-      [id, DEMO_USER_ID, provider, externalId || "", JSON.stringify(config || {})],
+      [id, userId, provider, externalId || "", JSON.stringify(config || {})],
     );
 
     return NextResponse.json({ integration: { id, provider, status: "connected" } }, { status: 201 });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("POST /api/integrations error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
@@ -61,6 +64,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { id, status } = await request.json();
     if (!id || !status) return NextResponse.json({ error: "id and status required" }, { status: 400 });
 
@@ -71,11 +75,12 @@ export async function PATCH(request: Request) {
 
     await d1Query(
       `UPDATE integrations SET status = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
-      [status, id, DEMO_USER_ID],
+      [status, id, userId],
     );
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("PATCH /api/integrations error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
@@ -83,12 +88,14 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-    await d1Query(`DELETE FROM integrations WHERE id = ? AND user_id = ?`, [id, DEMO_USER_ID]);
+    await d1Query(`DELETE FROM integrations WHERE id = ? AND user_id = ?`, [id, userId]);
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("DELETE /api/integrations error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

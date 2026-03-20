@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-
-const DEMO_USER_ID = "user_demo_000";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 interface MeetingRow {
   id: string;
@@ -46,6 +45,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    const userId = await getAuthUserId();
     const result = await d1Query<MeetingRow>(
       `SELECT m.*, bp.title as meeting_type
        FROM meetings m
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
          AND m.start_time >= ?
          AND m.start_time < ?
        ORDER BY m.start_time ASC`,
-      [DEMO_USER_ID, rangeStart.toISOString(), rangeEnd.toISOString()],
+      [userId, rangeStart.toISOString(), rangeEnd.toISOString()],
     );
 
     const events = result.results.map((row) => ({
@@ -72,6 +72,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ events });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/events error:", err);
     return NextResponse.json({ events: [], error: (err as Error).message }, { status: 500 });
   }

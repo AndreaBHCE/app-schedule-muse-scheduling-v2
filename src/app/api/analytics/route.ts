@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-
-const DEMO_USER_ID = "user_demo_000";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const days = parseInt(url.searchParams.get("days") || "30");
 
   try {
+    const userId = await getAuthUserId();
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceISO = since.toISOString();
@@ -17,35 +17,35 @@ export async function GET(request: Request) {
       await Promise.all([
         d1Query<{ cnt: number }>(
           `SELECT COUNT(*) as cnt FROM meetings WHERE user_id = ? AND created_at >= ?`,
-          [DEMO_USER_ID, sinceISO],
+          [userId, sinceISO],
         ),
         d1Query<{ status: string; cnt: number }>(
           `SELECT status, COUNT(*) as cnt FROM meetings WHERE user_id = ? AND created_at >= ? GROUP BY status`,
-          [DEMO_USER_ID, sinceISO],
+          [userId, sinceISO],
         ),
         d1Query<{ day: string; cnt: number }>(
           `SELECT DATE(start_time) as day, COUNT(*) as cnt
            FROM meetings WHERE user_id = ? AND start_time >= ?
            GROUP BY DATE(start_time) ORDER BY day ASC`,
-          [DEMO_USER_ID, sinceISO],
+          [userId, sinceISO],
         ),
         d1Query<{ title: string; cnt: number }>(
           `SELECT bp.title, COUNT(*) as cnt
            FROM meetings m JOIN booking_pages bp ON m.booking_page_id = bp.id
            WHERE m.user_id = ? AND m.created_at >= ?
            GROUP BY bp.id ORDER BY cnt DESC LIMIT 5`,
-          [DEMO_USER_ID, sinceISO],
+          [userId, sinceISO],
         ),
         d1Query<{ location_type: string; cnt: number }>(
           `SELECT location_type, COUNT(*) as cnt
            FROM meetings WHERE user_id = ? AND created_at >= ?
            GROUP BY location_type`,
-          [DEMO_USER_ID, sinceISO],
+          [userId, sinceISO],
         ),
         d1Query<{ avg_per_day: number }>(
           `SELECT CAST(COUNT(*) AS FLOAT) / MAX(1, JULIANDAY('now') - JULIANDAY(?)) as avg_per_day
            FROM meetings WHERE user_id = ? AND start_time >= ?`,
-          [sinceISO, DEMO_USER_ID, sinceISO],
+          [sinceISO, userId, sinceISO],
         ),
       ]);
 
@@ -72,6 +72,7 @@ export async function GET(request: Request) {
       locationBreakdown: locationBreakdown.results.map((r) => ({ type: r.location_type, count: r.cnt })),
     });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/analytics error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 import crypto from "crypto";
-
-const DEMO_USER_ID = "user_demo_000";
 
 /* ── API Keys ─────────────────────────────────────────── */
 
@@ -34,13 +33,14 @@ export async function GET(request: Request) {
   const resource = url.searchParams.get("resource") || "all";
 
   try {
+    const userId = await getAuthUserId();
     const response: Record<string, unknown> = {};
 
     if (resource === "all" || resource === "keys") {
       const keys = await d1Query<ApiKeyRow>(
         `SELECT id, name, key_prefix, scopes, last_used_at, expires_at, created_at
          FROM api_keys WHERE user_id = ? ORDER BY created_at DESC`,
-        [DEMO_USER_ID],
+        [userId],
       );
       response.apiKeys = keys.results.map((k) => ({
         id: k.id,
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     if (resource === "all" || resource === "webhooks") {
       const hooks = await d1Query<WebhookRow>(
         `SELECT * FROM webhooks WHERE user_id = ? ORDER BY created_at DESC`,
-        [DEMO_USER_ID],
+        [userId],
       );
       response.webhooks = hooks.results.map((h) => ({
         id: h.id,
@@ -71,6 +71,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(response);
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/developers error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
@@ -78,6 +79,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { type, ...payload } = await request.json();
 
     if (type === "key") {
@@ -92,7 +94,7 @@ export async function POST(request: Request) {
         `INSERT INTO api_keys (id, user_id, name, key_prefix, key_hash, scopes, expires_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
-          id, DEMO_USER_ID, payload.name.trim(), prefix, hash,
+          id, userId, payload.name.trim(), prefix, hash,
           JSON.stringify(payload.scopes || ["read"]),
           payload.expiresAt || null,
         ],
@@ -111,7 +113,7 @@ export async function POST(request: Request) {
       await d1Query(
         `INSERT INTO webhooks (id, user_id, url, events, secret, active)
          VALUES (?, ?, ?, ?, ?, 1)`,
-        [id, DEMO_USER_ID, payload.url.trim(), JSON.stringify(payload.events || ["meeting.created"]), secret],
+        [id, userId, payload.url.trim(), JSON.stringify(payload.events || ["meeting.created"]), secret],
       );
 
       return NextResponse.json({ webhook: { id, url: payload.url.trim(), secret } }, { status: 201 });
@@ -119,6 +121,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: "type must be 'key' or 'webhook'" }, { status: 400 });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("POST /api/developers error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
@@ -126,19 +129,21 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { type, id } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     if (type === "key") {
-      await d1Query(`DELETE FROM api_keys WHERE id = ? AND user_id = ?`, [id, DEMO_USER_ID]);
+      await d1Query(`DELETE FROM api_keys WHERE id = ? AND user_id = ?`, [id, userId]);
     } else if (type === "webhook") {
-      await d1Query(`DELETE FROM webhooks WHERE id = ? AND user_id = ?`, [id, DEMO_USER_ID]);
+      await d1Query(`DELETE FROM webhooks WHERE id = ? AND user_id = ?`, [id, userId]);
     } else {
       return NextResponse.json({ error: "type must be 'key' or 'webhook'" }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("DELETE /api/developers error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

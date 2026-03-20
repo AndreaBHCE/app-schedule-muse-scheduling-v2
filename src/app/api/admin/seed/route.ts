@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 /**
  * POST /api/admin/seed
  *
- * Creates all tables and inserts sample data into D1.
- * This is a one-time setup route — call it once after deploying.
+ * Creates all tables and inserts sample data for the authenticated user.
+ * Uses the real Clerk userId so data belongs to the signed-in account.
  */
 export async function POST() {
   try {
-    const DEMO_USER_ID = "user_demo_000";
+    const USER_ID = await getAuthUserId();
 
     // ── Create tables ──────────────────────────────────────
     const tableStatements = [
@@ -83,11 +84,8 @@ export async function POST() {
       await d1Query(sql);
     }
 
-    // ── Seed demo user ─────────────────────────────────────
-    await d1Query(
-      `INSERT OR IGNORE INTO users (id, email, display_name, timezone) VALUES (?, ?, ?, ?)`,
-      [DEMO_USER_ID, "demo@schedulemuseai.com", "Demo User", "America/New_York"],
-    );
+    // ── Ensure user row exists (getAuthUserId already does INSERT OR IGNORE) ──
+    // No additional user insert needed — getAuthUserId() handled it above.
 
     // ── Seed booking pages ─────────────────────────────────
     const bookingPages = [
@@ -103,7 +101,7 @@ export async function POST() {
       await d1Query(
         `INSERT OR IGNORE INTO booking_pages (id, user_id, title, slug, description, duration_minutes, buffer_minutes, status, color, location_type, location_details, bookings_last_7d, conversion_delta_pct)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [bp.id, DEMO_USER_ID, bp.title, bp.slug, bp.desc, bp.dur, bp.buf, bp.status, bp.color, bp.loc, bp.locD, bp.b7, bp.conv],
+        [bp.id, USER_ID, bp.title, bp.slug, bp.desc, bp.dur, bp.buf, bp.status, bp.color, bp.loc, bp.locD, bp.b7, bp.conv],
       );
     }
 
@@ -151,7 +149,7 @@ export async function POST() {
       await d1Query(
         `INSERT OR IGNORE INTO meetings (id, user_id, booking_page_id, guest_name, guest_email, meeting_type, start_time, end_time, status, location_type, location_details)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [mt.id, DEMO_USER_ID, mt.bp, mt.guest, mt.email, mt.type, at(mt.dOff, mt.h, mt.m), endAt(mt.dOff, mt.h, mt.m, mt.dur), mt.status, mt.loc, mt.locD],
+        [mt.id, USER_ID, mt.bp, mt.guest, mt.email, mt.type, at(mt.dOff, mt.h, mt.m), endAt(mt.dOff, mt.h, mt.m, mt.dur), mt.status, mt.loc, mt.locD],
       );
     }
 
@@ -175,7 +173,7 @@ export async function POST() {
       await d1Query(
         `INSERT OR IGNORE INTO contacts (id, user_id, name, email, phone, company, tags, total_meetings, last_meeting_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [c.id, DEMO_USER_ID, c.name, c.email, c.phone, c.company, c.tags, c.mc, c.lm],
+        [c.id, USER_ID, c.name, c.email, c.phone, c.company, c.tags, c.mc, c.lm],
       );
     }
 
@@ -193,7 +191,7 @@ export async function POST() {
       await d1Query(
         `INSERT OR IGNORE INTO integrations (id, user_id, provider, status, last_synced_at)
          VALUES (?, ?, ?, ?, ?)`,
-        [integ.id, DEMO_USER_ID, integ.provider, integ.status, integ.syncAt],
+        [integ.id, USER_ID, integ.provider, integ.status, integ.syncAt],
       );
     }
 
@@ -211,7 +209,7 @@ export async function POST() {
     await d1Query(
       `INSERT OR IGNORE INTO availability_schedules (id, user_id, name, timezone, rules, is_default)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      ["avail-1", DEMO_USER_ID, "Business Hours", "America/New_York", defaultAvailability, 1],
+      ["avail-1", USER_ID, "Business Hours", "America/New_York", defaultAvailability, 1],
     );
 
     return NextResponse.json({
@@ -220,6 +218,7 @@ export async function POST() {
       tables: ["users", "booking_pages", "meetings", "contacts", "integrations", "availability_schedules", "api_keys", "webhooks"],
     });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("Seed error:", err);
     return NextResponse.json(
       { success: false, error: (err as Error).message },

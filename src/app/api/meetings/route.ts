@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-
-const DEMO_USER_ID = "user_demo_000";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 interface MeetingRow {
   id: string;
@@ -26,12 +25,13 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   try {
+    const userId = await getAuthUserId();
     const now = new Date().toISOString();
     let sql = `SELECT m.*, bp.title as meeting_type
                FROM meetings m
                JOIN booking_pages bp ON m.booking_page_id = bp.id
                WHERE m.user_id = ?`;
-    const params: (string | number)[] = [DEMO_USER_ID];
+    const params: (string | number)[] = [userId];
 
     if (status === "upcoming") {
       sql += ` AND m.start_time >= ? AND m.status IN ('confirmed','pending')`;
@@ -73,6 +73,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ meetings, total, page, limit });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/meetings error:", err);
     return NextResponse.json({ meetings: [], error: (err as Error).message }, { status: 500 });
   }
@@ -80,6 +81,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { id, status, canceledReason } = await request.json();
     if (!id || !status) {
       return NextResponse.json({ error: "id and status required" }, { status: 400 });
@@ -93,11 +95,12 @@ export async function PATCH(request: Request) {
     await d1Query(
       `UPDATE meetings SET status = ?, canceled_reason = ?, updated_at = datetime('now')
        WHERE id = ? AND user_id = ?`,
-      [status, canceledReason || null, id, DEMO_USER_ID],
+      [status, canceledReason || null, id, userId],
     );
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("PATCH /api/meetings error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

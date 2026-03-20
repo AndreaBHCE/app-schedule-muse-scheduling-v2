@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-
-const DEMO_USER_ID = "user_demo_000";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 interface ContactRow {
   id: string;
@@ -23,8 +22,9 @@ export async function GET(request: Request) {
   const tag = url.searchParams.get("tag") || "";
 
   try {
+    const userId = await getAuthUserId();
     let sql = `SELECT * FROM contacts WHERE user_id = ?`;
-    const params: (string | number)[] = [DEMO_USER_ID];
+    const params: (string | number)[] = [userId];
 
     if (search) {
       sql += ` AND (name LIKE ? OR email LIKE ? OR company LIKE ?)`;
@@ -56,6 +56,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ contacts });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/contacts error:", err);
     return NextResponse.json({ contacts: [], error: (err as Error).message }, { status: 500 });
   }
@@ -63,6 +64,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const payload = await request.json();
     if (!payload.name?.trim() || !payload.email?.trim()) {
       return NextResponse.json({ error: "name and email required" }, { status: 400 });
@@ -74,7 +76,7 @@ export async function POST(request: Request) {
       `INSERT INTO contacts (id, user_id, name, email, phone, company, tags, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, DEMO_USER_ID, payload.name.trim(), payload.email.trim(),
+        id, userId, payload.name.trim(), payload.email.trim(),
         payload.phone || "", payload.company || "",
         JSON.stringify(payload.tags || []), payload.notes || "",
       ],
@@ -82,6 +84,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ contact: { id, name: payload.name.trim() } }, { status: 201 });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("POST /api/contacts error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
@@ -89,6 +92,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { id, ...fields } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
@@ -109,12 +113,13 @@ export async function PATCH(request: Request) {
     if (sets.length === 0) return NextResponse.json({ error: "nothing to update" }, { status: 400 });
 
     sets.push(`updated_at = datetime('now')`);
-    params.push(id, DEMO_USER_ID);
+    params.push(id, userId);
 
     await d1Query(`UPDATE contacts SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`, params);
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("PATCH /api/contacts error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
@@ -122,12 +127,14 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const userId = await getAuthUserId();
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-    await d1Query(`DELETE FROM contacts WHERE id = ? AND user_id = ?`, [id, DEMO_USER_ID]);
+    await d1Query(`DELETE FROM contacts WHERE id = ? AND user_id = ?`, [id, userId]);
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("DELETE /api/contacts error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
