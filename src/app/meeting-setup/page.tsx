@@ -1629,7 +1629,7 @@ export default function MeetingSetupPage() {
               >
                 {/* Background image layer */}
                 <img
-                  src="/IPHONE-ICON-SUNSET-TRANSPARENT.png"
+                  src="/iphone-icon-sunset-transparent.png"
                   alt=""
                   style={{
                     position: "absolute",
