@@ -1293,7 +1293,7 @@ export default function MeetingSetupPage() {
               <div className="flex items-center gap-3">
                 <input
                   type="range"
-                  min={50}
+                  min={25}
                   max={100}
                   value={config.pageInfoBgOpacity}
                   onChange={(e) => update("pageInfoBgOpacity", Number(e.target.value))}
@@ -1329,21 +1329,22 @@ export default function MeetingSetupPage() {
             {/* Scheduling Background Opacity */}
             <div className="mt-4">
               <FieldLabel>Scheduling Background Opacity</FieldLabel>
-              <div className="space-y-1 mt-1">
-                {[90, 95, 100].map((val) => (
-                  <label key={val} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="schedBgOpacity"
-                      checked={config.pageSchedulingBgOpacity === val}
-                      onChange={() => update("pageSchedulingBgOpacity", val)}
-                      className="accent-teal-600"
-                    />
-                    <span className="text-sm" style={{ color: "var(--cal-heading)" }}>{val}%</span>
-                  </label>
+              <div className="grid grid-cols-4 gap-x-4 gap-y-1 mt-1">
+                {[50, 65, 85, 100, 55, 70, 90, null, 60, 80, 95, null].map((val, i) => (
+                  val !== null ? (
+                    <label key={val} className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="schedBgOpacity"
+                        checked={config.pageSchedulingBgOpacity === val}
+                        onChange={() => update("pageSchedulingBgOpacity", val)}
+                        className="accent-teal-600"
+                      />
+                      <span className="text-sm" style={{ color: "var(--cal-heading)" }}>{val}%</span>
+                    </label>
+                  ) : <span key={`empty-${i}`} />
                 ))}
               </div>
-              <p className="text-xs mt-2" style={{ color: "var(--cal-mid)" }}>Opacity is limited to ensure content is readable</p>
             </div>
           </div>
 
