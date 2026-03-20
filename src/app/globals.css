@@ -1017,6 +1017,19 @@ a {
   font-size: 0.82rem;
   color: var(--cal-mid);
 }
+.ob-avail__apply-all {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 0.25rem 2.75rem;
+  font-size: 0.78rem;
+  color: var(--cal-primary);
+  cursor: pointer;
+  text-decoration: none;
+}
+.ob-avail__apply-all:hover {
+  text-decoration: underline;
+}
 
 /* --- AI Toggle --- */
 .ob-ai-toggle {

@@ -18,14 +18,17 @@ type OnboardingData = {
 const TOTAL_STEPS = 5;
 
 const DAY_LABELS = [
-  { key: "sun", short: "S", full: "Sunday" },
   { key: "mon", short: "M", full: "Monday" },
   { key: "tue", short: "T", full: "Tuesday" },
   { key: "wed", short: "W", full: "Wednesday" },
   { key: "thu", short: "T", full: "Thursday" },
   { key: "fri", short: "F", full: "Friday" },
   { key: "sat", short: "S", full: "Saturday" },
+  { key: "sun", short: "S", full: "Sunday" },
 ];
+
+/* getDay() returns 0=Sun … 6=Sat — map index → key */
+const DOW_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 const USE_CASES = [
   { id: "schedule-clients", icon: "📅", label: "Schedule client meetings" },
@@ -132,6 +135,17 @@ export default function OnboardingPage() {
     }));
   }
 
+  function applyMondayToWeekdays() {
+    setData((prev) => {
+      const mon = prev.availability.mon;
+      const updated = { ...prev.availability };
+      ["tue", "wed", "thu", "fri"].forEach((k) => {
+        updated[k] = { ...mon };
+      });
+      return { ...prev, availability: updated };
+    });
+  }
+
   /* ================================================================
      STEP RENDERERS
      ================================================================ */
@@ -181,7 +195,7 @@ export default function OnboardingPage() {
             <span style={{ color: "var(--cal-primary)" }}>›</span>
           </div>
           <div className="ob-preview-cal__grid">
-            {["S","M","T","W","T","F","S"].map((d,i) => (
+            {["M","T","W","T","F","S","S"].map((d,i) => (
               <div key={i} className="ob-preview-cal__day-label">{d}</div>
             ))}
             {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
@@ -314,33 +328,40 @@ export default function OnboardingPage() {
           {DAY_LABELS.map((day) => {
             const a = data.availability[day.key];
             return (
-              <div key={day.key} className="ob-avail__row">
-                <button
-                  className={`ob-avail__day-btn ${a.enabled ? "ob-avail__day-btn--active" : ""}`}
-                  onClick={() => toggleDay(day.key)}
-                >
-                  {day.short}
-                </button>
-                {a.enabled ? (
-                  <div className="ob-avail__times">
-                    <input
-                      className="ob-avail__time-input"
-                      value={a.start}
-                      onChange={(e) => updateTime(day.key, "start", e.target.value)}
-                    />
-                    <span className="ob-avail__dash">—</span>
-                    <input
-                      className="ob-avail__time-input"
-                      value={a.end}
-                      onChange={(e) => updateTime(day.key, "end", e.target.value)}
-                    />
-                    <button className="ob-avail__action" onClick={() => toggleDay(day.key)} title="Remove">✕</button>
-                  </div>
-                ) : (
-                  <div className="ob-avail__unavailable">
-                    Unavailable
-                    <button className="ob-avail__action" onClick={() => toggleDay(day.key)} title="Add hours">⊕</button>
-                  </div>
+              <div key={day.key}>
+                <div className="ob-avail__row">
+                  <button
+                    className={`ob-avail__day-btn ${a.enabled ? "ob-avail__day-btn--active" : ""}`}
+                    onClick={() => toggleDay(day.key)}
+                  >
+                    {day.short}
+                  </button>
+                  {a.enabled ? (
+                    <div className="ob-avail__times">
+                      <input
+                        className="ob-avail__time-input"
+                        value={a.start}
+                        onChange={(e) => updateTime(day.key, "start", e.target.value)}
+                      />
+                      <span className="ob-avail__dash">—</span>
+                      <input
+                        className="ob-avail__time-input"
+                        value={a.end}
+                        onChange={(e) => updateTime(day.key, "end", e.target.value)}
+                      />
+                      <button className="ob-avail__action" onClick={() => toggleDay(day.key)} title="Remove">✕</button>
+                    </div>
+                  ) : (
+                    <div className="ob-avail__unavailable">
+                      Unavailable
+                      <button className="ob-avail__action" onClick={() => toggleDay(day.key)} title="Add hours">⊕</button>
+                    </div>
+                  )}
+                </div>
+                {day.key === "mon" && a.enabled && (
+                  <button className="ob-avail__apply-all" onClick={applyMondayToWeekdays}>
+                    Change all weekdays to match Monday
+                  </button>
                 )}
               </div>
             );
@@ -378,7 +399,7 @@ export default function OnboardingPage() {
             {Array.from({ length: 31 }, (_, i) => {
               const dayNum = i + 1;
               const dow = new Date(2026, 2, dayNum).getDay();
-              const dayKey = DAY_LABELS[dow].key;
+              const dayKey = DOW_TO_KEY[dow];
               const isEnabled = data.availability[dayKey]?.enabled;
               const isToday = dayNum === 20;
               return (
