@@ -223,7 +223,7 @@ function ChevronDown({ open }: { open: boolean }) {
 
 function InfoIcon({ tip }: { tip: string }) {
   return (
-    <span className="hint-icon" title={tip} aria-label="Info">
+    <span className="hint-icon" data-tip={tip} aria-label="Info">
       ?
     </span>
   );
