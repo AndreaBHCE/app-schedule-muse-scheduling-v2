@@ -1608,32 +1608,43 @@ export default function MeetingSetupPage() {
             </h4>
             <div
               className="rounded-[2rem] border-4 overflow-hidden mx-auto"
-              style={{ borderColor: "var(--cal-heading)", width: 240, height: 420 }}
+              style={{ borderColor: "#1a1a1a", width: 240, height: 420 }}
             >
               {/* Status bar */}
               <div
                 className="flex items-center justify-between px-4 py-1.5 text-[10px] font-semibold"
-                style={{ background: "var(--cal-heading)", color: "white" }}
+                style={{ background: "rgba(0,0,0,0.5)", color: "white", position: "relative", zIndex: 2 }}
               >
                 <span>9:41</span>
                 <span>📶 🔋</span>
               </div>
-              {/* Call screen */}
+              {/* Call screen with iPhone background image */}
               <div
                 className="flex flex-col items-center justify-center p-6 text-center"
-                style={{ background: "var(--cal-bg)", height: "calc(100% - 28px)" }}
+                style={{
+                  backgroundImage: "url(/IPHONE-ICON-SUNSET-TRANSPARENT.png)",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  height: "calc(100% - 28px)",
+                  position: "relative",
+                }}
               >
-                <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3"
-                  style={{ background: "var(--cal-hover)" }}
-                >
-                  📞
-                </div>
-                <div className="text-sm font-bold mb-1" style={{ color: "var(--cal-heading)" }}>
-                  {config.phoneNumber || "+1 (555) 000-0000"}
-                </div>
-                <div className="text-xs px-4 leading-relaxed" style={{ color: "var(--cal-text)" }}>
-                  {config.phoneWelcomeMessage || "Welcome message will appear here."}
+                {/* Dark overlay for readability */}
+                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)" }} />
+                {/* Content */}
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3 mx-auto"
+                    style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(6px)" }}
+                  >
+                    📞
+                  </div>
+                  <div className="text-sm font-bold mb-1 text-white">
+                    {config.phoneNumber || "+1 (555) 000-0000"}
+                  </div>
+                  <div className="text-xs px-4 leading-relaxed text-white/90">
+                    {config.phoneWelcomeMessage || "Welcome message will appear here."}
+                  </div>
                 </div>
               </div>
             </div>
