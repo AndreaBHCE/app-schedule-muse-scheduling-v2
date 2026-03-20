@@ -1626,25 +1626,19 @@ export default function MeetingSetupPage() {
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   height: "calc(100% - 28px)",
-                  position: "relative",
                 }}
               >
-                {/* Dark overlay for readability */}
-                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)" }} />
-                {/* Content */}
-                <div style={{ position: "relative", zIndex: 1 }}>
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3 mx-auto"
-                    style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(6px)" }}
-                  >
-                    📞
-                  </div>
-                  <div className="text-sm font-bold mb-1 text-white">
-                    {config.phoneNumber || "+1 (555) 000-0000"}
-                  </div>
-                  <div className="text-xs px-4 leading-relaxed text-white/90">
-                    {config.phoneWelcomeMessage || "Welcome message will appear here."}
-                  </div>
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3 mx-auto"
+                  style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(6px)" }}
+                >
+                  📞
+                </div>
+                <div className="text-sm font-bold mb-1 text-white">
+                  {config.phoneNumber || "+1 (555) 000-0000"}
+                </div>
+                <div className="text-xs px-4 leading-relaxed text-white/90">
+                  {config.phoneWelcomeMessage || "Welcome message will appear here."}
                 </div>
               </div>
             </div>
