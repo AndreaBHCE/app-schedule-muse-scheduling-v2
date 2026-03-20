@@ -230,27 +230,6 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="card">
-          <h3 className="card-title">Your booking pages</h3>
-
-          {loading && <p className="text-white/70">Loading...</p>}
-          {error && <p className="text-rose-300">{error}</p>}
-
-          {!loading && !error && bookings.length === 0 && (
-            <p className="text-white/70">No bookings yet. Create one with the button above.</p>
-          )}
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {bookings.map((booking) => (
-              <article key={booking.id} className="card bg-slate-900 p-4">
-                <h4 className="text-lg font-semibold text-white">{booking.title}</h4>
-                <p className="text-sm text-white/70">Duration: {booking.durationMinutes}m</p>
-                <p className="text-sm text-white/70">Buffer: {booking.bufferMinutes}m</p>
-                <p className="text-xs text-white/50">Created: {new Date(booking.createdAt).toLocaleString()}</p>
-              </article>
-            ))}
-          </div>
-        </section>
       </main>
     </div>
   );
