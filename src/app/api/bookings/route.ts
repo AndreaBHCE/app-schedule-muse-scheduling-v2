@@ -5,7 +5,11 @@ export type Booking = {
   title: string;
   durationMinutes: number;
   bufferMinutes: number;
+  status: "Published" | "Draft" | "Paused";
+  updatedAt: string;
   createdAt: string;
+  bookingsLast7Days: number;
+  conversionDeltaPercent: number;
 };
 
 let bookings: Booking[] = [];
@@ -34,15 +38,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
+    const now = new Date().toISOString();
     const newBooking: Booking = {
       id: `${Date.now()}-${Math.round(Math.random() * 100000)}`,
       title: payload.title.trim(),
       durationMinutes: payload.durationMinutes,
       bufferMinutes: payload.bufferMinutes,
-      createdAt: new Date().toISOString(),
+      status: "Published",
+      createdAt: now,
+      updatedAt: now,
+      bookingsLast7Days: Math.floor(Math.random() * 12),
+      conversionDeltaPercent: Math.floor(Math.random() * 21) - 10,
     };
 
-    bookings.push(newBooking);
+    bookings.unshift(newBooking); // most recent first
 
     return NextResponse.json({ booking: newBooking }, { status: 201 });
   } catch (error) {

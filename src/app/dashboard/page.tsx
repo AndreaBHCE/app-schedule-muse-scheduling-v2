@@ -13,7 +13,11 @@ type Booking = {
   title: string;
   durationMinutes: number;
   bufferMinutes: number;
+  status: "Published" | "Draft" | "Paused";
   createdAt: string;
+  updatedAt: string;
+  bookingsLast7Days: number;
+  conversionDeltaPercent: number;
 };
 
 export default function DashboardPage() {
@@ -91,6 +95,34 @@ export default function DashboardPage() {
             <button className="btn-secondary">View analytics</button>
           </div>
         </header>
+
+        <section className="card">
+          <h3 className="card-title">Recently updated</h3>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {bookings.slice(0, 6).map((booking) => (
+              <article key={booking.id} className="card bg-slate-900 p-4 border border-slate-700">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-lg font-semibold text-white">{booking.title}</h4>
+                  <span className={`text-xs font-medium ${booking.status === "Published" ? "text-emerald-400" : booking.status === "Draft" ? "text-amber-300" : "text-slate-300"}`}>
+                    {booking.status}
+                  </span>
+                </div>
+                <p className="text-xs text-white/60">Updated {new Date(booking.updatedAt).toLocaleString()}</p>
+                <div className="mt-3 flex items-center justify-between text-sm text-white/70">
+                  <span>{booking.bookingsLast7Days} bookings (7d)</span>
+                  <span className={`${booking.conversionDeltaPercent >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
+                    {booking.conversionDeltaPercent > 0 ? "+" : ""}{booking.conversionDeltaPercent}%
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <Link href={`/meeting-setup?edit=${booking.id}`} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Edit</Link>
+                  <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Share</button>
+                  <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Archive</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <section className="card">
           <h3 className="card-title">Your booking pages</h3>
