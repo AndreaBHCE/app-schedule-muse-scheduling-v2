@@ -957,8 +957,30 @@ export default function MeetingSetupPage() {
             </div>
 
             {/* Page body */}
-            <div className="pd-browser__body" style={{ background: config.pageBackground }}>
-              <div className="pd-page-layout">
+            <div
+              className="pd-browser__body"
+              style={{
+                background:
+                  config.pageBackgroundType === "image" && config.pageBackgroundImage
+                    ? `url(${config.pageBackgroundImage}) center/cover no-repeat`
+                    : config.pageBackgroundType === "gradient"
+                    ? `linear-gradient(135deg, ${config.pageBackground}, ${config.pageAccentColor})`
+                    : config.pageBackground,
+                position: "relative",
+              }}
+            >
+              {/* Video background */}
+              {config.pageBackgroundType === "video" && config.pageBackgroundImage && (
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="pd-video-bg"
+                  src={config.pageBackgroundImage}
+                />
+              )}
+              <div className="pd-page-layout" style={{ position: "relative", zIndex: 1 }}>
                 {/* ---- Information pane ---- */}
                 <div className="pd-info-pane" style={{ background: infoBgRgba, color: config.pageInfoTextColor }}>
                   {config.pageLogo && (
@@ -1027,7 +1049,7 @@ export default function MeetingSetupPage() {
 
               {/* Footer inside preview */}
               {config.pageFooter && (
-                <div className="pd-page-footer" style={{ color: config.pageInfoTextColor }}>
+                <div className="pd-page-footer" style={{ color: config.pageInfoTextColor, position: "relative", zIndex: 1 }}>
                   {config.pageFooter}
                 </div>
               )}
@@ -1084,6 +1106,13 @@ export default function MeetingSetupPage() {
                 </button>
               ))}
             </div>
+            {/* Tooltips for image & video limits */}
+            <div className="flex items-center gap-3 mb-3">
+              <InfoIcon tip="Supported formats: JPG, PNG, WebP. Max file size: 5 MB. Recommended resolution: 1920×1080px or higher." />
+              <span className="text-xs" style={{ color: "var(--cal-mid)" }}>Image limits</span>
+              <InfoIcon tip="Supported formats: MP4, WebM. Max file size: 30 MB. Max duration: 60 seconds. Resolution: 1920×1080px recommended. Video will auto-loop and play muted." />
+              <span className="text-xs" style={{ color: "var(--cal-mid)" }}>Video limits</span>
+            </div>
             {config.pageBackgroundType === "solid" && (
               <div className="flex items-center gap-2">
                 <input
@@ -1109,15 +1138,37 @@ export default function MeetingSetupPage() {
               </div>
             )}
             {config.pageBackgroundType === "image" && (
-              <div>
-                <FieldLabel>Image URL</FieldLabel>
-                <Input value={config.pageBackgroundImage} onChange={(e) => update("pageBackgroundImage", e.target.value)} placeholder="https://..." />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <FieldLabel>Background Image</FieldLabel>
+                  <label className="pd-choose-btn cursor-pointer">
+                    Upload image
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={() => {}} />
+                  </label>
+                </div>
+                <Input value={config.pageBackgroundImage} onChange={(e) => update("pageBackgroundImage", e.target.value)} placeholder="Or paste image URL (JPG, PNG, WebP)" />
+                {config.pageBackgroundImage && (
+                  <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--cal-border)", maxHeight: 120 }}>
+                    <img src={config.pageBackgroundImage} alt="Background preview" className="w-full h-full object-cover" style={{ maxHeight: 120 }} />
+                  </div>
+                )}
               </div>
             )}
             {config.pageBackgroundType === "video" && (
-              <div>
-                <FieldLabel>Video URL</FieldLabel>
-                <Input value={config.pageBackgroundImage} onChange={(e) => update("pageBackgroundImage", e.target.value)} placeholder="https://..." />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <FieldLabel>Background Video</FieldLabel>
+                  <label className="pd-choose-btn cursor-pointer">
+                    Upload video
+                    <input type="file" accept="video/mp4,video/webm" className="hidden" onChange={() => {}} />
+                  </label>
+                </div>
+                <Input value={config.pageBackgroundImage} onChange={(e) => update("pageBackgroundImage", e.target.value)} placeholder="Or paste video URL (MP4, WebM)" />
+                {config.pageBackgroundImage && (
+                  <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--cal-border)", maxHeight: 120 }}>
+                    <video src={config.pageBackgroundImage} className="w-full" style={{ maxHeight: 120 }} muted autoPlay loop playsInline />
+                  </div>
+                )}
               </div>
             )}
           </div>
