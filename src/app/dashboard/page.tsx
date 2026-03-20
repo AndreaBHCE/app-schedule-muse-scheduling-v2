@@ -203,37 +203,32 @@ export default function DashboardPage() {
               )}
 
               {!eventsLoading && !eventsError && events.length > 0 && (
-                <table className="w-full text-left text-sm text-white/80 border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-700/60">
-                      <th className="py-2">Start</th>
-                      <th>Meeting</th>
-                      <th>Guest</th>
-                      <th>Status</th>
-                      <th>Location</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {events.map((event) => (
-                      <tr key={event.id} className="align-top border-b border-slate-700/40">
-                        <td className="py-2">{new Date(event.startTime).toLocaleString()}</td>
-                        <td>{event.meetingType}</td>
-                        <td>{event.guestName} <span className="text-xs text-white/50">({event.guestEmail})</span></td>
-                        <td className={`text-xs font-semibold ${event.status === "confirmed" ? "text-emerald-300" : event.status === "pending" ? "text-amber-300" : "text-rose-300"}`}>
-                          {event.status}
-                        </td>
-                        <td>{event.location} {event.location === "virtual" ? `(${event.locationDetails})` : event.locationDetails}</td>
-                        <td className="space-x-1">
-                          <button onClick={() => alert(`Reschedule ${event.meetingType}`)} className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Reschedule</button>
-                          <button onClick={() => alert(`Cancel ${event.meetingType}`)} className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Cancel</button>
-                          {event.location === "virtual" && <a href={event.locationDetails} target="_blank" rel="noreferrer" className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Join</a>}
-                          <button onClick={() => alert(`Details for ${event.meetingType}`)} className="rounded px-2 py-1 bg-slate-700 text-xs font-semibold">Details</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="bg-slate-800 rounded-xl p-3">
+                  <div className="grid grid-cols-[100px,1fr] gap-2 text-xs text-slate-300 mb-2">
+                    <div className="font-semibold">Time</div>
+                    <div className="font-semibold">Event</div>
+                  </div>
+                  {events.map((event) => {
+                    const eventDate = new Date(event.startTime);
+                    const timeStr = eventDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                    return (
+                      <div key={event.id} className="grid grid-cols-[100px,1fr] gap-2 border-y border-slate-700 py-2">
+                        <div className="text-white/70">{timeStr}</div>
+                        <div>
+                          <div className="font-semibold text-white">{event.meetingType}</div>
+                          <div className="text-xs text-white/60">{event.guestName} ({event.guestEmail})</div>
+                          <div className="text-xs text-white/60">{event.location} • {event.status}</div>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            <button onClick={() => alert(`Reschedule ${event.meetingType}`)} className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Reschedule</button>
+                            <button onClick={() => alert(`Cancel ${event.meetingType}`)} className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Cancel</button>
+                            {event.location === "virtual" && <a href={event.locationDetails} target="_blank" rel="noreferrer" className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Join</a>}
+                            <button onClick={() => alert(`Details for ${event.meetingType}`)} className="rounded px-2 py-1 text-xs bg-slate-700 text-white">Details</button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
