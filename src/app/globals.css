@@ -773,7 +773,7 @@ a {
 .ob-content {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   min-height: 0;
 }
 
@@ -787,7 +787,7 @@ a {
 }
 .ob-form__inner {
   flex: 1;
-  max-width: 540px;
+  max-width: 680px;
 }
 .ob-form__nav {
   display: flex;
@@ -795,17 +795,17 @@ a {
   gap: 1rem;
   padding-top: 2rem;
   margin-top: auto;
-  max-width: 540px;
+  max-width: 680px;
 }
 
 /* --- Preview side --- */
 .ob-preview {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 3rem;
+  padding: 2.5rem 2rem;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
   background: #f0faf9;
 }
 
@@ -847,6 +847,29 @@ a {
 .ob-preview > * {
   position: relative;
   z-index: 1;
+}
+
+/* --- Section divider (between sections on same page) --- */
+.ob-section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cal-border) 20%, var(--cal-border) 80%, transparent);
+  margin: 2rem 0 1.75rem;
+}
+
+/* --- Preview stack (vertical stack of preview cards) --- */
+.ob-preview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+/* --- Sub-heading (smaller heading for sub-sections) --- */
+.ob-heading--sub {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
 }
 
 /* --- Typography --- */

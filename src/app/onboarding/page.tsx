@@ -15,7 +15,7 @@ type OnboardingData = {
   aiSummary: boolean;
 };
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 2;
 
 const DAY_LABELS = [
   { key: "mon", short: "M", full: "Monday" },
@@ -147,11 +147,11 @@ export default function OnboardingPage() {
   }
 
   /* ================================================================
-     STEP RENDERERS
+     PAGE RENDERERS
      ================================================================ */
 
-  /* ----- Step 1: Usage ----- */
-  function renderStep1() {
+  /* ----- Page 1: About You (Usage + Use Cases + Role) ----- */
+  function renderPage1() {
     return (
       <>
         <p className="ob-welcome">Welcome to ScheduleMuseAI!</p>
@@ -174,49 +174,9 @@ export default function OnboardingPage() {
             </button>
           ))}
         </div>
-      </>
-    );
-  }
 
-  /* ----- Step 1 Preview ----- */
-  function renderStep1Preview() {
-    return (
-      <div className="ob-preview-card">
-        <div className="ob-preview-cal">
-          <div className="ob-preview-cal__header">
-            <div className="ob-preview-cal__avatar" />
-            <div>
-              <div className="ob-preview-cal__title">Select a Date &amp; Time</div>
-            </div>
-          </div>
-          <div className="ob-preview-cal__month">
-            <span style={{ color: "var(--cal-primary)" }}>‹</span>
-            <span>MARCH 2026</span>
-            <span style={{ color: "var(--cal-primary)" }}>›</span>
-          </div>
-          <div className="ob-preview-cal__grid">
-            {["M","T","W","T","F","S","S"].map((d,i) => (
-              <div key={i} className="ob-preview-cal__day-label">{d}</div>
-            ))}
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-              <div
-                key={d}
-                className={`ob-preview-cal__day ${d === 20 ? "ob-preview-cal__day--today" : ""} ${d === 22 ? "ob-preview-cal__day--selected" : ""}`}
-              >
-                {d}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ----- Step 2: Use Cases ----- */
-  function renderStep2() {
-    return (
-      <>
-        <h2 className="ob-heading">What ScheduleMuse AI uses are you most excited about?</h2>
+        <div className="ob-section-divider" />
+        <h3 className="ob-heading ob-heading--sub">What are you most excited about?</h3>
         <p className="ob-sub">Select all that apply:</p>
 
         <div className="ob-card-grid ob-card-grid--2">
@@ -231,39 +191,9 @@ export default function OnboardingPage() {
             </button>
           ))}
         </div>
-      </>
-    );
-  }
 
-  /* ----- Step 2 Preview ----- */
-  function renderStep2Preview() {
-    const selected = USE_CASES.filter((u) => data.useCases.includes(u.id));
-    return (
-      <div className="ob-preview-card">
-        <div className="ob-preview-features">
-          <h4 className="ob-preview-features__title">Your toolkit</h4>
-          {selected.length === 0 ? (
-            <p className="ob-preview-features__empty">Select features to see your personalized toolkit</p>
-          ) : (
-            <div className="ob-preview-features__list">
-              {selected.map((f) => (
-                <div key={f.id} className="ob-preview-features__item">
-                  <span>{f.icon}</span>
-                  <span>{f.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  /* ----- Step 3: Role ----- */
-  function renderStep3() {
-    return (
-      <>
-        <h2 className="ob-heading">What role will we be scheduling for?</h2>
+        <div className="ob-section-divider" />
+        <h3 className="ob-heading ob-heading--sub">What role will we be scheduling for?</h3>
         <p className="ob-sub">Understanding your role will help us set up your first scheduling link.</p>
 
         <div className="ob-card-grid ob-card-grid--2">
@@ -282,36 +212,75 @@ export default function OnboardingPage() {
     );
   }
 
-  /* ----- Step 3 Preview ----- */
-  function renderStep3Preview() {
-    const selected = ROLES.find((r) => r.id === data.role);
+  /* ----- Page 1 Preview ----- */
+  function renderPage1Preview() {
+    const selectedRole = ROLES.find((r) => r.id === data.role);
+    const selectedCases = USE_CASES.filter((u) => data.useCases.includes(u.id));
+
     return (
-      <div className="ob-preview-card">
-        <div className="ob-preview-role">
-          {selected ? (
-            <>
-              <div className="ob-preview-role__icon">{selected.icon}</div>
-              <div className="ob-preview-role__label">{selected.label}</div>
-              <div className="ob-preview-role__desc">
-                We&apos;ll tailor your booking page templates and notification defaults for {selected.label.toLowerCase()} workflows.
+      <div className="ob-preview-stack">
+        <div className="ob-preview-card">
+          <div className="ob-preview-cal">
+            <div className="ob-preview-cal__header">
+              <div className="ob-preview-cal__avatar" />
+              <div>
+                <div className="ob-preview-cal__title">Select a Date &amp; Time</div>
               </div>
-            </>
-          ) : (
-            <>
-              <div className="ob-preview-role__icon">🔹</div>
-              <div className="ob-preview-role__label">Select your role</div>
-              <div className="ob-preview-role__desc">
-                Pick a role to see how we&apos;ll customize your experience.
-              </div>
-            </>
-          )}
+            </div>
+            <div className="ob-preview-cal__month">
+              <span style={{ color: "var(--cal-primary)" }}>‹</span>
+              <span>MARCH 2026</span>
+              <span style={{ color: "var(--cal-primary)" }}>›</span>
+            </div>
+            <div className="ob-preview-cal__grid">
+              {["M","T","W","T","F","S","S"].map((d,i) => (
+                <div key={i} className="ob-preview-cal__day-label">{d}</div>
+              ))}
+              {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                <div
+                  key={d}
+                  className={`ob-preview-cal__day ${d === 20 ? "ob-preview-cal__day--today" : ""} ${d === 22 ? "ob-preview-cal__day--selected" : ""}`}
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {selectedCases.length > 0 && (
+          <div className="ob-preview-card">
+            <div className="ob-preview-features">
+              <h4 className="ob-preview-features__title">Your toolkit</h4>
+              <div className="ob-preview-features__list">
+                {selectedCases.map((f) => (
+                  <div key={f.id} className="ob-preview-features__item">
+                    <span>{f.icon}</span>
+                    <span>{f.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedRole && (
+          <div className="ob-preview-card">
+            <div className="ob-preview-role">
+              <div className="ob-preview-role__icon">{selectedRole.icon}</div>
+              <div className="ob-preview-role__label">{selectedRole.label}</div>
+              <div className="ob-preview-role__desc">
+                We&apos;ll tailor your booking page templates and notification defaults for {selectedRole.label.toLowerCase()} workflows.
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  /* ----- Step 4: Availability ----- */
-  function renderStep4() {
+  /* ----- Page 2: Your Schedule (Availability + Location + AI Summary) ----- */
+  function renderPage2() {
     return (
       <>
         <h2 className="ob-heading">Let&apos;s get your scheduling hours set up:</h2>
@@ -374,63 +343,9 @@ export default function OnboardingPage() {
             </span>
           </div>
         </div>
-      </>
-    );
-  }
 
-  /* ----- Step 4 Preview ----- */
-  function renderStep4Preview() {
-    const enabledDays = DAY_LABELS.filter((d) => data.availability[d.key].enabled);
-    return (
-      <div className="ob-preview-card">
-        <div className="ob-preview-cal">
-          <div className="ob-preview-cal__header">
-            <div className="ob-preview-cal__title" style={{ fontSize: 14, fontWeight: 700 }}>Select a Date &amp; Time</div>
-          </div>
-          <div className="ob-preview-cal__month">
-            <span style={{ color: "var(--cal-primary)" }}>‹</span>
-            <span>MARCH</span>
-            <span style={{ color: "var(--cal-primary)" }}>›</span>
-          </div>
-          <div className="ob-preview-cal__grid">
-            {DAY_LABELS.map((d, i) => (
-              <div key={i} className="ob-preview-cal__day-label">{d.short}</div>
-            ))}
-            {Array.from({ length: 31 }, (_, i) => {
-              const dayNum = i + 1;
-              const dow = new Date(2026, 2, dayNum).getDay();
-              const dayKey = DOW_TO_KEY[dow];
-              const isEnabled = data.availability[dayKey]?.enabled;
-              const isToday = dayNum === 20;
-              return (
-                <div
-                  key={dayNum}
-                  className={`ob-preview-cal__day ${isToday ? "ob-preview-cal__day--today" : ""} ${isEnabled && !isToday ? "ob-preview-cal__day--available" : ""} ${!isEnabled ? "ob-preview-cal__day--disabled" : ""}`}
-                >
-                  {dayNum}
-                </div>
-              );
-            })}
-          </div>
-          {/* Time slots */}
-          {enabledDays.length > 0 && (
-            <div className="ob-preview-cal__slots">
-              <div className="ob-preview-cal__slots-title">Available times</div>
-              {["10:00am", "10:30am", "11:00am", "11:30am"].map((t) => (
-                <div key={t} className="ob-preview-cal__slot">{t}</div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  /* ----- Step 5: Location + AI ----- */
-  function renderStep5() {
-    return (
-      <>
-        <h2 className="ob-heading">What is your preferred way to meet with people?</h2>
+        <div className="ob-section-divider" />
+        <h3 className="ob-heading ob-heading--sub">What is your preferred way to meet with people?</h3>
         <p className="ob-sub">Set a meeting location for your first scheduling link. You can always change this later.</p>
 
         <div className="ob-card-grid ob-card-grid--2">
@@ -446,7 +361,6 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        {/* AI Summary toggle */}
         <div className="ob-ai-toggle">
           <label className="ob-ai-toggle__label">
             <input
@@ -474,36 +388,80 @@ export default function OnboardingPage() {
     );
   }
 
-  /* ----- Step 5 Preview ----- */
-  function renderStep5Preview() {
+  /* ----- Page 2 Preview ----- */
+  function renderPage2Preview() {
+    const enabledDays = DAY_LABELS.filter((d) => data.availability[d.key].enabled);
     const loc = LOCATIONS.find((l) => l.id === data.meetingLocation);
-    return (
-      <div className="ob-preview-card">
-        {/* Meeting summary preview */}
-        <div className="ob-preview-meeting">
-          <div className="ob-preview-meeting__location">
-            <span className="ob-preview-meeting__loc-icon">{loc?.icon || "📍"}</span>
-            <span className="ob-preview-meeting__loc-label">{loc?.label || "Select a location"}</span>
-          </div>
 
-          {data.aiSummary && (
-            <div className="ob-preview-meeting__ai">
-              <div className="ob-preview-meeting__ai-title">Summary ✨</div>
-              <div className="ob-preview-meeting__ai-line" style={{ width: "90%" }} />
-              <div className="ob-preview-meeting__ai-line" style={{ width: "75%" }} />
-              <div className="ob-preview-meeting__ai-title" style={{ marginTop: 12 }}>Action items ✨</div>
-              <div className="ob-preview-meeting__ai-item">
-                <span className="ob-preview-meeting__ai-check">✓</span>
-                <div className="ob-preview-meeting__ai-line" style={{ width: "80%" }} />
-              </div>
-              <div className="ob-preview-meeting__ai-item">
-                <span className="ob-preview-meeting__ai-circle" />
-                <div className="ob-preview-meeting__ai-line" style={{ width: "65%" }} />
-              </div>
-              <div className="ob-preview-meeting__ai-title" style={{ marginTop: 12 }}>Next steps ✨</div>
-              <div className="ob-preview-meeting__ai-line" style={{ width: "85%" }} />
+    return (
+      <div className="ob-preview-stack">
+        <div className="ob-preview-card">
+          <div className="ob-preview-cal">
+            <div className="ob-preview-cal__header">
+              <div className="ob-preview-cal__title" style={{ fontSize: 14, fontWeight: 700 }}>Select a Date &amp; Time</div>
             </div>
-          )}
+            <div className="ob-preview-cal__month">
+              <span style={{ color: "var(--cal-primary)" }}>‹</span>
+              <span>MARCH</span>
+              <span style={{ color: "var(--cal-primary)" }}>›</span>
+            </div>
+            <div className="ob-preview-cal__grid">
+              {DAY_LABELS.map((d, i) => (
+                <div key={i} className="ob-preview-cal__day-label">{d.short}</div>
+              ))}
+              {Array.from({ length: 31 }, (_, i) => {
+                const dayNum = i + 1;
+                const dow = new Date(2026, 2, dayNum).getDay();
+                const dayKey = DOW_TO_KEY[dow];
+                const isEnabled = data.availability[dayKey]?.enabled;
+                const isToday = dayNum === 20;
+                return (
+                  <div
+                    key={dayNum}
+                    className={`ob-preview-cal__day ${isToday ? "ob-preview-cal__day--today" : ""} ${isEnabled && !isToday ? "ob-preview-cal__day--available" : ""} ${!isEnabled ? "ob-preview-cal__day--disabled" : ""}`}
+                  >
+                    {dayNum}
+                  </div>
+                );
+              })}
+            </div>
+            {enabledDays.length > 0 && (
+              <div className="ob-preview-cal__slots">
+                <div className="ob-preview-cal__slots-title">Available times</div>
+                {["10:00am", "10:30am", "11:00am", "11:30am"].map((t) => (
+                  <div key={t} className="ob-preview-cal__slot">{t}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="ob-preview-card">
+          <div className="ob-preview-meeting">
+            <div className="ob-preview-meeting__location">
+              <span className="ob-preview-meeting__loc-icon">{loc?.icon || "📍"}</span>
+              <span className="ob-preview-meeting__loc-label">{loc?.label || "Select a location"}</span>
+            </div>
+
+            {data.aiSummary && (
+              <div className="ob-preview-meeting__ai">
+                <div className="ob-preview-meeting__ai-title">Summary ✨</div>
+                <div className="ob-preview-meeting__ai-line" style={{ width: "90%" }} />
+                <div className="ob-preview-meeting__ai-line" style={{ width: "75%" }} />
+                <div className="ob-preview-meeting__ai-title" style={{ marginTop: 12 }}>Action items ✨</div>
+                <div className="ob-preview-meeting__ai-item">
+                  <span className="ob-preview-meeting__ai-check">✓</span>
+                  <div className="ob-preview-meeting__ai-line" style={{ width: "80%" }} />
+                </div>
+                <div className="ob-preview-meeting__ai-item">
+                  <span className="ob-preview-meeting__ai-circle" />
+                  <div className="ob-preview-meeting__ai-line" style={{ width: "65%" }} />
+                </div>
+                <div className="ob-preview-meeting__ai-title" style={{ marginTop: 12 }}>Next steps ✨</div>
+                <div className="ob-preview-meeting__ai-line" style={{ width: "85%" }} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -513,11 +471,8 @@ export default function OnboardingPage() {
      RENDER MAP
      ================================================================ */
   const steps: Record<number, { content: () => React.ReactNode; preview: () => React.ReactNode }> = {
-    1: { content: renderStep1, preview: renderStep1Preview },
-    2: { content: renderStep2, preview: renderStep2Preview },
-    3: { content: renderStep3, preview: renderStep3Preview },
-    4: { content: renderStep4, preview: renderStep4Preview },
-    5: { content: renderStep5, preview: renderStep5Preview },
+    1: { content: renderPage1, preview: renderPage1Preview },
+    2: { content: renderPage2, preview: renderPage2Preview },
   };
 
   return (
