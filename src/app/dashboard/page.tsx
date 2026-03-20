@@ -65,6 +65,44 @@ export default function DashboardPage() {
 
   const today = new Date();
 
+  const kpis = (() => {
+    const now = new Date();
+    const minus7 = new Date(now);
+    minus7.setDate(minus7.getDate() - 7);
+    const minus30 = new Date(now);
+    minus30.setDate(minus30.getDate() - 30);
+
+    const bookings7d = bookings.filter((booking) => {
+      const created = new Date(booking.createdAt);
+      return created >= minus7 && created <= now;
+    }).length;
+    const bookings30d = bookings.filter((booking) => {
+      const created = new Date(booking.createdAt);
+      return created >= minus30 && created <= now;
+    }).length;
+
+    const meetingsCompleted7d = events.filter((event) => {
+      const start = new Date(event.startTime);
+      return start >= minus7 && start <= now && event.status === "confirmed";
+    }).length;
+    const meetingsCompleted30d = events.filter((event) => {
+      const start = new Date(event.startTime);
+      return start >= minus30 && start <= now && event.status === "confirmed";
+    }).length;
+
+    const candidate7d = events.filter((event) => {
+      const start = new Date(event.startTime);
+      return start >= minus7 && start <= now && ["confirmed", "canceled"].includes(event.status);
+    }).length;
+    const noShows7d = events.filter((event) => {
+      const start = new Date(event.startTime);
+      return start >= minus7 && start <= now && event.status === "canceled";
+    }).length;
+    const noShowsPct7d = candidate7d > 0 ? Number(((noShows7d / candidate7d) * 100).toFixed(1)) : 0;
+
+    return { bookings7d, bookings30d, meetingsCompleted7d, meetingsCompleted30d, noShowsPct7d };
+  })();
+
   useEffect(() => {
     let canceled = false;
 
@@ -341,6 +379,26 @@ export default function DashboardPage() {
                 <p className="text-xs text-white/50">Updated {new Date(booking.updatedAt).toLocaleDateString()}</p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <article className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Bookings created</p>
+              <p className="text-3xl font-bold text-teal-950">{(kpis?.bookings7d ?? 0)} / {(kpis?.bookings30d ?? 0)}</p>
+              <p className="text-xs text-slate-500 mt-1">Last 7d / 30d</p>
+            </article>
+            <article className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Meetings completed</p>
+              <p className="text-3xl font-bold text-teal-950">{(kpis?.meetingsCompleted7d ?? 0)} / {(kpis?.meetingsCompleted30d ?? 0)}</p>
+              <p className="text-xs text-slate-500 mt-1">Last 7d / 30d</p>
+            </article>
+            <article className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-slate-500">No-shows</p>
+              <p className="text-3xl font-bold text-teal-950">{(kpis?.noShowsPct7d ?? 0).toFixed(1)}%</p>
+              <p className="text-xs text-slate-500 mt-1">Last 7d</p>
+            </article>
           </div>
         </section>
 
