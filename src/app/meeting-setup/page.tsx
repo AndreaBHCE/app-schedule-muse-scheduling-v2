@@ -124,7 +124,7 @@ const LOCATION_LABELS: Record<LocationType, string> = {
 
 function defaultConfig(): BookingConfig {
   return {
-    meetingSubject: "30-Minute Meeting",
+    meetingSubject: "Meeting with John Smith from Acme Builders",
     durations: [30],
     defaultDuration: 30,
     hostName: "",
