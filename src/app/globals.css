@@ -804,8 +804,49 @@ a {
   align-items: center;
   justify-content: center;
   padding: 3rem;
-  background: linear-gradient(135deg, #f0faf9 0%, #e6f7f5 50%, #f0f4ff 100%);
-  overflow-y: auto;
+  position: relative;
+  overflow: hidden;
+  background: #f0faf9;
+}
+
+/* Teal marble effect — layered radial gradients + pseudo-elements */
+.ob-preview::before,
+.ob-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ob-preview::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(13, 148, 136, 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 75% 10%, rgba(20, 184, 166, 0.28) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 50% 55%, rgba(255, 255, 255, 0.9) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 80% at 85% 70%, rgba(13, 148, 136, 0.3) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 25% 80%, rgba(20, 184, 166, 0.22) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 40% at 60% 30%, rgba(240, 253, 250, 0.95) 0%, transparent 45%),
+    radial-gradient(ellipse 40% 60% at 40% 45%, rgba(13, 148, 136, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 65% 55% at 10% 60%, rgba(204, 251, 241, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 90% 35%, rgba(153, 246, 228, 0.25) 0%, transparent 50%);
+  filter: blur(30px) contrast(1.05);
+  z-index: 0;
+}
+
+.ob-preview::after {
+  background:
+    radial-gradient(ellipse 35% 50% at 20% 35%, rgba(15, 118, 110, 0.2) 0%, transparent 70%),
+    radial-gradient(ellipse 45% 35% at 70% 65%, rgba(13, 148, 136, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 45% at 55% 15%, rgba(94, 234, 212, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 30% at 35% 75%, rgba(20, 184, 166, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 55% at 80% 25%, rgba(255, 255, 255, 0.6) 0%, transparent 45%);
+  filter: blur(45px);
+  z-index: 0;
+}
+
+.ob-preview > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* --- Typography --- */
