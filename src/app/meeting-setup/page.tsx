@@ -10,7 +10,9 @@ import AppSidebar from "@/components/layout/AppSidebar";
    ================================================================ */
 
 function formatTime24to12(time24: string): string {
+  if (!time24 || !time24.includes(":")) return time24 || "--:--";
   const [h, m] = time24.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return time24;
   const suffix = h >= 12 ? "PM" : "AM";
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return `${h12}:${m.toString().padStart(2, "0")} ${suffix}`;
@@ -560,7 +562,24 @@ function MeetingSetupPageContent() {
             <FieldLabel>Timezone</FieldLabel>
             <Input value={config.timezone} onChange={(e) => update("timezone", e.target.value)} />
           </div>
-          <FieldLabel>Weekly hours</FieldLabel>
+          <div className="flex items-center justify-between">
+            <FieldLabel>Weekly hours</FieldLabel>
+            <button
+              type="button"
+              onClick={() => {
+                const mon = config.availability.monday;
+                const updated = { ...config.availability };
+                for (const day of ["tuesday", "wednesday", "thursday", "friday"] as WeekDay[]) {
+                  updated[day] = { ...mon };
+                }
+                update("availability", updated);
+              }}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              style={{ background: "var(--cal-btn)", color: "var(--cal-primary)" }}
+            >
+              Apply Monday&apos;s hours to all weekdays
+            </button>
+          </div>
           <div className="space-y-2 mt-2">
             {WEEK_DAYS.map((day) => {
               const dh = config.availability[day];
@@ -605,22 +624,6 @@ function MeetingSetupPageContent() {
               );
             })}
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              const mon = config.availability.monday;
-              const updated = { ...config.availability };
-              for (const day of ["tuesday", "wednesday", "thursday", "friday"] as WeekDay[]) {
-                updated[day] = { ...mon };
-              }
-              update("availability", updated);
-            }}
-            className="mt-3 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-            style={{ background: "var(--cal-btn)", color: "var(--cal-primary)" }}
-          >
-            Apply Monday&apos;s hours to all weekdays
-          </button>
         </Section>
 
         {/* ---- Location (SINGLE — no multi-location anywhere) ---- */}
