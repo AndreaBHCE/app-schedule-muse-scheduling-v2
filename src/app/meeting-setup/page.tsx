@@ -399,6 +399,30 @@ function MeetingSetupPageContent() {
     setConfig((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  /** Read a file from an <input type="file"> and set the data-URL in config */
+  function handleFileUpload(
+    e: React.ChangeEvent<HTMLInputElement>,
+    configKey: keyof BookingConfig,
+    maxMB: number,
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > maxMB * 1024 * 1024) {
+      setSaveMsg(`File too large — max ${maxMB} MB.`);
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        update(configKey as keyof BookingConfig, reader.result as never);
+      }
+    };
+    reader.onerror = () => setSaveMsg("Failed to read file.");
+    reader.readAsDataURL(file);
+    e.target.value = ""; // reset so same file can be re-selected
+  }
+
   function toggle(section: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -1088,9 +1112,6 @@ function MeetingSetupPageContent() {
               <div className="pd-page-layout" style={{ position: "relative", zIndex: 1 }}>
                 {/* ---- Information pane ---- */}
                 <div className="pd-info-pane" style={{ background: infoBgRgba, color: config.pageInfoTextColor }}>
-                  {config.pageLogo && (
-                    <img src={config.pageLogo} alt="Logo" className="pd-info-logo" />
-                  )}
                   {config.pageProfileImage && (
                     <img src={config.pageProfileImage} alt="Profile" className="pd-info-profile" />
                   )}
@@ -1107,6 +1128,9 @@ function MeetingSetupPageContent() {
                       {config.pageHostTitle && <div className="pd-info-host-title">{config.pageHostTitle}</div>}
                       {config.pageCompanyName && <div className="pd-info-host-company">{config.pageCompanyName}</div>}
                     </div>
+                  )}
+                  {config.pageLogo && (
+                    <img src={config.pageLogo} alt="Logo" className="pd-info-logo" style={{ marginTop: "12px" }} />
                   )}
                 </div>
 
@@ -1248,7 +1272,7 @@ function MeetingSetupPageContent() {
                   <FieldLabel>Background Image</FieldLabel>
                   <label className="pd-choose-btn cursor-pointer">
                     Upload image
-                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={() => {}} />
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => handleFileUpload(e, "pageBackgroundImage", 5)} />
                   </label>
                 </div>
                 <Input value={config.pageBackgroundImage} onChange={(e) => update("pageBackgroundImage", e.target.value)} placeholder="Or paste image URL (JPG, PNG, WebP)" />
@@ -1265,7 +1289,7 @@ function MeetingSetupPageContent() {
                   <FieldLabel>Background Video</FieldLabel>
                   <label className="pd-choose-btn cursor-pointer">
                     Upload video
-                    <input type="file" accept="video/mp4,video/webm" className="hidden" onChange={() => {}} />
+                    <input type="file" accept="video/mp4,video/webm" className="hidden" onChange={(e) => handleFileUpload(e, "pageBackgroundImage", 30)} />
                   </label>
                 </div>
                 <Input value={config.pageBackgroundImage} onChange={(e) => update("pageBackgroundImage", e.target.value)} placeholder="Or paste video URL (MP4, WebM)" />
@@ -1292,7 +1316,7 @@ function MeetingSetupPageContent() {
                 </div>
                 <label className="pd-choose-btn cursor-pointer">
                   Choose image
-                  <input type="file" accept="image/*" className="hidden" onChange={() => {}} />
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "pageLogo", 5)} />
                 </label>
               </div>
               {config.pageLogo && (
@@ -1313,7 +1337,7 @@ function MeetingSetupPageContent() {
                 </div>
                 <label className="pd-choose-btn cursor-pointer">
                   Choose image
-                  <input type="file" accept="image/*" className="hidden" onChange={() => {}} />
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "pageProfileImage", 5)} />
                 </label>
               </div>
               {config.pageProfileImage && (
