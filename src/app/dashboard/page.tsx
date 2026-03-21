@@ -354,20 +354,20 @@ export default function DashboardPage() {
 
         <section className="card">
           <div className="grid gap-3 sm:grid-cols-3">
-            <article className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Bookings created</p>
-              <p className="text-3xl font-bold text-teal-950">{(kpis?.bookings7d ?? 0)} / {(kpis?.bookings30d ?? 0)}</p>
-              <p className="text-xs text-slate-500 mt-1">Last 7d / 30d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.817 0.131 180)', borderColor: 'oklch(0.755 0.16 180)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.346 0.097 180)' }}>Bookings created</p>
+              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.05 180)' }}>{(kpis?.bookings7d ?? 0)} / {(kpis?.bookings30d ?? 0)}</p>
+              <p className="text-xs mt-1" style={{ color: 'oklch(0.346 0.097 180)' }}>Last 7d / 30d</p>
             </article>
-            <article className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Meetings completed</p>
-              <p className="text-3xl font-bold text-teal-950">{(kpis?.meetingsCompleted7d ?? 0)} / {(kpis?.meetingsCompleted30d ?? 0)}</p>
-              <p className="text-xs text-slate-500 mt-1">Last 7d / 30d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.817 0.131 180)', borderColor: 'oklch(0.755 0.16 180)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.346 0.097 180)' }}>Meetings completed</p>
+              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.05 180)' }}>{(kpis?.meetingsCompleted7d ?? 0)} / {(kpis?.meetingsCompleted30d ?? 0)}</p>
+              <p className="text-xs mt-1" style={{ color: 'oklch(0.346 0.097 180)' }}>Last 7d / 30d</p>
             </article>
-            <article className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-slate-500">No-shows</p>
-              <p className="text-3xl font-bold text-teal-950">{(kpis?.noShowsPct7d ?? 0).toFixed(1)}%</p>
-              <p className="text-xs text-slate-500 mt-1">Last 7d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.817 0.131 180)', borderColor: 'oklch(0.755 0.16 180)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.346 0.097 180)' }}>No-shows</p>
+              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.05 180)' }}>{(kpis?.noShowsPct7d ?? 0).toFixed(1)}%</p>
+              <p className="text-xs mt-1" style={{ color: 'oklch(0.346 0.097 180)' }}>Last 7d</p>
             </article>
           </div>
         </section>
@@ -375,7 +375,7 @@ export default function DashboardPage() {
         <section className="card">
           <h3 className="card-title mb-3">My Upcoming Meetings</h3>
 
-          <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
+          <div>
             <div className="cal-grid">
               {/* Calendar header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--cal-border)' }}>
@@ -413,11 +413,6 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
-
-            <aside className="card bg-slate-900 p-4 border border-slate-700 self-start">
-              <h4 className="text-base font-semibold text-white">Right panel (coming soon)</h4>
-              <p className="mt-2 text-sm text-white/70">Place KPI cards, scheduling shortcuts, and quick actions here once the full layout solidifies.</p>
-            </aside>
           </div>
         </section>
 

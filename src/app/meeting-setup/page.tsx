@@ -1,8 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import React, { useCallback, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import AppSidebar from "@/components/layout/AppSidebar";
+
+/* ================================================================
+   HELPERS
+   ================================================================ */
+
+function formatTime24to12(time24: string): string {
+  const [h, m] = time24.split(":").map(Number);
+  const suffix = h >= 12 ? "PM" : "AM";
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${m.toString().padStart(2, "0")} ${suffix}`;
+}
 
 /* ================================================================
    TYPES
@@ -181,18 +193,18 @@ function defaultConfig(): BookingConfig {
     pageBackgroundImage: "",
     pageLogo: "",
     pageProfileImage: "",
-    pageHeading: "Schedule a Meeting with ScheduleMuseAI",
-    pageSubheading: "Let's connect to discuss your scheduling needs.",
-    pageWelcomeMessage: "Thank you for connecting. Please select a convenient time for our call from the options on the right. I look forward to speaking with you.",
+    pageHeading: "Schedule a Meeting",
+    pageSubheading: "Select a convenient time from the available slots.",
+    pageWelcomeMessage: "Thank you for your interest. Please select a convenient time for our call from the options on the right. I look forward to speaking with you.",
     pageHostName: "",
     pageHostTitle: "",
-    pageCompanyName: "ScheduleMuseAI",
+    pageCompanyName: "",
     pageInfoTextColor: "#333333",
     pageInfoBgOpacity: 90,
     pageButtonColor: "#111934",
     pageSchedulingBgOpacity: 100,
     pageAccentColor: "#00bfa5",
-    pageFooter: "If the times shown do not fit your schedule, send an email to support@schedulemuseai.com",
+    pageFooter: "If the times shown do not fit your schedule, please reach out via email.",
     embedMode: "inline",
     embedButtonText: "Book a meeting",
     embedButtonColor: "#00bfa5",
@@ -333,12 +345,53 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
    MAIN COMPONENT
    ================================================================ */
 
-export default function MeetingSetupPage() {
+export default function MeetingSetupPageWrapper() {
+  return (
+    <Suspense fallback={<div className="app-layout"><AppSidebar /><main className="app-main"><div className="p-8 text-center" style={{ color: "var(--cal-mid)" }}>Loading…</div></main></div>}>
+      <MeetingSetupPageContent />
+    </Suspense>
+  );
+}
+
+function MeetingSetupPageContent() {
+  const searchParams = useSearchParams();
   const [config, setConfig] = useState<BookingConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState<TabId>("settings");
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["subject"]));
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  /* ── Load existing booking when ?edit=<id> is present ── */
+  useEffect(() => {
+    const id = searchParams.get("edit");
+    if (!id) return;
+    setEditingId(id);
+    setLoading(true);
+    fetch(`/api/bookings/${encodeURIComponent(id)}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Not found");
+        return r.json();
+      })
+      .then((data) => {
+        if (data.booking?.config) {
+          // Merge with defaults so any new fields are present
+          setConfig({ ...defaultConfig(), ...data.booking.config });
+        }
+      })
+      .catch(() => {
+        setSaveMsg("Could not load booking — starting with defaults.");
+      })
+      .finally(() => setLoading(false));
+  }, [searchParams]);
+
+  /* ── Auto-clear messages after 5 seconds ── */
+  useEffect(() => {
+    if (!saveMsg) return;
+    const t = setTimeout(() => setSaveMsg(null), 5000);
+    return () => clearTimeout(t);
+  }, [saveMsg]);
 
   const update = useCallback(<K extends keyof BookingConfig>(key: K, value: BookingConfig[K]) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -359,18 +412,46 @@ export default function MeetingSetupPage() {
     setSaving(true);
     setSaveMsg(null);
     try {
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: config.meetingSubject,
-          durationMinutes: config.defaultDuration,
-          bufferMinutes: config.bufferAfterMinutes,
-          config,
-        }),
-      });
+      const payload = {
+        title: config.meetingSubject || "Untitled Booking",
+        durationMinutes: config.defaultDuration,
+        bufferMinutes: config.bufferAfterMinutes,
+        locationType: config.location.type === "video" ? "virtual" : config.location.type,
+        locationDetails: config.location.details,
+        config,
+      };
+
+      let res: Response;
+      if (editingId) {
+        // UPDATE existing booking
+        res = await fetch(`/api/bookings/${encodeURIComponent(editingId)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // CREATE new booking
+        res = await fetch("/api/bookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
       if (!res.ok) throw new Error("Failed to save");
-      setSaveMsg("Booking page saved successfully.");
+
+      const data = await res.json();
+
+      // After first create, store the id so subsequent saves use PUT
+      if (!editingId && data.booking?.id) {
+        setEditingId(data.booking.id);
+        // Update the URL to include ?edit=id so refresh reloads the data
+        const url = new URL(window.location.href);
+        url.searchParams.set("edit", data.booking.id);
+        window.history.replaceState({}, "", url.toString());
+      }
+
+      setSaveMsg("Booking calendar saved successfully ✓");
     } catch {
       setSaveMsg("Error saving — please try again.");
     } finally {
@@ -386,7 +467,7 @@ export default function MeetingSetupPage() {
     const availSummary =
       enabledDays.length === 0
         ? "No availability set"
-        : `${enabledDays.map((d) => DAY_LABELS[d].slice(0, 3)).join(", ")} · ${config.availability[enabledDays[0]].start} – ${config.availability[enabledDays[0]].end}`;
+        : `${enabledDays.map((d) => DAY_LABELS[d].slice(0, 3)).join(", ")} · ${formatTime24to12(config.availability[enabledDays[0]].start)} – ${formatTime24to12(config.availability[enabledDays[0]].end)}`;
 
     const locSummary = `${LOCATION_LABELS[config.location.type]}${config.location.details ? ` · ${config.location.details}` : ""}`;
 
@@ -524,6 +605,22 @@ export default function MeetingSetupPage() {
               );
             })}
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const mon = config.availability.monday;
+              const updated = { ...config.availability };
+              for (const day of ["tuesday", "wednesday", "thursday", "friday"] as WeekDay[]) {
+                updated[day] = { ...mon };
+              }
+              update("availability", updated);
+            }}
+            className="mt-3 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            style={{ background: "var(--cal-btn)", color: "var(--cal-primary)" }}
+          >
+            Apply Monday&apos;s hours to all weekdays
+          </button>
         </Section>
 
         {/* ---- Location (SINGLE — no multi-location anywhere) ---- */}
@@ -647,11 +744,17 @@ export default function MeetingSetupPage() {
         >
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <FieldLabel>Slot interval (min)</FieldLabel>
+              <FieldLabel>Slot interval</FieldLabel>
               <Select value={config.slotIntervalMinutes} onChange={(e) => update("slotIntervalMinutes", Number(e.target.value))}>
                 {[5, 10, 15, 20, 30, 60].map((v) => (
                   <option key={v} value={v}>{v} min</option>
                 ))}
+                <option value={90}>90 min</option>
+                <option value={120}>2 hr</option>
+                <option value={180}>3 hr</option>
+                <option value={240}>4 hr</option>
+                <option value={300}>5 hr</option>
+                <option value={360}>6 hr</option>
               </Select>
             </div>
             <div>
@@ -1638,28 +1741,42 @@ export default function MeetingSetupPage() {
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
-            <h2 className="app-page-name">Booking Setup</h2>
+            <h2 className="app-page-name">Booking Calendar Builder</h2>
             <p className="app-subtitle">
-              Configure every aspect of your booking page — settings, form, notifications, branding, embedding, and phone.
+              Design your booking calendar page — configure availability, customize the form, set up notifications, and brand your public booking page.
             </p>
           </div>
           <div className="app-cta">
             <Link href="/dashboard" className="btn-secondary">← Back to dashboard</Link>
-            <button onClick={handleSave} disabled={saving} className="btn-primary">
-              {saving ? "Saving…" : "Save booking page"}
+            <button onClick={handleSave} disabled={saving || loading} className="btn-primary">
+              {saving ? "Saving…" : editingId ? "Update booking page" : "Save booking page"}
             </button>
           </div>
         </header>
 
+        {loading && (
+          <div className="rounded-lg px-4 py-3 text-sm font-medium" style={{ background: "var(--cal-hover)", color: "var(--cal-heading)" }}>
+            Loading booking configuration…
+          </div>
+        )}
+
         {saveMsg && (
           <div
-            className="rounded-lg px-4 py-3 text-sm font-medium"
+            className="rounded-lg px-4 py-3 text-sm font-medium flex items-center justify-between"
             style={{
-              background: saveMsg.startsWith("Error") ? "#ffe4e6" : "var(--cal-hover)",
-              color: saveMsg.startsWith("Error") ? "#9f1239" : "var(--cal-heading)",
+              background: saveMsg.startsWith("Error") || saveMsg.startsWith("Could not") ? "#ffe4e6" : "var(--cal-hover)",
+              color: saveMsg.startsWith("Error") || saveMsg.startsWith("Could not") ? "#9f1239" : "var(--cal-heading)",
             }}
           >
-            {saveMsg}
+            <span>{saveMsg}</span>
+            <button
+              type="button"
+              onClick={() => setSaveMsg(null)}
+              className="ml-3 text-xs font-bold opacity-60 hover:opacity-100 transition-opacity"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
           </div>
         )}
 

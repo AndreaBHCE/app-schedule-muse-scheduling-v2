@@ -215,9 +215,9 @@ a {
 }
 
 .app-sidebar__link--active {
-  background: rgba(0, 191, 165, 0.18);
-  border-color: rgba(0, 191, 165, 0.4);
-  color: #0b1f25;
+  background: rgba(0, 191, 165, 0.22);
+  border-color: rgba(0, 191, 165, 0.5);
+  color: #c8f5ef;
 }
 
 .app-main {
