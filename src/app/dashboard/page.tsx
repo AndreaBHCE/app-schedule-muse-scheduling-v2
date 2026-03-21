@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import AppSidebar from "@/components/layout/AppSidebar";
 
 type Booking = {
@@ -48,9 +49,13 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 export default function DashboardPage() {
+  const { user } = useUser();
+  const firstName = user?.firstName || "";
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Booking | null>(null);
+  const [deleteInput, setDeleteInput] = useState("");
 
   const [events, setEvents] = useState<MeetingEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
@@ -152,6 +157,20 @@ export default function DashboardPage() {
   }
 
   function goToToday() { setCurrentDate(new Date()); }
+
+  async function handleDelete() {
+    if (!deleteTarget || deleteInput !== "DELETE") return;
+    try {
+      const res = await fetch(`/api/bookings/${encodeURIComponent(deleteTarget.id)}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      setBookings((prev) => prev.filter((b) => b.id !== deleteTarget.id));
+    } catch {
+      setError("Failed to delete booking calendar.");
+    } finally {
+      setDeleteTarget(null);
+      setDeleteInput("");
+    }
+  }
 
   function getCalendarLabel(): string {
     if (range === "day") {
@@ -298,14 +317,14 @@ export default function DashboardPage() {
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
-            <h2 className="app-page-name">Welcome back.</h2>
+            <h2 className="app-page-name">Welcome back{firstName ? `, ${firstName}` : ""}.</h2>
             <p className="app-subtitle">
-              Your scheduling dashboard gives you full control over booking pages, availability, and reminders — all powered by ScheduleMuse AI.
+              Your scheduling dashboard gives you full control over booking calendars, availability, and reminders — all powered by ScheduleMuse AI.
             </p>
           </div>
           <div className="app-cta">
             <Link href="/meeting-setup" className="btn-primary">
-              Create booking page
+              Create booking calendar
             </Link>
             <Link href="/analytics" className="btn-secondary">View analytics</Link>
           </div>
@@ -333,6 +352,7 @@ export default function DashboardPage() {
                   <Link href={`/meeting-setup?edit=${booking.id}`} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Edit</Link>
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Share</button>
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Archive</button>
+                  <button onClick={() => { setDeleteTarget(booking); setDeleteInput(""); }} className="rounded px-3 py-1 text-xs font-semibold text-white hover:opacity-80" style={{ background: "#9f1239" }}>Delete</button>
                 </div>
               </article>
             ))}
@@ -340,7 +360,7 @@ export default function DashboardPage() {
         </section>
 
         <section className="card">
-          <h3 className="card-title">Your Bookings</h3>
+          <h3 className="card-title">Your Booking Calendars</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {bookings.map((booking) => (
               <article key={booking.id} className="card bg-slate-900 p-4 border border-slate-700">
@@ -354,20 +374,20 @@ export default function DashboardPage() {
 
         <section className="card">
           <div className="grid gap-3 sm:grid-cols-3">
-            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.817 0.131 180)', borderColor: 'oklch(0.755 0.16 180)' }}>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.346 0.097 180)' }}>Bookings created</p>
-              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.05 180)' }}>{(kpis?.bookings7d ?? 0)} / {(kpis?.bookings30d ?? 0)}</p>
-              <p className="text-xs mt-1" style={{ color: 'oklch(0.346 0.097 180)' }}>Last 7d / 30d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.846 0.039 196.711)', borderColor: 'oklch(0.78 0.06 196.711)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Bookings created</p>
+              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.03 196.711)' }}>{(kpis?.bookings7d ?? 0)} / {(kpis?.bookings30d ?? 0)}</p>
+              <p className="text-xs mt-1" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Last 7d / 30d</p>
             </article>
-            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.817 0.131 180)', borderColor: 'oklch(0.755 0.16 180)' }}>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.346 0.097 180)' }}>Meetings completed</p>
-              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.05 180)' }}>{(kpis?.meetingsCompleted7d ?? 0)} / {(kpis?.meetingsCompleted30d ?? 0)}</p>
-              <p className="text-xs mt-1" style={{ color: 'oklch(0.346 0.097 180)' }}>Last 7d / 30d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.846 0.039 196.711)', borderColor: 'oklch(0.78 0.06 196.711)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Meetings completed</p>
+              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.03 196.711)' }}>{(kpis?.meetingsCompleted7d ?? 0)} / {(kpis?.meetingsCompleted30d ?? 0)}</p>
+              <p className="text-xs mt-1" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Last 7d / 30d</p>
             </article>
-            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.817 0.131 180)', borderColor: 'oklch(0.755 0.16 180)' }}>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.346 0.097 180)' }}>No-shows</p>
-              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.05 180)' }}>{(kpis?.noShowsPct7d ?? 0).toFixed(1)}%</p>
-              <p className="text-xs mt-1" style={{ color: 'oklch(0.346 0.097 180)' }}>Last 7d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.846 0.039 196.711)', borderColor: 'oklch(0.78 0.06 196.711)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.35 0.04 196.711)' }}>No-shows</p>
+              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.03 196.711)' }}>{(kpis?.noShowsPct7d ?? 0).toFixed(1)}%</p>
+              <p className="text-xs mt-1" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Last 7d</p>
             </article>
           </div>
         </section>
@@ -415,6 +435,40 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* ── Delete Confirmation Modal ─────── */}
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="rounded-xl p-6 shadow-xl w-full max-w-md" style={{ background: "var(--cal-bg)" }}>
+              <h3 className="text-lg font-bold mb-2" style={{ color: "var(--cal-heading)" }}>Delete Booking Calendar</h3>
+              <p className="text-sm mb-1" style={{ color: "var(--cal-text)" }}>
+                You are about to permanently delete <strong style={{ color: "var(--cal-heading)" }}>{deleteTarget.title}</strong>. This action cannot be undone.
+              </p>
+              <p className="text-sm mb-4" style={{ color: "var(--cal-text)" }}>
+                Type <strong style={{ color: "#9f1239" }}>DELETE</strong> below to confirm:
+              </p>
+              <input
+                value={deleteInput}
+                onChange={(e) => setDeleteInput(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                className="w-full rounded-lg border px-3 py-2 text-sm mb-4"
+                style={{ borderColor: deleteInput === "DELETE" ? "#9f1239" : "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => { setDeleteTarget(null); setDeleteInput(""); }} className="btn-secondary">Cancel</button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteInput !== "DELETE"}
+                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity"
+                  style={{ background: deleteInput === "DELETE" ? "#9f1239" : "#ccc", opacity: deleteInput === "DELETE" ? 1 : 0.5 }}
+                >
+                  Permanently Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>

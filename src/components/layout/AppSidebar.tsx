@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/dashboard",     label: "Dashboard" },
-  { href: "/meeting-setup", label: "Booking Setup" },
+  { href: "/meeting-setup", label: "Booking Calendars" },
   { href: "/your-meetings", label: "Your Meetings" },
   { href: "/calendar",      label: "Calendar" },
   { href: "/contacts",      label: "Contacts" },
   { href: "/integrations",  label: "Integrations" },
   { href: "/analytics",     label: "Analytics" },
-  { href: "/developers",    label: "Developers" },
+  { href: "/webhooks",      label: "Webhooks" },
+  { href: "/api-keys",      label: "API" },
 ];
 
 export default function AppSidebar() {
