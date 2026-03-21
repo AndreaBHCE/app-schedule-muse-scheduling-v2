@@ -352,7 +352,7 @@ export default function DashboardPage() {
                   <Link href={`/meeting-setup?edit=${booking.id}`} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Edit</Link>
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Share</button>
                   <button className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Archive</button>
-                  <button onClick={() => { setDeleteTarget(booking); setDeleteInput(""); }} className="rounded px-3 py-1 text-xs font-semibold text-white hover:opacity-80" style={{ background: "#9f1239" }}>Delete</button>
+                  <button onClick={() => { setDeleteTarget(booking); setDeleteInput(""); }} className="rounded px-3 py-1 text-xs font-semibold bg-slate-700 text-white hover:bg-slate-600">Delete</button>
                 </div>
               </article>
             ))}
