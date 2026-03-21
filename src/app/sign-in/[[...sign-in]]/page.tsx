@@ -6,9 +6,9 @@ export default function SignInPage() {
       <div className="w-full max-w-lg py-12 px-6">
         <div className="flex flex-col items-center gap-4 mb-8 text-center">
           <img
-            src="/schedulemuseai-logo-1-teal.jpg"
+            src="/schedulemuseai-logo-transparent-01.png"
             alt="ScheduleMuseAI logo"
-            className="h-16 w-16 rounded-2xl"
+            className="h-16 w-16"
           />
           <p className="text-3xl font-semibold text-white/90">ScheduleMuseAI</p>
         </div>
