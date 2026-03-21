@@ -197,7 +197,7 @@ function defaultConfig(): BookingConfig {
     pageProfileImage: "",
     pageHeading: "Schedule a Meeting",
     pageSubheading: "Select a convenient time from the available slots.",
-    pageWelcomeMessage: "Thank you for your interest. Please select a convenient time for our call from the options on the right. I look forward to speaking with you.",
+    pageWelcomeMessage: "Thank you for your interest. Please select a convenient time for our meeting from the options on the right. I look forward to speaking with you.",
     pageHostName: "",
     pageHostTitle: "",
     pageCompanyName: "",
@@ -1052,6 +1052,29 @@ function MeetingSetupPageContent() {
     const infoBgRgba = `rgba(255,255,255,${config.pageInfoBgOpacity / 100})`;
     const schedBgRgba = `rgba(255,255,255,${config.pageSchedulingBgOpacity / 100})`;
 
+    /* Build preview time slots from actual availability + slot interval */
+    const previewSlots: string[] = (() => {
+      const WEEK_DAYS_ORDER: (keyof typeof config.availability)[] = [
+        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+      ];
+      const firstEnabled = WEEK_DAYS_ORDER.find((d) => config.availability[d].enabled);
+      const dayConf = firstEnabled ? config.availability[firstEnabled] : { start: "09:00", end: "17:00" };
+      const [sh, sm] = dayConf.start.split(":").map(Number);
+      const [eh, em] = dayConf.end.split(":").map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+      const interval = config.slotIntervalMinutes || 30;
+      const slots: string[] = [];
+      for (let m = startMin; m + (config.defaultDuration || 30) <= endMin && slots.length < 8; m += interval) {
+        const h = Math.floor(m / 60);
+        const mm = m % 60;
+        const suffix = h >= 12 ? "PM" : "AM";
+        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        slots.push(`${h12}:${mm.toString().padStart(2, "0")} ${suffix}`);
+      }
+      return slots.length > 0 ? slots : ["9:00 AM"];
+    })();
+
     const MOCK_DAYS = [
       [null, null, null, null, 1, 2, 3],
       [4, 5, 6, 7, 8, 9, 10],
@@ -1162,7 +1185,7 @@ function MeetingSetupPageContent() {
 
                   {/* Time slots */}
                   <div className="pd-time-slots">
-                    {["9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM"].map((slot) => (
+                    {previewSlots.map((slot) => (
                       <button
                         key={slot}
                         type="button"
