@@ -23,17 +23,17 @@ type ProviderInfo = {
 
 const PROVIDERS: ProviderInfo[] = [
   // Meeting providers
-  { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: "🎥", category: "meeting" },
-  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: "📹", category: "meeting" },
-  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: "💬", category: "meeting" },
-  { key: "goto_meeting",    name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: "📞", category: "meeting" },
+  { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: "/zoom_icon_1.png", category: "meeting" },
+  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: "/google_meets_icon_1.png", category: "meeting" },
+  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: "/microsoft_teams_icon_1.png", category: "meeting" },
+  { key: "goto_meeting",    name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: "/goto_meeting_icon_1.png", category: "meeting" },
   // Email providers
-  { key: "gmail",           name: "Gmail",             description: "Send booking emails.",                    icon: "✉️", category: "email" },
-  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: "📧", category: "email" },
-  { key: "smtp",            name: "SMTP",              description: "Send booking emails.",                    icon: "📨", category: "email" },
+  { key: "gmail",           name: "Gmail",             description: "Send booking emails.",                    icon: "/gmail_icon_1.png", category: "email" },
+  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: "/outlook_icon_1.png", category: "email" },
+  { key: "smtp",            name: "SMTP",              description: "Send booking emails.",                    icon: "/smtp_email_icon_1.png", category: "email" },
   // Calendar providers
-  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: "📅", category: "calendar" },
-  { key: "outlook_calendar",name: "Outlook Calendar",  description: "Write events to this calendar.",          icon: "🗓️", category: "calendar" },
+  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: "/google_calendar_icon_1.png", category: "calendar" },
+  { key: "outlook_calendar",name: "Outlook Calendar",  description: "Write events to this calendar.",          icon: "/outlook_calendar_icon_1.png", category: "calendar" },
 ];
 
 const STATUS_STYLES: Record<string, { text: string; dot: string }> = {
@@ -108,7 +108,7 @@ export default function IntegrationsPage() {
                 style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg)" }}>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">{p.icon}</span>
+                    <img src={p.icon} alt={p.name} className="w-8 h-8 object-contain" />
                     <h4 className="font-semibold" style={{ color: "var(--cal-heading)" }}>{p.name}</h4>
                   </div>
                   <p className="text-sm mb-4" style={{ color: "var(--cal-text)" }}>{p.description}</p>
