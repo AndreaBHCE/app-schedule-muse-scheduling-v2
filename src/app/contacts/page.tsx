@@ -133,7 +133,6 @@ export default function ContactsPage() {
                   <tr style={{ borderBottom: "2px solid var(--cal-border)" }}>
                     <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>First Name</th>
                     <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Last Name</th>
-                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Full Name</th>
                     <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Email</th>
                     <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Company</th>
                     <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Phone</th>
@@ -144,12 +143,10 @@ export default function ContactsPage() {
                   {contacts.map((c) => {
                     const firstName = c.firstName || "";
                     const lastName = c.lastName || "";
-                    const fullName = [firstName, lastName].filter(Boolean).join(" ");
                     return (
                       <tr key={c.id} className="cal-row" style={{ borderBottom: "1px solid var(--cal-border)" }}>
                         <td className="py-2 px-3 font-semibold" style={{ color: "var(--cal-heading)" }}>{firstName || "—"}</td>
                         <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{lastName || "—"}</td>
-                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{fullName}</td>
                         <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.email}</td>
                         <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.company}</td>
                         <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.phone}</td>
