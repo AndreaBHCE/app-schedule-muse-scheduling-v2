@@ -95,7 +95,7 @@ export default function IntegrationsPage() {
     const providers = PROVIDERS.filter((p) => p.category === category);
     return (
       <div className="mb-8">
-        <h3 className="text-lg font-bold mb-1" style={{ color: "var(--cal-heading)" }}>{title}</h3>
+        <h3 className="text-lg font-bold mb-1" style={{ color: "#ffffff" }}>{title}</h3>
         <p className="text-sm mb-4" style={{ color: "var(--cal-mid)" }}>{subtitle}</p>
         <div className={`grid gap-4 ${category === "calendar" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
           {providers.map((p) => {
