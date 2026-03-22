@@ -15,6 +15,14 @@ export async function POST() {
       console.log("meeting_count column might not exist or already renamed");
     }
 
+    // Drop the legacy name column since we now use first_name and last_name
+    try {
+      await d1Query(`ALTER TABLE contacts DROP COLUMN name`);
+    } catch (e) {
+      // Column might not exist or already dropped
+      console.log("name column might not exist or already dropped");
+    }
+
     return NextResponse.json({ success: true, message: "Migration completed" });
   } catch (err) {
     console.error("Migration error:", err);

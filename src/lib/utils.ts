@@ -7,11 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 
 export function applyContactMergeTags(
   template: string,
-  contact: { firstName?: string; lastName?: string; email?: string; name?: string },
+  contact: { firstName?: string; lastName?: string; email?: string },
 ) {
   const firstName = (contact.firstName || "").trim();
   const lastName = (contact.lastName || "").trim();
-  const fullName = [firstName, lastName].filter(Boolean).join(" ") || (contact.name || "").trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
   return template
     .replace(/\{\{\s*contact\.first_name\s*\}\}/gi, firstName)

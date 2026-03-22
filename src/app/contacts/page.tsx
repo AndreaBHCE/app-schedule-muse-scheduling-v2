@@ -144,7 +144,7 @@ export default function ContactsPage() {
                   {contacts.map((c) => {
                     const firstName = c.firstName || "";
                     const lastName = c.lastName || "";
-                    const fullName = [firstName, lastName].filter(Boolean).join(" ") || c.name;
+                    const fullName = [firstName, lastName].filter(Boolean).join(" ");
                     return (
                       <tr key={c.id} className="cal-row" style={{ borderBottom: "1px solid var(--cal-border)" }}>
                         <td className="py-2 px-3 font-semibold" style={{ color: "var(--cal-heading)" }}>{firstName || "—"}</td>

@@ -32,10 +32,7 @@ interface ContactPayload {
 export function formatContact(row: ContactRow) {
   const firstName = (row.first_name || "").trim();
   const lastName = (row.last_name || "").trim();
-  const fullNameFromSplit = [firstName, lastName].filter(Boolean).join(" ");
-  const fallbackName = (row.name || "").trim();
-
-  const fullName = fullNameFromSplit || fallbackName;
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
   return {
     id: row.id,
@@ -108,17 +105,11 @@ export async function POST(request: Request) {
     const userId = await getAuthUserId();
     const payload: ContactPayload = await request.json();
 
-    let firstName = (payload.firstName || "").trim();
-    let lastName = (payload.lastName || "").trim();
+    const firstName = (payload.firstName || "").trim();
+    const lastName = (payload.lastName || "").trim();
 
-    if (!firstName && !lastName && payload.name) {
-      const fromName = splitName(payload.name);
-      firstName = fromName.firstName;
-      lastName = fromName.lastName;
-    }
-
-    if (!firstName && !lastName) {
-      return NextResponse.json({ error: "firstName and/or lastName required" }, { status: 400 });
+    if (!firstName || !lastName) {
+      return NextResponse.json({ error: "firstName and lastName required" }, { status: 400 });
     }
     if (!payload.email?.trim()) {
       return NextResponse.json({ error: "email required" }, { status: 400 });

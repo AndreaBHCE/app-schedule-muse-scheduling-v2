@@ -176,14 +176,13 @@ export async function POST() {
       const lastName = split.length > 1 ? split.slice(1).join(" ") : "";
 
       await d1Query(
-        `INSERT OR IGNORE INTO contacts (id, user_id, first_name, last_name, name, email, phone, company, tags, total_meetings, last_meeting_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR IGNORE INTO contacts (id, user_id, first_name, last_name, email, phone, company, tags, total_meetings, last_meeting_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           c.id,
           USER_ID,
           firstName,
           lastName,
-          c.name,
           c.email,
           c.phone,
           c.company,

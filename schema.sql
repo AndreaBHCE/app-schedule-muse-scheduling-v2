@@ -68,7 +68,6 @@ CREATE TABLE IF NOT EXISTS contacts (
   user_id         TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   first_name      TEXT DEFAULT '',
   last_name       TEXT DEFAULT '',
-  name            TEXT DEFAULT '',
   email           TEXT NOT NULL,
   phone           TEXT DEFAULT '',
   company         TEXT DEFAULT '',
