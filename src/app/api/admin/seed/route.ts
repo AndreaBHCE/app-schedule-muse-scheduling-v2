@@ -44,7 +44,8 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_meetings_guest_email ON meetings(guest_email)`,
       `CREATE TABLE IF NOT EXISTS contacts (
         id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT DEFAULT '', company TEXT DEFAULT '',
+        first_name TEXT DEFAULT '', last_name TEXT DEFAULT '', name TEXT DEFAULT '',
+        email TEXT NOT NULL, phone TEXT DEFAULT '', company TEXT DEFAULT '',
         tags TEXT DEFAULT '[]', notes TEXT DEFAULT '', last_meeting_at TEXT,
         total_meetings INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
