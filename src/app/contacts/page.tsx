@@ -131,12 +131,12 @@ export default function ContactsPage() {
               <table className="w-full text-sm" style={{ color: "var(--cal-text)" }}>
                 <thead>
                   <tr style={{ borderBottom: "2px solid var(--cal-border)" }}>
-                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>First Name</th>
-                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Last Name</th>
-                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Email</th>
-                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Company</th>
-                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Phone</th>
-                    <th className="text-right py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Actions</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "white" }}>First Name</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "white" }}>Last Name</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "white" }}>Email</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "white" }}>Company</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "white" }}>Phone</th>
+                    <th className="text-right py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "white" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -145,11 +145,11 @@ export default function ContactsPage() {
                     const lastName = c.lastName || "";
                     return (
                       <tr key={c.id} className="cal-row" style={{ borderBottom: "1px solid var(--cal-border)" }}>
-                        <td className="py-2 px-3 font-semibold" style={{ color: "var(--cal-heading)" }}>{firstName || "—"}</td>
-                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{lastName || "—"}</td>
-                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.email}</td>
-                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.company}</td>
-                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.phone}</td>
+                        <td className="py-2 px-3 font-semibold" style={{ color: "white" }}>{firstName || "—"}</td>
+                        <td className="py-2 px-3" style={{ color: "white" }}>{lastName || "—"}</td>
+                        <td className="py-2 px-3" style={{ color: "white" }}>{c.email}</td>
+                        <td className="py-2 px-3" style={{ color: "white" }}>{c.company}</td>
+                        <td className="py-2 px-3" style={{ color: "white" }}>{c.phone}</td>
                         <td className="py-2 px-3 text-right">
                           <button onClick={() => deleteContact(c.id)} className="text-xs rounded px-2 py-1 hover:opacity-80" style={{ background: "#ffe4e6", color: "#9f1239" }}>×</button>
                         </td>
