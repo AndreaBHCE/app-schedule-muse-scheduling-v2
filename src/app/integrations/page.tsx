@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
+import {
+  SiZoom,
+  SiGoogle,
+  SiComposer,
+  SiGmail,
+  SiComposer as SiOutlook,
+  SiMaildotcom,
+  SiGooglecalendar,
+  SiComposer as SiOutlookCalendar,
+  SiGotomeeting,
+} from "react-icons/si";
 
 type Integration = {
   id: string;
@@ -25,10 +36,11 @@ const PROVIDERS: ProviderInfo[] = [
   // Meeting providers
   { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: SiZoom, category: "meeting" },
   { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: SiGoogle, category: "meeting" },
-  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: SiMicrosoft, category: "meeting" },
+  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: SiComposer, category: "meeting" },
+  { key: "goto_meeting",    name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: SiGotomeeting, category: "meeting" },
   // Email providers
   { key: "gmail",           name: "Gmail",             description: "Send booking emails.",                    icon: SiGmail, category: "email" },
-  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: SiMicrosoftoutlook, category: "email" },
+  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: SiOutlook, category: "email" },
   { key: "smtp",            name: "SMTP",              description: "Send booking emails.",                    icon: SiMaildotcom, category: "email" },
   // Calendar providers
   { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: SiGooglecalendar, category: "calendar" },
