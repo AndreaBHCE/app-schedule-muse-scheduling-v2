@@ -80,6 +80,11 @@
   background: var(--cal-hover);
 }
 
+/* Integrations headings must remain white to be visible on dark backgrounds */
+.integrations-category-title {
+  color: white !important;
+}
+
 .hint-icon {
   position: relative;
   display: inline-flex;
