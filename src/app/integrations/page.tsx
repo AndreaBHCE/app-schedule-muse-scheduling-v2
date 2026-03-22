@@ -2,17 +2,6 @@
 
 import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
-import {
-  SiZoom,
-  SiGoogle,
-  SiComposer,
-  SiGmail,
-  SiComposer as SiOutlook,
-  SiMaildotcom,
-  SiGooglecalendar,
-  SiComposer as SiOutlookCalendar,
-  SiGotomeeting,
-} from "react-icons/si";
 
 type Integration = {
   id: string;
@@ -28,23 +17,23 @@ type ProviderInfo = {
   key: string;
   name: string;
   description: string;
-  icon: React.ComponentType<{ size?: string | number; className?: string }>;
+  icon: string;
   category: "meeting" | "email" | "calendar";
 };
 
 const PROVIDERS: ProviderInfo[] = [
   // Meeting providers
-  { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: SiZoom, category: "meeting" },
-  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: SiGoogle, category: "meeting" },
-  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: SiComposer, category: "meeting" },
-  { key: "goto_meeting",    name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: SiGotomeeting, category: "meeting" },
+  { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: "🎥", category: "meeting" },
+  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: "📹", category: "meeting" },
+  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: "💬", category: "meeting" },
+  { key: "goto_meeting",    name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: "📞", category: "meeting" },
   // Email providers
-  { key: "gmail",           name: "Gmail",             description: "Send booking emails.",                    icon: SiGmail, category: "email" },
-  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: SiOutlook, category: "email" },
-  { key: "smtp",            name: "SMTP",              description: "Send booking emails.",                    icon: SiMaildotcom, category: "email" },
+  { key: "gmail",           name: "Gmail",             description: "Send booking emails.",                    icon: "✉️", category: "email" },
+  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: "📧", category: "email" },
+  { key: "smtp",            name: "SMTP",              description: "Send booking emails.",                    icon: "📨", category: "email" },
   // Calendar providers
-  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: SiGooglecalendar, category: "calendar" },
-  { key: "outlook_calendar",name: "Outlook Calendar",  description: "Write events to this calendar.",          icon: SiOutlookCalendar, category: "calendar" },
+  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: "📅", category: "calendar" },
+  { key: "outlook_calendar",name: "Outlook Calendar",  description: "Write events to this calendar.",          icon: "🗓️", category: "calendar" },
 ];
 
 const STATUS_STYLES: Record<string, { text: string; dot: string }> = {
@@ -119,7 +108,7 @@ export default function IntegrationsPage() {
                 style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg)" }}>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <p.icon className="text-2xl" />
+                    <span className="text-2xl">{p.icon}</span>
                     <h4 className="font-semibold" style={{ color: "var(--cal-heading)" }}>{p.name}</h4>
                   </div>
                   <p className="text-sm mb-4" style={{ color: "var(--cal-text)" }}>{p.description}</p>
