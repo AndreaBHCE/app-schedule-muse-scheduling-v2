@@ -17,9 +17,17 @@ interface MeetingRow {
   created_at: string;
 }
 
+function splitFullName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { firstName: "", lastName: "" };
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const status = url.searchParams.get("status"); // upcoming | past | canceled | all
+  const search = url.searchParams.get("search")?.trim() || "";
   const page = parseInt(url.searchParams.get("page") || "1");
   const limit = parseInt(url.searchParams.get("limit") || "20");
   const offset = (page - 1) * limit;
@@ -32,6 +40,12 @@ export async function GET(request: Request) {
                JOIN booking_pages bp ON m.booking_page_id = bp.id
                WHERE m.user_id = ?`;
     const params: (string | number)[] = [userId];
+
+    if (search) {
+      const q = `%${search}%`;
+      sql += ` AND (m.guest_name LIKE ? OR m.guest_email LIKE ? OR bp.title LIKE ?)`;
+      params.push(q, q, q);
+    }
 
     if (status === "upcoming") {
       sql += ` AND m.start_time >= ? AND m.status IN ('confirmed','pending')`;
@@ -55,21 +69,26 @@ export async function GET(request: Request) {
 
     const result = await d1Query<MeetingRow & { meeting_type: string }>(sql, params);
 
-    const meetings = result.results.map((row) => ({
-      id: row.id,
-      bookingPageId: row.booking_page_id,
-      meetingType: row.meeting_type,
-      guestName: row.guest_name,
-      guestEmail: row.guest_email,
-      startTime: row.start_time,
-      endTime: row.end_time,
-      status: row.status,
-      locationType: row.location_type,
-      locationDetails: row.location_details,
-      notes: row.notes,
-      canceledReason: row.canceled_reason,
-      createdAt: row.created_at,
-    }));
+    const meetings = result.results.map((row) => {
+      const { firstName, lastName } = splitFullName(row.guest_name);
+      return {
+        id: row.id,
+        bookingPageId: row.booking_page_id,
+        meetingType: row.meeting_type,
+        guestName: row.guest_name,
+        guestEmail: row.guest_email,
+        guestFirstName: firstName,
+        guestLastName: lastName,
+        startTime: row.start_time,
+        endTime: row.end_time,
+        status: row.status,
+        locationType: row.location_type,
+        locationDetails: row.location_details,
+        notes: row.notes,
+        canceledReason: row.canceled_reason,
+        createdAt: row.created_at,
+      };
+    });
 
     return NextResponse.json({ meetings, total, page, limit });
   } catch (err) {

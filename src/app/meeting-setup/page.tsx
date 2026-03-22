@@ -4,6 +4,7 @@ import Link from "next/link";
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppSidebar from "@/components/layout/AppSidebar";
+import { applyContactMergeTags } from "@/lib/utils";
 
 /* ================================================================
    HELPERS
@@ -364,6 +365,13 @@ function MeetingSetupPageContent() {
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const sampleContact = {
+    firstName: "Jane",
+    lastName: "Doe",
+    email: "jane.doe@example.com",
+    name: "Jane Doe",
+  };
 
   /* ── Load existing booking when ?edit=<id> is present ── */
   useEffect(() => {
@@ -1143,7 +1151,9 @@ function MeetingSetupPageContent() {
                     <p className="pd-info-sub">{config.pageSubheading}</p>
                   )}
                   {config.pageWelcomeMessage && (
-                    <p className="pd-info-welcome">{config.pageWelcomeMessage}</p>
+                    <p className="pd-info-welcome">
+                      {applyContactMergeTags(config.pageWelcomeMessage, sampleContact)}
+                    </p>
                   )}
                   {(config.pageHostName || config.pageHostTitle || config.pageCompanyName) && (
                     <div className="pd-info-host">
@@ -1398,6 +1408,9 @@ function MeetingSetupPageContent() {
                 <button type="button" className="pd-fmt-btn" title="Italic"><em>I</em></button>
                 <button type="button" className="pd-fmt-btn" title="Link">🔗</button>
               </div>
+              <p className="text-xs mt-2" style={{ color: "var(--cal-mid)" }}>
+                Supports merge tags: <code>{"{{contact.first_name}}"}</code>, <code>{"{{contact.last_name}}"}</code>, <code>{"{{contact.email}}"}</code>, <code>{"{{contact.name}}"}</code>.
+              </p>
             </div>
 
             {/* Host details */}

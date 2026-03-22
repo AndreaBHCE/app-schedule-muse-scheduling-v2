@@ -6,6 +6,8 @@ import AppSidebar from "@/components/layout/AppSidebar";
 type Contact = {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone: string;
   company: string;
@@ -22,7 +24,8 @@ export default function ContactsPage() {
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
   const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newFirstName, setNewFirstName] = useState("");
+  const [newLastName, setNewLastName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newCompany, setNewCompany] = useState("");
   const [newPhone, setNewPhone] = useState("");
@@ -46,13 +49,19 @@ export default function ContactsPage() {
   useEffect(() => { load(); }, [search, selectedTag]);
 
   async function addContact() {
-    if (!newName.trim() || !newEmail.trim()) return;
+    if (!newFirstName.trim() || !newLastName.trim() || !newEmail.trim()) return;
     await fetch("/api/contacts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName, email: newEmail, company: newCompany, phone: newPhone }),
+      body: JSON.stringify({
+        firstName: newFirstName.trim(),
+        lastName: newLastName.trim(),
+        email: newEmail.trim(),
+        company: newCompany,
+        phone: newPhone,
+      }),
     });
-    setNewName(""); setNewEmail(""); setNewCompany(""); setNewPhone("");
+    setNewFirstName(""); setNewLastName(""); setNewEmail(""); setNewCompany(""); setNewPhone("");
     setShowAdd(false);
     load();
   }
@@ -118,43 +127,40 @@ export default function ContactsPage() {
           ) : contacts.length === 0 ? (
             <div className="p-8 text-center" style={{ color: "var(--cal-mid)" }}>No contacts found.</div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {contacts.map((c) => (
-                <article key={c.id} className="rounded-xl border p-4" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg)" }}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-semibold" style={{ color: "var(--cal-heading)" }}>{c.name}</h4>
-                      <p className="text-xs" style={{ color: "var(--cal-mid)" }}>{c.email}</p>
-                    </div>
-                    <button onClick={() => deleteContact(c.id)} className="text-xs rounded px-2 py-1 hover:opacity-80" style={{ background: "#ffe4e6", color: "#9f1239" }}>
-                      ×
-                    </button>
-                  </div>
-
-                  {c.company && (
-                    <p className="text-sm mt-1" style={{ color: "var(--cal-text)" }}>{c.company}</p>
-                  )}
-                  {c.phone && (
-                    <p className="text-xs mt-0.5" style={{ color: "var(--cal-mid)" }}>{c.phone}</p>
-                  )}
-
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {c.tags.map((tag) => (
-                      <span key={tag} className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{ background: "var(--cal-hover)", color: "var(--cal-primary)" }}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between mt-3 pt-2 text-xs" style={{ borderTop: "1px solid var(--cal-border)", color: "var(--cal-mid)" }}>
-                    <span>{c.totalMeetings} meeting{c.totalMeetings !== 1 ? "s" : ""}</span>
-                    {c.lastMeetingAt && (
-                      <span>Last: {new Date(c.lastMeetingAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
-                    )}
-                  </div>
-                </article>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" style={{ color: "var(--cal-text)" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid var(--cal-border)" }}>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>First Name</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Last Name</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Full Name</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Email</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Company</th>
+                    <th className="text-left py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Phone</th>
+                    <th className="text-right py-3 px-3 font-semibold text-xs uppercase tracking-wide" style={{ color: "var(--cal-mid)" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.map((c) => {
+                    const firstName = c.firstName || "";
+                    const lastName = c.lastName || "";
+                    const fullName = [firstName, lastName].filter(Boolean).join(" ") || c.name;
+                    return (
+                      <tr key={c.id} className="cal-row" style={{ borderBottom: "1px solid var(--cal-border)" }}>
+                        <td className="py-2 px-3 font-semibold" style={{ color: "var(--cal-heading)" }}>{firstName || "—"}</td>
+                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{lastName || "—"}</td>
+                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{fullName}</td>
+                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.email}</td>
+                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.company}</td>
+                        <td className="py-2 px-3" style={{ color: "var(--cal-text)" }}>{c.phone}</td>
+                        <td className="py-2 px-3 text-right">
+                          <button onClick={() => deleteContact(c.id)} className="text-xs rounded px-2 py-1 hover:opacity-80" style={{ background: "#ffe4e6", color: "#9f1239" }}>×</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
@@ -165,7 +171,10 @@ export default function ContactsPage() {
             <div className="rounded-xl p-6 shadow-xl w-full max-w-md" style={{ background: "var(--cal-bg)" }}>
               <h3 className="text-lg font-bold mb-4" style={{ color: "var(--cal-heading)" }}>Add Contact</h3>
               <div className="space-y-3">
-                <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Full name *" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={newFirstName} onChange={(e) => setNewFirstName(e.target.value)} placeholder="First name *" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
+                  <input value={newLastName} onChange={(e) => setNewLastName(e.target.value)} placeholder="Last name *" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
+                </div>
                 <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Email *" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
                 <input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="Company" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
                 <input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Phone" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
