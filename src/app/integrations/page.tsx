@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import AppSidebar from "@/components/layout/AppSidebar";
 
 type Integration = {
@@ -43,6 +44,7 @@ const STATUS_STYLES: Record<string, { text: string; dot: string }> = {
 };
 
 export default function IntegrationsPage() {
+  const { user } = useUser();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,9 +75,10 @@ export default function IntegrationsPage() {
       alert('Zoom connected successfully!');
       load(); // Reload to show updated status
     } else if (error) {
+      const details = urlParams.get('details');
       // Clear URL and show error message
       window.history.replaceState({}, '', '/integrations');
-      alert(`Zoom connection failed: ${error}`);
+      alert(`Zoom connection failed: ${error}${details ? '\n\nDetails: ' + decodeURIComponent(details) : ''}`);
     }
   }, []);
 
@@ -130,8 +133,11 @@ export default function IntegrationsPage() {
   }
 
   function initiateZoomOAuth() {
-    // Generate state parameter with user ID for security
-    const state = `zoom-oauth-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    // Use Clerk userId from hook for callback recovery
+    const clerkUserId = user?.id || '';
+
+    // Generate state parameter encoding the userId for the callback to use
+    const state = `zoom-oauth-${clerkUserId}-${Date.now()}-${Math.random().toString(36).substring(2)}`;
 
     // Store state in sessionStorage for verification
     sessionStorage.setItem('zoom_oauth_state', state);

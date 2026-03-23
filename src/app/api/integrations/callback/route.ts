@@ -2,7 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { d1Query } from "@/lib/cloudflare";
 
+/**
+ * Extract Clerk userId from the state parameter.
+ * State format: zoom-oauth-{clerkUserId}-{timestamp}-{random}
+ */
+function extractUserIdFromState(state: string): string | null {
+  // Match: zoom-oauth-user_XXXX-timestamp-random
+  const match = state.match(/^zoom-oauth-(user_[^-]+)-/);
+  return match ? match[1] : null;
+}
+
 // Zoom OAuth callback handler
+// NOTE: This route is marked as public in middleware.ts because
+// Zoom redirects the user here and Clerk session cookies may not
+// be present on the redirect request.
 export async function GET(request: NextRequest) {
   console.log("🔄 Zoom OAuth callback triggered");
   console.log("Callback URL:", request.url);
@@ -17,11 +30,11 @@ export async function GET(request: NextRequest) {
 
     console.log("Callback params:", { code: code ? "PRESENT" : "MISSING", state: state ? "PRESENT" : "MISSING", error });
 
-    // Handle OAuth errors
+    // Handle OAuth errors from Zoom
     if (error) {
       console.error("Zoom OAuth error:", error);
       return NextResponse.redirect(
-        new URL("/integrations?error=zoom_oauth_failed", request.url)
+        new URL(`/integrations?error=zoom_oauth_failed&details=${encodeURIComponent(error)}`, request.url)
       );
     }
 
@@ -31,31 +44,51 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify state parameter for security
     if (!state) {
       return NextResponse.redirect(
         new URL("/integrations?error=missing_state", request.url)
       );
     }
 
-    // Get authenticated user
-    const { userId } = await auth();
+    // --- Resolve the authenticated user ---
+    // Try Clerk auth() first (works if session cookie survived the redirect).
+    // Fall back to the userId embedded in the state parameter.
+    let userId: string | null = null;
+
+    try {
+      const clerkAuth = await auth();
+      userId = clerkAuth.userId;
+      console.log("Clerk auth() resolved userId:", userId ? "PRESENT" : "NULL");
+    } catch (authErr) {
+      console.warn("Clerk auth() threw (expected during cross-origin redirect):", authErr instanceof Error ? authErr.message : authErr);
+    }
+
     if (!userId) {
+      // Recover from the state parameter
+      userId = extractUserIdFromState(state);
+      console.log("Recovered userId from state param:", userId ? "PRESENT" : "NULL");
+    }
+
+    if (!userId) {
+      console.error("No userId from auth() or state param — cannot complete OAuth");
       return NextResponse.redirect(
         new URL("/sign-in?redirect=/integrations", request.url)
       );
     }
 
-    // Exchange authorization code for access token
+    // --- Exchange code for tokens ---
     const tokenResponse = await exchangeCodeForToken(code);
 
     if (!tokenResponse.access_token) {
       return NextResponse.redirect(
-        new URL("/integrations?error=token_exchange_failed", request.url)
+        new URL("/integrations?error=token_exchange_failed&details=no_access_token_in_response", request.url)
       );
     }
 
-    // Store the tokens in database
+    // --- Ensure user row exists (FK constraint) ---
+    await ensureUserExists(userId);
+
+    // --- Store the tokens ---
     await storeZoomTokens(userId, tokenResponse);
 
     // Redirect back to integrations page with success
@@ -65,7 +98,6 @@ export async function GET(request: NextRequest) {
 
   } catch (err) {
     console.error("Zoom OAuth callback error:", err);
-    // Log more details for debugging
     console.error("Error details:", {
       message: err instanceof Error ? err.message : String(err),
       stack: err instanceof Error ? err.stack : undefined,
@@ -73,9 +105,8 @@ export async function GET(request: NextRequest) {
       searchParams: Object.fromEntries(new URL(request.url).searchParams)
     });
 
-    // Include error details in redirect for easier debugging
     const errorMessage = err instanceof Error ? err.message : String(err);
-    const encodedError = encodeURIComponent(errorMessage.substring(0, 100)); // Limit length
+    const encodedError = encodeURIComponent(errorMessage.substring(0, 200));
 
     return NextResponse.redirect(
       new URL(`/integrations?error=callback_error&details=${encodedError}`, request.url)
@@ -90,7 +121,7 @@ async function exchangeCodeForToken(code: string) {
   const redirectUri = 'https://app.schedulemuseai.com/api/integrations/callback';
 
   if (!zoomClientId || !zoomClientSecret) {
-    throw new Error("Zoom credentials not configured");
+    throw new Error("Zoom credentials not configured — check ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET env vars");
   }
 
   const credentials = Buffer.from(`${zoomClientId}:${zoomClientSecret}`).toString('base64');
@@ -109,19 +140,29 @@ async function exchangeCodeForToken(code: string) {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error("Zoom token exchange failed:", error);
-    throw new Error(`Token exchange failed: ${response.status}`);
+    const errorBody = await response.text();
+    console.error("Zoom token exchange failed:", response.status, errorBody);
+    // Include the Zoom error body so it surfaces in the redirect
+    throw new Error(`Zoom token exchange ${response.status}: ${errorBody.substring(0, 150)}`);
   }
 
   return await response.json();
+}
+
+// Ensure the user row exists in D1 so the FK on integrations.user_id won't fail
+async function ensureUserExists(userId: string) {
+  await d1Query(
+    `INSERT INTO users (id, created_at, updated_at)
+     VALUES (?, datetime('now'), datetime('now'))
+     ON CONFLICT(id) DO NOTHING`,
+    [userId]
+  );
 }
 
 // Store Zoom tokens in database
 async function storeZoomTokens(userId: string, tokenData: any) {
   const id = `int-zoom-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 
-  // Encrypt sensitive tokens (you might want to add proper encryption here)
   const encryptedAccessToken = Buffer.from(tokenData.access_token).toString('base64');
   const encryptedRefreshToken = tokenData.refresh_token
     ? Buffer.from(tokenData.refresh_token).toString('base64')
