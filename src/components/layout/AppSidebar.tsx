@@ -41,8 +41,25 @@ export default function AppSidebar() {
 
       <div className="text-xs text-white/70">
         Version 1.0
-        <div className="mt-2">
-          Need help? <a className="underline" href="#">Support</a>
+        <div className="mt-2 space-y-1">
+          <div>
+            Need help? <Link href="/support" className="underline hover:text-white">Support</Link>
+          </div>
+          <div>
+            <Link href="/docs" className="underline hover:text-white">
+              Documentation
+            </Link>
+          </div>
+          <div>
+            <Link href="/privacy" className="underline hover:text-white">
+              Privacy Policy
+            </Link>
+          </div>
+          <div>
+            <Link href="/terms-of-use" className="underline hover:text-white">
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </aside>
