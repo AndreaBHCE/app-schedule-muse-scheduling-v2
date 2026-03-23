@@ -1,3 +1,4 @@
+
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 // Only these routes are accessible without signing in
