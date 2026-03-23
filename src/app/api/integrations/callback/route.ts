@@ -58,6 +58,13 @@ export async function GET(request: NextRequest) {
 
   } catch (err) {
     console.error("Zoom OAuth callback error:", err);
+    // Log more details for debugging
+    console.error("Error details:", {
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      url: request.url,
+      searchParams: Object.fromEntries(new URL(request.url).searchParams)
+    });
     return NextResponse.redirect(
       new URL("/integrations?error=callback_error", request.url)
     );
