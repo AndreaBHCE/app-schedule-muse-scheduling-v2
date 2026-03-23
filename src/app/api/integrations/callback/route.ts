@@ -72,8 +72,13 @@ export async function GET(request: NextRequest) {
       url: request.url,
       searchParams: Object.fromEntries(new URL(request.url).searchParams)
     });
+
+    // Include error details in redirect for easier debugging
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const encodedError = encodeURIComponent(errorMessage.substring(0, 100)); // Limit length
+
     return NextResponse.redirect(
-      new URL("/integrations?error=callback_error", request.url)
+      new URL(`/integrations?error=callback_error&details=${encodedError}`, request.url)
     );
   }
 }
