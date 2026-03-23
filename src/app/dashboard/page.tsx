@@ -315,7 +315,7 @@ export default function DashboardPage() {
       <AppSidebar />
 
       <main className="app-main">
-        <header className="app-header">
+        <header className="app-header relative">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
             <h2 className="app-page-name">Welcome back{firstName ? `, ${firstName}` : ""}.</h2>
@@ -323,13 +323,13 @@ export default function DashboardPage() {
               Your scheduling dashboard gives you full control over booking calendars, availability, and reminders — all powered by ScheduleMuse AI.
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="app-cta">
-              <Link href="/meeting-setup" className="btn-primary">
-                Create booking calendar
-              </Link>
-              <Link href="/analytics" className="btn-secondary">View analytics</Link>
-            </div>
+          <div className="app-cta">
+            <Link href="/meeting-setup" className="btn-primary">
+              Create booking calendar
+            </Link>
+            <Link href="/analytics" className="btn-secondary">View analytics</Link>
+          </div>
+          <div className="absolute top-6 right-6">
             <UserProfile />
           </div>
         </header>
