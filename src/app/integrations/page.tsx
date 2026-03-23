@@ -59,7 +59,25 @@ export default function IntegrationsPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+
+    // Check for OAuth success/error messages in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+
+    if (success === 'zoom_connected') {
+      // Clear URL and show success message
+      window.history.replaceState({}, '', '/integrations');
+      alert('Zoom connected successfully!');
+      load(); // Reload to show updated status
+    } else if (error) {
+      // Clear URL and show error message
+      window.history.replaceState({}, '', '/integrations');
+      alert(`Zoom connection failed: ${error}`);
+    }
+  }, []);
 
   function getStatus(providerKey: string): Integration | undefined {
     return integrations.find((i) => i.provider === providerKey);
@@ -67,6 +85,25 @@ export default function IntegrationsPage() {
 
   async function toggleConnect(providerKey: string) {
     const existing = getStatus(providerKey);
+
+    // Special handling for Zoom OAuth
+    if (providerKey === "zoom") {
+      if (existing && existing.status === "connected") {
+        // Disconnect Zoom
+        await fetch("/api/integrations", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: existing.id, status: "disconnected" }),
+        });
+        load();
+      } else {
+        // Initiate Zoom OAuth flow
+        initiateZoomOAuth();
+      }
+      return;
+    }
+
+    // Default behavior for other providers
     if (existing && existing.status === "connected") {
       // Disconnect
       await fetch("/api/integrations", {
@@ -90,6 +127,24 @@ export default function IntegrationsPage() {
       });
     }
     load();
+  }
+
+  function initiateZoomOAuth() {
+    // Generate state parameter with user ID for security
+    const state = `zoom-oauth-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+
+    // Store state in sessionStorage for verification
+    sessionStorage.setItem('zoom_oauth_state', state);
+
+    // Zoom OAuth URL
+    const zoomClientId = '1ODsdlwGQhKKxvUb0ZmXcA';
+    const redirectUri = `${window.location.origin}/api/integrations/callback`;
+    const scope = 'meeting:write meeting:read user:read';
+
+    const oauthUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${zoomClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
+
+    // Redirect to Zoom OAuth
+    window.location.href = oauthUrl;
   }
 
   function renderCategory(title: string, subtitle: string, category: "meeting" | "email" | "calendar") {
@@ -119,6 +174,11 @@ export default function IntegrationsPage() {
                     <span className="text-xs font-medium capitalize" style={{ color: style.text }}>
                       Status: {status === "connected" ? "Connected" : "Not connected"}
                     </span>
+                    {integration?.config && typeof integration.config === 'string' && (
+                      <span className="text-xs text-gray-500">
+                        ({JSON.parse(integration.config).account_type || 'Basic'})
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => toggleConnect(p.key)}

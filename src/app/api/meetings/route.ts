@@ -1,126 +1,144 @@
-import { NextResponse } from "next/server";
-import { d1Query } from "@/lib/cloudflare";
+import { NextRequest, NextResponse } from "next/server";
 import { getAuthUserId, AuthError } from "@/lib/auth";
+import { d1Query } from "@/lib/cloudflare";
+import { createZoomMeeting } from "@/lib/zoom";
 
-interface MeetingRow {
-  id: string;
-  booking_page_id: string;
+interface MeetingData {
+  booking_page_id?: string;
   guest_name: string;
   guest_email: string;
+  meeting_type?: string;
   start_time: string;
   end_time: string;
-  status: string;
-  location_type: string;
-  location_details: string;
-  notes: string;
-  canceled_reason: string;
-  created_at: string;
+  location?: string;
+  location_details?: string;
+  notes?: string;
 }
 
-function splitFullName(fullName: string) {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { firstName: "", lastName: "" };
-  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
-  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
-}
-
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const status = url.searchParams.get("status"); // upcoming | past | canceled | all
-  const search = url.searchParams.get("search")?.trim() || "";
-  const page = parseInt(url.searchParams.get("page") || "1");
-  const limit = parseInt(url.searchParams.get("limit") || "20");
-  const offset = (page - 1) * limit;
-
+export async function POST(request: NextRequest) {
   try {
     const userId = await getAuthUserId();
-    const now = new Date().toISOString();
-    let sql = `SELECT m.*, bp.title as meeting_type
-               FROM meetings m
-               JOIN booking_pages bp ON m.booking_page_id = bp.id
-               WHERE m.user_id = ?`;
-    const params: (string | number)[] = [userId];
+    const data: MeetingData = await request.json();
 
-    if (search) {
-      const q = `%${search}%`;
-      sql += ` AND (m.guest_name LIKE ? OR m.guest_email LIKE ? OR bp.title LIKE ?)`;
-      params.push(q, q, q);
+    // Validate required fields
+    if (!data.guest_name || !data.guest_email || !data.start_time || !data.end_time) {
+      return NextResponse.json(
+        { error: "Missing required fields: guest_name, guest_email, start_time, end_time" },
+        { status: 400 }
+      );
     }
 
-    if (status === "upcoming") {
-      sql += ` AND m.start_time >= ? AND m.status IN ('confirmed','pending')`;
-      params.push(now);
-    } else if (status === "past") {
-      sql += ` AND (m.start_time < ? OR m.status IN ('completed','no-show'))`;
-      params.push(now);
-    } else if (status === "canceled") {
-      sql += ` AND m.status = 'canceled'`;
+    // Calculate duration in minutes
+    const startTime = new Date(data.start_time);
+    const endTime = new Date(data.end_time);
+    const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+
+    if (duration <= 0) {
+      return NextResponse.json({ error: "End time must be after start time" }, { status: 400 });
     }
 
-    // Count
-    const countResult = await d1Query<{ cnt: number }>(
-      sql.replace("SELECT m.*, bp.title as meeting_type", "SELECT COUNT(*) as cnt"),
-      params,
+    // Check if user has Zoom integration
+    const zoomIntegration = await d1Query(
+      `SELECT id FROM integrations WHERE user_id = ? AND provider = 'zoom' AND status = 'connected'`,
+      [userId]
     );
-    const total = countResult.results[0]?.cnt ?? 0;
 
-    sql += ` ORDER BY m.start_time DESC LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
+    let zoomMeeting = null;
+    let locationDetails = data.location_details || '';
 
-    const result = await d1Query<MeetingRow & { meeting_type: string }>(sql, params);
+    // Create Zoom meeting if integration exists
+    if (zoomIntegration.results && zoomIntegration.results.length > 0) {
+      const meetingTopic = `${data.guest_name} - ${data.meeting_type || 'Meeting'}`;
+      const zoomStartTime = startTime.toISOString();
 
-    const meetings = result.results.map((row) => {
-      const { firstName, lastName } = splitFullName(row.guest_name);
-      return {
-        id: row.id,
-        bookingPageId: row.booking_page_id,
-        meetingType: row.meeting_type,
-        guestName: row.guest_name,
-        guestEmail: row.guest_email,
-        guestFirstName: firstName,
-        guestLastName: lastName,
-        startTime: row.start_time,
-        endTime: row.end_time,
-        status: row.status,
-        locationType: row.location_type,
-        locationDetails: row.location_details,
-        notes: row.notes,
-        canceledReason: row.canceled_reason,
-        createdAt: row.created_at,
-      };
-    });
+      zoomMeeting = await createZoomMeeting(userId, {
+        topic: meetingTopic,
+        start_time: zoomStartTime,
+        duration: duration,
+        timezone: "UTC", // You might want to get user's timezone
+        agenda: data.notes || "",
+      });
 
-    return NextResponse.json({ meetings, total, page, limit });
+      if (zoomMeeting) {
+        locationDetails = zoomMeeting.join_url;
+      }
+    }
+
+    // Create meeting record in database
+    const meetingId = `meeting-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+
+    await d1Query(
+      `INSERT INTO meetings (
+        id, user_id, booking_page_id, guest_name, guest_email, meeting_type,
+        start_time, end_time, status, location, location_details, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?)`,
+      [
+        meetingId,
+        userId,
+        data.booking_page_id || null,
+        data.guest_name,
+        data.guest_email,
+        data.meeting_type || '',
+        data.start_time,
+        data.end_time,
+        data.location || 'virtual',
+        locationDetails,
+        data.notes || '',
+      ]
+    );
+
+    const meeting = {
+      id: meetingId,
+      guest_name: data.guest_name,
+      guest_email: data.guest_email,
+      start_time: data.start_time,
+      end_time: data.end_time,
+      location: data.location || 'virtual',
+      location_details: locationDetails,
+      zoom_meeting: zoomMeeting,
+      created: true,
+    };
+
+    return NextResponse.json({ meeting }, { status: 201 });
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
-    console.error("GET /api/meetings error:", err);
-    return NextResponse.json({ meetings: [], error: (err as Error).message }, { status: 500 });
+    console.error("POST /api/meetings error:", err);
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
 
-export async function PATCH(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const userId = await getAuthUserId();
-    const { id, status, canceledReason } = await request.json();
-    if (!id || !status) {
-      return NextResponse.json({ error: "id and status required" }, { status: 400 });
-    }
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
+    const offset = parseInt(searchParams.get("offset") || "0");
 
-    const allowed = ["confirmed", "pending", "canceled", "completed", "no-show"];
-    if (!allowed.includes(status)) {
-      return NextResponse.json({ error: `status must be one of: ${allowed.join(", ")}` }, { status: 400 });
-    }
-
-    await d1Query(
-      `UPDATE meetings SET status = ?, canceled_reason = ?, updated_at = datetime('now')
-       WHERE id = ? AND user_id = ?`,
-      [status, canceledReason || null, id, userId],
+    const result = await d1Query(
+      `SELECT * FROM meetings WHERE user_id = ? ORDER BY start_time DESC LIMIT ? OFFSET ?`,
+      [userId, limit, offset]
     );
 
-    return NextResponse.json({ success: true });
+    const meetings = result.results.map((row: any) => ({
+      id: row.id,
+      bookingPageId: row.booking_page_id,
+      guestName: row.guest_name,
+      guestEmail: row.guest_email,
+      meetingType: row.meeting_type,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      status: row.status,
+      location: row.location,
+      locationDetails: row.location_details,
+      notes: row.notes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+
+    return NextResponse.json({ meetings });
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
-    console.error("PATCH /api/meetings error:", err);
+    console.error("GET /api/meetings error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
