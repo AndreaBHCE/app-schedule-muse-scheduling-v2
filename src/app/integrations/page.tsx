@@ -136,10 +136,10 @@ export default function IntegrationsPage() {
     // Store state in sessionStorage for verification
     sessionStorage.setItem('zoom_oauth_state', state);
 
-    // Zoom OAuth URL - Use exact redirect URI from Zoom app configuration
+    // Zoom OAuth URL - Use exact redirect URI and scopes from Zoom app configuration
     const zoomClientId = '1ODsdlwGQhKKxvUb0ZmXcA';
     const redirectUri = 'https://app.schedulemuseai.com/api/integrations/callback';
-    const scope = 'meeting:write meeting:read user:read';
+    const scope = 'meeting:write:meeting meeting:read:meeting user:read:user';
 
     const oauthUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${zoomClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
 
