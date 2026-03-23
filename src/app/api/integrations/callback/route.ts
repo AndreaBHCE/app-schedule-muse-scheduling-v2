@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 async function exchangeCodeForToken(code: string) {
   const zoomClientId = process.env.ZOOM_CLIENT_ID;
   const zoomClientSecret = process.env.ZOOM_CLIENT_SECRET;
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.schedulemuse.ai'}/api/integrations/callback`;
+  const redirectUri = 'https://app.schedulemuseai.com/api/integrations/callback';
 
   if (!zoomClientId || !zoomClientSecret) {
     throw new Error("Zoom credentials not configured");

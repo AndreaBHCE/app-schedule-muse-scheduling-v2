@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import AppSidebar from "@/components/layout/AppSidebar";
+import UserProfile from "@/components/layout/UserProfile";
 
 type Booking = {
   id: string;
@@ -322,11 +323,14 @@ export default function DashboardPage() {
               Your scheduling dashboard gives you full control over booking calendars, availability, and reminders — all powered by ScheduleMuse AI.
             </p>
           </div>
-          <div className="app-cta">
-            <Link href="/meeting-setup" className="btn-primary">
-              Create booking calendar
-            </Link>
-            <Link href="/analytics" className="btn-secondary">View analytics</Link>
+          <div className="flex items-center gap-4">
+            <div className="app-cta">
+              <Link href="/meeting-setup" className="btn-primary">
+                Create booking calendar
+              </Link>
+              <Link href="/analytics" className="btn-secondary">View analytics</Link>
+            </div>
+            <UserProfile />
           </div>
         </header>
 
