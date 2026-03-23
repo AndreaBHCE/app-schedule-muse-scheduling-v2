@@ -4,11 +4,18 @@ import { d1Query } from "@/lib/cloudflare";
 
 // Zoom OAuth callback handler
 export async function GET(request: NextRequest) {
+  console.log("🔄 Zoom OAuth callback triggered");
+  console.log("Callback URL:", request.url);
+  console.log("Environment check - ZOOM_CLIENT_ID:", process.env.ZOOM_CLIENT_ID ? "SET" : "NOT SET");
+  console.log("Environment check - ZOOM_CLIENT_SECRET:", process.env.ZOOM_CLIENT_SECRET ? "SET" : "NOT SET");
+
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const error = searchParams.get("error");
+
+    console.log("Callback params:", { code: code ? "PRESENT" : "MISSING", state: state ? "PRESENT" : "MISSING", error });
 
     // Handle OAuth errors
     if (error) {
