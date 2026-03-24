@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import AppSidebar from "@/components/layout/AppSidebar";
 
 type Meeting = {
   id: string;
@@ -51,7 +50,8 @@ export default function YourMeetingsPage() {
           setMeetings(json.meetings || []);
           setTotal(json.total || 0);
         }
-      } catch {
+      } catch (err) {
+        console.warn("Failed to load meetings:", err);
         if (!dead) setMeetings([]);
       } finally {
         if (!dead) setLoading(false);
@@ -83,10 +83,7 @@ export default function YourMeetingsPage() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="app-layout">
-      <AppSidebar />
-
-      <main className="app-main">
+    <>
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
@@ -223,7 +220,6 @@ export default function YourMeetingsPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </>
   );
 }

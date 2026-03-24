@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AppSidebar from "@/components/layout/AppSidebar";
 
 type ApiKey = {
   id: string;
@@ -31,7 +30,15 @@ export default function DevelopersPage() {
   /* New key form */
   const [showKeyForm, setShowKeyForm] = useState(false);
   const [keyName, setKeyName] = useState("");
+  const [keyScopes, setKeyScopes] = useState<string[]>(["meetings:read"]);
   const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
+
+  const AVAILABLE_SCOPES = [
+    "meetings:read", "meetings:write",
+    "contacts:read", "contacts:write",
+    "bookings:read", "bookings:write",
+    "events:read", "analytics:read",
+  ];
 
   /* New webhook form */
   const [showWebhookForm, setShowWebhookForm] = useState(false);
@@ -51,8 +58,8 @@ export default function DevelopersPage() {
       const json = await res.json();
       setApiKeys(json.apiKeys || []);
       setWebhooks(json.webhooks || []);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn("Failed to load developer data:", err);
     } finally {
       setLoading(false);
     }
@@ -62,14 +69,16 @@ export default function DevelopersPage() {
 
   async function createKey() {
     if (!keyName.trim()) return;
+    if (keyScopes.length === 0) return;
     const res = await fetch("/api/developers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "key", name: keyName }),
+      body: JSON.stringify({ type: "key", name: keyName, scopes: keyScopes }),
     });
     const json = await res.json();
     setNewKeySecret(json.apiKey?.key || null);
     setKeyName("");
+    setKeyScopes(["meetings:read"]);
     setShowKeyForm(false);
     load();
   }
@@ -115,11 +124,14 @@ export default function DevelopersPage() {
     );
   }
 
-  return (
-    <div className="app-layout">
-      <AppSidebar />
+  function toggleScope(scope: string) {
+    setKeyScopes((prev) =>
+      prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope],
+    );
+  }
 
-      <main className="app-main">
+  return (
+    <>
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
@@ -263,6 +275,20 @@ export default function DevelopersPage() {
               <input value={keyName} onChange={(e) => setKeyName(e.target.value)} placeholder="Key name (e.g. Production)"
                 className="w-full rounded-lg border px-3 py-2 text-sm mb-4"
                 style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
+              <p className="text-xs font-semibold mb-2" style={{ color: "var(--cal-mid)" }}>Scopes (at least one required):</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {AVAILABLE_SCOPES.map((scope) => (
+                  <button key={scope} onClick={() => toggleScope(scope)}
+                    className="rounded-full px-2.5 py-1 text-xs font-medium border cursor-pointer"
+                    style={{
+                      borderColor: keyScopes.includes(scope) ? "var(--cal-primary)" : "var(--cal-border)",
+                      background: keyScopes.includes(scope) ? "var(--cal-hover)" : "transparent",
+                      color: keyScopes.includes(scope) ? "var(--cal-primary)" : "var(--cal-mid)",
+                    }}>
+                    {scope}
+                  </button>
+                ))}
+              </div>
               <div className="flex justify-end gap-2">
                 <button onClick={() => setShowKeyForm(false)} className="btn-secondary">Cancel</button>
                 <button onClick={createKey} className="btn-primary">Create</button>
@@ -300,7 +326,6 @@ export default function DevelopersPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </>
   );
 }

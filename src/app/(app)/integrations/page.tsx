@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import AppSidebar from "@/components/layout/AppSidebar";
 
 type Integration = {
   id: string;
@@ -54,7 +53,8 @@ export default function IntegrationsPage() {
       const res = await fetch("/api/integrations");
       const json = await res.json();
       setIntegrations(json.integrations || []);
-    } catch {
+    } catch (err) {
+      console.warn("Failed to load integrations:", err);
       setIntegrations([]);
     } finally {
       setLoading(false);
@@ -132,25 +132,21 @@ export default function IntegrationsPage() {
     load();
   }
 
-  function initiateZoomOAuth() {
-    // Use Clerk userId from hook for callback recovery
-    const clerkUserId = user?.id || '';
-
-    // Generate state parameter encoding the userId for the callback to use
-    const state = `zoom-oauth-${clerkUserId}-${Date.now()}-${Math.random().toString(36).substring(2)}`;
-
-    // Store state in sessionStorage for verification
-    sessionStorage.setItem('zoom_oauth_state', state);
-
-    // Zoom OAuth URL - Use exact redirect URI and scopes from Zoom app configuration
-    const zoomClientId = '1ODsdlwGQhKKxvUb0ZmXcA';
-    const redirectUri = 'https://app.schedulemuseai.com/api/integrations/callback';
-    const scope = 'meeting:write:meeting meeting:read:meeting user:read:user';
-
-    const oauthUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${zoomClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
-
-    // Redirect to Zoom OAuth
-    window.location.href = oauthUrl;
+  async function initiateZoomOAuth() {
+    try {
+      // Generate the OAuth URL server-side (includes HMAC-signed state)
+      const res = await fetch("/api/integrations/connect", { method: "POST" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error || "Failed to start Zoom connection");
+        return;
+      }
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (err) {
+      console.warn("Failed to initiate Zoom OAuth:", err);
+      alert("Could not connect to Zoom — please try again.");
+    }
   }
 
   function renderCategory(title: string, subtitle: string, category: "meeting" | "email" | "calendar") {
@@ -203,10 +199,7 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="app-layout">
-      <AppSidebar />
-
-      <main className="app-main">
+    <>
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
@@ -238,7 +231,6 @@ export default function IntegrationsPage() {
             )}
           </div>
         )}
-      </main>
-    </div>
+    </>
   );
 }

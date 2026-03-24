@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
+import { requireScope } from "@/lib/apikey";
 
 interface MeetingRow {
   id: string;
@@ -53,7 +54,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "events:read");
     let sql = `SELECT m.*, bp.title as meeting_type
        FROM meetings m
        JOIN booking_pages bp ON m.booking_page_id = bp.id

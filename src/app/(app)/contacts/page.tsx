@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AppSidebar from "@/components/layout/AppSidebar";
 
 type Contact = {
   id: string;
@@ -39,7 +38,8 @@ export default function ContactsPage() {
       const res = await fetch(`/api/contacts?${params}`);
       const json = await res.json();
       setContacts(json.contacts || []);
-    } catch {
+    } catch (err) {
+      console.warn("Failed to load contacts:", err);
       setContacts([]);
     } finally {
       setLoading(false);
@@ -80,10 +80,7 @@ export default function ContactsPage() {
   const allTags = [...new Set(contacts.flatMap((c) => c.tags))].sort();
 
   return (
-    <div className="app-layout">
-      <AppSidebar />
-
-      <main className="app-main">
+    <>
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
@@ -183,7 +180,6 @@ export default function ContactsPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </>
   );
 }

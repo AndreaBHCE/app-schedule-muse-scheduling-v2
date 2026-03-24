@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
+import { requireScope } from "@/lib/apikey";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const days = parseInt(url.searchParams.get("days") || "30");
 
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "analytics:read");
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceISO = since.toISOString();

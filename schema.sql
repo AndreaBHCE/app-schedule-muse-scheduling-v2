@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   display_name    TEXT NOT NULL DEFAULT '',
   avatar_url      TEXT DEFAULT '',
   timezone        TEXT NOT NULL DEFAULT 'America/New_York',
+  preferences     TEXT DEFAULT '{}',
   created_at      TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -68,6 +69,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   user_id         TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   first_name      TEXT DEFAULT '',
   last_name       TEXT DEFAULT '',
+  name            TEXT DEFAULT '',
   email           TEXT NOT NULL,
   phone           TEXT DEFAULT '',
   company         TEXT DEFAULT '',
@@ -120,7 +122,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
   name            TEXT NOT NULL,
   key_hash        TEXT NOT NULL,
   key_prefix      TEXT NOT NULL,
-  permissions     TEXT NOT NULL DEFAULT '["read"]',
+  scopes          TEXT NOT NULL DEFAULT '["meetings:read"]',
   last_used_at    TEXT,
   expires_at      TEXT,
   created_at      TEXT NOT NULL DEFAULT (datetime('now'))
@@ -137,6 +139,7 @@ CREATE TABLE IF NOT EXISTS webhooks (
   secret          TEXT NOT NULL,
   active          INTEGER NOT NULL DEFAULT 1,
   last_triggered_at TEXT,
+  last_status_code INTEGER,
   failure_count   INTEGER NOT NULL DEFAULT 0,
   created_at      TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT NOT NULL DEFAULT (datetime('now'))

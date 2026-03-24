@@ -1,4 +1,5 @@
 import { d1Query } from "./cloudflare";
+import { encryptToken, decryptToken } from "./crypto";
 
 // Zoom API configuration
 const ZOOM_BASE_URL = "https://api.zoom.us/v2";
@@ -34,8 +35,8 @@ export async function getZoomTokens(userId: string): Promise<ZoomTokens | null> 
   }
 
   const row = result.results[0];
-  const accessToken = row.access_token ? Buffer.from(String(row.access_token), 'base64').toString() : '';
-  const refreshToken = row.refresh_token ? Buffer.from(String(row.refresh_token), 'base64').toString() : '';
+  const accessToken = row.access_token ? decryptToken(String(row.access_token)) : '';
+  const refreshToken = row.refresh_token ? decryptToken(String(row.refresh_token)) : '';
 
   return {
     access_token: accessToken,
@@ -80,10 +81,10 @@ export async function refreshZoomToken(userId: string): Promise<ZoomTokens | nul
     const newTokens = await response.json();
 
     // Update tokens in database
-    const encryptedAccessToken = Buffer.from(newTokens.access_token).toString('base64');
+    const encryptedAccessToken = encryptToken(newTokens.access_token);
     const encryptedRefreshToken = newTokens.refresh_token
-      ? Buffer.from(newTokens.refresh_token).toString('base64')
-      : tokens.refresh_token; // Keep old refresh token if not provided
+      ? encryptToken(newTokens.refresh_token)
+      : encryptToken(tokens.refresh_token); // Re-encrypt existing token for storage
 
     await d1Query(
       `UPDATE integrations SET

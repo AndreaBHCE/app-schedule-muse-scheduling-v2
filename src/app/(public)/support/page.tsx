@@ -29,10 +29,10 @@ export default function Support() {
                 <div>
                   <h3 className="font-medium text-gray-800">Email Support</h3>
                   <a
-                    href="mailto:schedulemuseai@gmail.com"
+                    href="mailto:contact@schedulemuseai.com"
                     className="text-blue-600 hover:text-blue-800"
                   >
-                    schedulemuseai@gmail.com
+                    contact@schedulemuseai.com
                   </a>
                 </div>
                 <div>
@@ -126,7 +126,7 @@ export default function Support() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="mailto:schedulemuseai@gmail.com?subject=ScheduleMuse AI Support Request"
+                href="mailto:contact@schedulemuseai.com?subject=ScheduleMuse AI Support Request"
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-center"
               >
                 Email Us

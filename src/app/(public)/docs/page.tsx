@@ -303,7 +303,7 @@ export default function Documentation() {
                 Visit Support Center
               </Link>
               <a
-                href="mailto:schedulemuseai@gmail.com?subject=ScheduleMuse AI Documentation Question"
+                href="mailto:contact@schedulemuseai.com?subject=ScheduleMuse AI Documentation Question"
                 className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors text-center"
               >
                 Email Support

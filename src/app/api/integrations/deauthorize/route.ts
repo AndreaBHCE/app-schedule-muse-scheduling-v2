@@ -1,11 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { d1Query } from "@/lib/cloudflare";
+
+const WEBHOOK_SECRET = process.env.ZOOM_WEBHOOK_SECRET_TOKEN!;
+
+/**
+ * Verify that the request genuinely came from Zoom.
+ * Zoom signs every webhook with HMAC-SHA256:
+ *   message  = "v0:{timestamp}:{rawBody}"
+ *   expected = "v0=" + hmac_sha256(secret, message)
+ * The signature is sent in the x-zm-signature header.
+ */
+function verifyZoomSignature(
+  rawBody: string,
+  timestamp: string | null,
+  signature: string | null,
+): boolean {
+  if (!timestamp || !signature) return false;
+
+  const message = `v0:${timestamp}:${rawBody}`;
+  const expected = `v0=${crypto.createHmac("sha256", WEBHOOK_SECRET).update(message).digest("hex")}`;
+
+  // Timing-safe comparison to prevent timing attacks
+  if (expected.length !== signature.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+}
 
 // Zoom deauthorization webhook handler
 // Zoom calls this when users disconnect the app
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Read raw body BEFORE parsing — signature covers the exact bytes
+    const rawBody = await request.text();
+    const timestamp = request.headers.get("x-zm-request-timestamp");
+    const signature = request.headers.get("x-zm-signature");
+
+    if (!verifyZoomSignature(rawBody, timestamp, signature)) {
+      console.warn("Zoom deauthorize: invalid signature — rejecting request");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
     const { user_id: zoomUserId, account_id: zoomAccountId } = body;
 
     if (!zoomUserId && !zoomAccountId) {

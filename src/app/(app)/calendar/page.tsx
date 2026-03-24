@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AppSidebar from "@/components/layout/AppSidebar";
 
 type MeetingEvent = {
   id: string;
@@ -63,7 +62,8 @@ export default function CalendarPage() {
         const res = await fetch(`/api/events?range=${range}&date=${dateStr}`);
         const json = await res.json();
         if (!dead) setEvents(json.events || []);
-      } catch {
+      } catch (err) {
+        console.warn("Failed to load calendar events:", err);
         if (!dead) setEvents([]);
       } finally {
         if (!dead) setLoading(false);
@@ -225,10 +225,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="app-layout">
-      <AppSidebar />
-
-      <main className="app-main">
+    <>
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
@@ -296,7 +293,6 @@ export default function CalendarPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </>
   );
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
 import { getAuthUserId, AuthError } from "@/lib/auth";
+import { VALID_SCOPES } from "@/lib/apikey";
+import { requiredString, validUrl } from "@/lib/validate";
 import crypto from "crypto";
 
 /* ── API Keys ─────────────────────────────────────────── */
@@ -83,19 +85,30 @@ export async function POST(request: Request) {
     const { type, ...payload } = await request.json();
 
     if (type === "key") {
-      if (!payload.name?.trim()) return NextResponse.json({ error: "name required" }, { status: 400 });
+      const nameErr = requiredString("name", payload.name);
+      if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
 
       const rawKey = `smuse_${crypto.randomBytes(24).toString("hex")}`;
       const id = `key-${Date.now()}`;
       const prefix = rawKey.slice(0, 12) + "...";
       const hash = crypto.createHash("sha256").update(rawKey).digest("hex");
 
+      // Validate scopes
+      const requestedScopes: string[] = payload.scopes || ["meetings:read"];
+      const invalidScopes = requestedScopes.filter((s: string) => !(VALID_SCOPES as readonly string[]).includes(s));
+      if (invalidScopes.length > 0) {
+        return NextResponse.json(
+          { error: `Invalid scopes: ${invalidScopes.join(", ")}. Valid scopes: ${VALID_SCOPES.join(", ")}` },
+          { status: 400 },
+        );
+      }
+
       await d1Query(
         `INSERT INTO api_keys (id, user_id, name, key_prefix, key_hash, scopes, expires_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           id, userId, payload.name.trim(), prefix, hash,
-          JSON.stringify(payload.scopes || ["read"]),
+          JSON.stringify(requestedScopes),
           payload.expiresAt || null,
         ],
       );
@@ -105,7 +118,8 @@ export async function POST(request: Request) {
     }
 
     if (type === "webhook") {
-      if (!payload.url?.trim()) return NextResponse.json({ error: "url required" }, { status: 400 });
+      const urlErr = validUrl("url", payload.url);
+      if (urlErr) return NextResponse.json({ error: urlErr }, { status: 400 });
 
       const id = `wh-${Date.now()}`;
       const secret = `whsec_${crypto.randomBytes(16).toString("hex")}`;

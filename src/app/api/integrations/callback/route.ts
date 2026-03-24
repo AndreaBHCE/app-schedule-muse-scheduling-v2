@@ -1,13 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { d1Query } from "@/lib/cloudflare";
+import { encryptToken } from "@/lib/crypto";
+import crypto from "crypto";
 
 /**
- * Extract Clerk userId from the state parameter.
- * State format: zoom-oauth-{clerkUserId}-{timestamp}-{random}
+ * Verify & extract Clerk userId from an HMAC-signed state parameter.
+ *
+ * State format: zoom-oauth.{clerkUserId}.{timestamp_b36}.{nonce}.{hmac_hex}
+ * The HMAC is computed over everything before the last dot using ZOOM_CLIENT_SECRET.
  */
-function extractUserIdFromState(state: string): string | null {
-  // Match: zoom-oauth-user_XXXX-timestamp-random
+function verifyState(state: string): string | null {
+  const secret = process.env.ZOOM_CLIENT_SECRET;
+  if (!secret) return null;
+
+  const lastDot = state.lastIndexOf(".");
+  if (lastDot === -1) return null;
+
+  const payload = state.slice(0, lastDot);
+  const receivedSig = state.slice(lastDot + 1);
+
+  const expectedSig = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+
+  // Constant-time comparison to prevent timing attacks
+  if (
+    receivedSig.length !== expectedSig.length ||
+    !crypto.timingSafeEqual(
+      Buffer.from(receivedSig, "hex"),
+      Buffer.from(expectedSig, "hex"),
+    )
+  ) {
+    return null;
+  }
+
+  // Parse payload: zoom-oauth.{userId}.{timestamp}.{nonce}
+  const parts = payload.split(".");
+  if (parts.length !== 4 || parts[0] !== "zoom-oauth") return null;
+
+  // Reject states older than 10 minutes
+  const timestamp = parseInt(parts[2], 36);
+  if (Date.now() - timestamp > 10 * 60 * 1000) return null;
+
+  return parts[1]; // userId
+}
+
+/**
+ * Legacy fallback: extract userId from unsigned state.
+ * Only used for states generated before the HMAC migration.
+ */
+function extractUserIdFromStateLegacy(state: string): string | null {
   const match = state.match(/^zoom-oauth-(user_[^-]+)-/);
   return match ? match[1] : null;
 }
@@ -52,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     // --- Resolve the authenticated user ---
     // Try Clerk auth() first (works if session cookie survived the redirect).
-    // Fall back to the userId embedded in the state parameter.
+    // Fall back to the HMAC-verified userId embedded in the state parameter.
     let userId: string | null = null;
 
     try {
@@ -64,8 +108,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (!userId) {
-      // Recover from the state parameter
-      userId = extractUserIdFromState(state);
+      // Verify HMAC signature before trusting the userId from state
+      userId = verifyState(state);
+
+      // Legacy fallback for pre-HMAC states (remove after migration window)
+      if (!userId) {
+        userId = extractUserIdFromStateLegacy(state);
+        if (userId) {
+          console.warn("OAuth callback used legacy unsigned state — client should be updated");
+        }
+      }
+
       console.log("Recovered userId from state param:", userId ? "PRESENT" : "NULL");
     }
 
@@ -118,7 +171,9 @@ export async function GET(request: NextRequest) {
 async function exchangeCodeForToken(code: string) {
   const zoomClientId = process.env.ZOOM_CLIENT_ID;
   const zoomClientSecret = process.env.ZOOM_CLIENT_SECRET;
-  const redirectUri = 'https://app.schedulemuseai.com/api/integrations/callback';
+  const redirectUri =
+    process.env.ZOOM_REDIRECT_URI ||
+    "https://app.schedulemuseai.com/api/integrations/callback";
 
   if (!zoomClientId || !zoomClientSecret) {
     throw new Error("Zoom credentials not configured — check ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET env vars");
@@ -163,9 +218,9 @@ async function ensureUserExists(userId: string) {
 async function storeZoomTokens(userId: string, tokenData: any) {
   const id = `int-zoom-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 
-  const encryptedAccessToken = Buffer.from(tokenData.access_token).toString('base64');
+  const encryptedAccessToken = encryptToken(tokenData.access_token);
   const encryptedRefreshToken = tokenData.refresh_token
-    ? Buffer.from(tokenData.refresh_token).toString('base64')
+    ? encryptToken(tokenData.refresh_token)
     : '';
 
   const metadata = JSON.stringify({

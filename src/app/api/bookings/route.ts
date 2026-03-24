@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
+import { requireScope } from "@/lib/apikey";
+import { dispatchWebhooks } from "@/lib/webhooks";
+import {
+  firstError,
+  requiredString,
+  optionalString,
+  positiveInt,
+  MAX_LONG,
+  MAX_JSON,
+} from "@/lib/validate";
 
 interface BookingPageRow {
   id: string;
@@ -20,9 +30,10 @@ interface BookingPageRow {
   updated_at: string;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "bookings:read");
     const result = await d1Query<BookingPageRow>(
       `SELECT * FROM booking_pages WHERE user_id = ? ORDER BY updated_at DESC`,
       [userId],
@@ -56,15 +67,38 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "bookings:write");
     const payload = await request.json();
 
-    if (!payload.title?.trim() || !payload.durationMinutes || payload.durationMinutes <= 0) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    const err = firstError(
+      requiredString("title", payload.title),
+      positiveInt("durationMinutes", payload.durationMinutes),
+      optionalString("description", payload.description, MAX_LONG),
+      optionalString("locationDetails", payload.locationDetails),
+      optionalString("locationType", payload.locationType),
+    );
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+
+    // Reject oversized config blobs
+    if (payload.config && JSON.stringify(payload.config).length > MAX_JSON) {
+      return NextResponse.json({ error: `config must be ${MAX_JSON} characters or fewer` }, { status: 400 });
     }
 
     const id = `bp-${Date.now()}-${Math.round(Math.random() * 100000)}`;
     const slug = payload.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+    // Check slug uniqueness for this user before INSERT
+    const existing = await d1Query<{ id: string }>(
+      `SELECT id FROM booking_pages WHERE user_id = ? AND slug = ?`,
+      [userId, slug],
+    );
+    if (existing.results.length > 0) {
+      return NextResponse.json(
+        { error: `A booking page with the slug "${slug}" already exists. Choose a different title.` },
+        { status: 409 },
+      );
+    }
 
     await d1Query(
       `INSERT INTO booking_pages (id, user_id, title, slug, description, duration_minutes, buffer_minutes, status, color, location_type, location_details, config)
@@ -78,7 +112,12 @@ export async function POST(request: Request) {
       ],
     );
 
-    return NextResponse.json({ booking: { id, title: payload.title.trim(), status: "Published" } }, { status: 201 });
+    const booking = { id, title: payload.title.trim(), status: "Published" };
+
+    // Fire-and-forget: dispatch webhook event
+    dispatchWebhooks(userId, "booking_page.created", { booking }).catch(() => {});
+
+    return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("POST /api/bookings error:", err);

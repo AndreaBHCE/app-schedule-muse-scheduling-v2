@@ -2,40 +2,40 @@ import crypto from "crypto";
 
 /**
  * Encrypts plaintext using AES-256-GCM.
- * Returns base64-encoded ciphertext with IV and auth tag.
+ * Returns base64-encoded string: [12-byte IV][16-byte auth tag][ciphertext]
  */
 export function encryptToken(plaintext: string): string {
-  const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex"); // 32 bytes hex
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher("aes-256-gcm", key) as any;
-  cipher.setIV(iv);
+  const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex"); // 32-byte key from 64-char hex
+  const iv = crypto.randomBytes(12); // 96-bit IV — GCM standard
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
 
-  let encrypted = cipher.update(plaintext, "utf8", "base64");
-  encrypted += cipher.final("base64");
+  const encrypted = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
+  const authTag = cipher.getAuthTag(); // 16 bytes
 
-  const authTag = cipher.getAuthTag();
-  const result = Buffer.concat([iv, authTag, Buffer.from(encrypted, "base64")]);
-
-  return result.toString("base64");
+  return Buffer.concat([iv, authTag, encrypted]).toString("base64");
 }
 
 /**
- * Decrypts ciphertext encrypted with encryptToken.
+ * Decrypts ciphertext produced by encryptToken.
  */
 export function decryptToken(ciphertext: string): string {
   const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex");
   const data = Buffer.from(ciphertext, "base64");
 
-  const iv = data.subarray(0, 16);
-  const authTag = data.subarray(16, 32);
-  const encrypted = data.subarray(32);
+  const iv = data.subarray(0, 12);        // 12-byte IV
+  const authTag = data.subarray(12, 28);   // 16-byte auth tag
+  const encrypted = data.subarray(28);     // remaining ciphertext
 
-  const decipher = crypto.createDecipher("aes-256-gcm", key) as any;
-  decipher.setIV(iv);
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(authTag);
 
-  let decrypted = decipher.update(encrypted);
-  decrypted += decipher.final("utf8");
+  const decrypted = Buffer.concat([
+    decipher.update(encrypted),
+    decipher.final(),
+  ]);
 
-  return decrypted;
+  return decrypted.toString("utf8");
 }

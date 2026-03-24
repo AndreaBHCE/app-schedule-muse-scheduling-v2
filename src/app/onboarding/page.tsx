@@ -92,10 +92,24 @@ export default function OnboardingPage() {
 
   const progress = (step / TOTAL_STEPS) * 100;
 
-  const goNext = useCallback(() => {
-    if (step < TOTAL_STEPS) setStep((s) => s + 1);
-    else router.push("/dashboard");
-  }, [step, router]);
+  const goNext = useCallback(async () => {
+    if (step < TOTAL_STEPS) {
+      setStep((s) => s + 1);
+    } else {
+      // Persist onboarding data before navigating to dashboard
+      try {
+        await fetch("/api/onboarding", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+      } catch {
+        // Don't block navigation if save fails
+        console.error("Failed to save onboarding data");
+      }
+      router.push("/dashboard");
+    }
+  }, [step, router, data]);
 
   const goBack = useCallback(() => {
     if (step > 1) setStep((s) => s - 1);

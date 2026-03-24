@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
+import { requireScope } from "@/lib/apikey";
 import { d1Query } from "@/lib/cloudflare";
 import { createZoomMeeting } from "@/lib/zoom";
+import { dispatchWebhooks } from "@/lib/webhooks";
+import {
+  firstError,
+  requiredString,
+  validEmail,
+  validISODate,
+  optionalString,
+  MAX_LONG,
+} from "@/lib/validate";
 
 interface MeetingData {
   booking_page_id?: string;
@@ -17,16 +27,22 @@ interface MeetingData {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "meetings:write");
     const data: MeetingData = await request.json();
 
-    // Validate required fields
-    if (!data.guest_name || !data.guest_email || !data.start_time || !data.end_time) {
-      return NextResponse.json(
-        { error: "Missing required fields: guest_name, guest_email, start_time, end_time" },
-        { status: 400 }
-      );
-    }
+    // Validate required fields with proper format checks
+    const err = firstError(
+      requiredString("guest_name", data.guest_name),
+      validEmail("guest_email", data.guest_email),
+      validISODate("start_time", data.start_time),
+      validISODate("end_time", data.end_time),
+      optionalString("meeting_type", data.meeting_type),
+      optionalString("location", data.location),
+      optionalString("location_details", data.location_details),
+      optionalString("notes", data.notes, MAX_LONG),
+    );
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
 
     // Calculate duration in minutes
     const startTime = new Date(data.start_time);
@@ -70,7 +86,7 @@ export async function POST(request: NextRequest) {
     await d1Query(
       `INSERT INTO meetings (
         id, user_id, booking_page_id, guest_name, guest_email, meeting_type,
-        start_time, end_time, status, location, location_details, notes
+        start_time, end_time, status, location_type, location_details, notes
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?)`,
       [
         meetingId,
@@ -99,6 +115,9 @@ export async function POST(request: NextRequest) {
       created: true,
     };
 
+    // Fire-and-forget: dispatch webhook event
+    dispatchWebhooks(userId, "meeting.created", { meeting }).catch(() => {});
+
     return NextResponse.json({ meeting }, { status: 201 });
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
@@ -109,7 +128,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "meetings:read");
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
     const offset = parseInt(searchParams.get("offset") || "0");
@@ -128,7 +148,7 @@ export async function GET(request: NextRequest) {
       startTime: row.start_time,
       endTime: row.end_time,
       status: row.status,
-      location: row.location,
+      location: row.location_type,
       locationDetails: row.location_details,
       notes: row.notes,
       createdAt: row.created_at,

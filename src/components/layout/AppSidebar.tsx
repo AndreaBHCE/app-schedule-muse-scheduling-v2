@@ -11,8 +11,7 @@ const navItems = [
   { href: "/contacts",      label: "Contacts" },
   { href: "/integrations",  label: "Integrations" },
   { href: "/analytics",     label: "Analytics" },
-  { href: "/webhooks",      label: "Webhooks" },
-  { href: "/api-keys",      label: "API" },
+  { href: "/developers",    label: "Developers" },
 ];
 
 export default function AppSidebar() {

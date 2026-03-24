@@ -8,28 +8,63 @@ export async function POST() {
 
     // TODO: Add admin role check here
     // For now, any authenticated user can migrate (restrict in production)
-    // Add missing columns to contacts table
-    await d1Query(`ALTER TABLE contacts ADD COLUMN first_name TEXT DEFAULT ''`);
-    await d1Query(`ALTER TABLE contacts ADD COLUMN last_name TEXT DEFAULT ''`);
 
-    // Check if meeting_count exists and rename to total_meetings
+    // Add first_name / last_name columns if missing (idempotent)
+    try {
+      await d1Query(`ALTER TABLE contacts ADD COLUMN first_name TEXT DEFAULT ''`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      await d1Query(`ALTER TABLE contacts ADD COLUMN last_name TEXT DEFAULT ''`);
+    } catch {
+      // Column already exists
+    }
+
+    // Rename meeting_count → total_meetings if needed
     try {
       await d1Query(`ALTER TABLE contacts RENAME COLUMN meeting_count TO total_meetings`);
-    } catch (e) {
+    } catch {
       // Column might already be renamed or not exist
-      console.log("meeting_count column might not exist or already renamed");
     }
 
-    // Drop the legacy name column since we now use first_name and last_name
+    // Add name column if missing (keep for backward compatibility)
     try {
-      await d1Query(`ALTER TABLE contacts DROP COLUMN name`);
-    } catch (e) {
-      // Column might not exist or already dropped
-      console.log("name column might not exist or already dropped");
+      await d1Query(`ALTER TABLE contacts ADD COLUMN name TEXT DEFAULT ''`);
+    } catch {
+      // Column already exists
     }
 
-    return NextResponse.json({ success: true, message: "Migration completed" });
+    // Backfill: sync name from first_name + last_name for any rows that have
+    // first_name/last_name but an empty name column
+    await d1Query(
+      `UPDATE contacts
+       SET name = TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, ''))
+       WHERE (name IS NULL OR name = '')
+         AND (first_name != '' OR last_name != '')`,
+    );
+
+    // Add scopes column to api_keys if missing (for H5 API key scopes)
+    try {
+      await d1Query(`ALTER TABLE api_keys ADD COLUMN scopes TEXT NOT NULL DEFAULT '["meetings:read"]'`);
+    } catch {
+      // Column already exists
+    }
+
+    // Add preferences column to users if missing (for M6 onboarding)
+    try {
+      await d1Query(`ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}'`);
+    } catch {
+      // Column already exists
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Migration completed — columns added/verified, name column synced.",
+    });
   } catch (err) {
+    if (err instanceof AuthError)
+      return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("Migration error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

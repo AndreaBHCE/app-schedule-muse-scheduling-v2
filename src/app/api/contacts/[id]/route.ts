@@ -1,82 +1,53 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
+import { requireScope } from "@/lib/apikey";
+import { formatContact, splitName, type ContactRow } from "@/lib/contacts";
 
-interface ContactRow {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  name: string | null;
-  email: string;
-  phone: string;
-  company: string;
-  tags: string;
-  notes: string;
-  total_meetings: number;
-  last_meeting_at: string;
-  created_at: string;
-  updated_at: string;
-}
-
-function formatContact(row: ContactRow) {
-  const firstName = (row.first_name || "").trim();
-  const lastName = (row.last_name || "").trim();
-  const fullNameFromSplit = [firstName, lastName].filter(Boolean).join(" ");
-  const fallbackName = (row.name || "").trim();
-  const fullName = fullNameFromSplit || fallbackName;
-
-  return {
-    id: row.id,
-    firstName,
-    lastName,
-    name: fullName,
-    email: row.email,
-    phone: row.phone,
-    company: row.company,
-    tags: JSON.parse(row.tags || "[]"),
-    notes: row.notes,
-    totalMeetings: row.total_meetings,
-    lastMeetingAt: row.last_meeting_at,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-function splitName(name: string): { firstName: string; lastName: string } {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length <= 1) return { firstName: parts[0] || "", lastName: "" };
-  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
-}
-
-export async function GET(request: Request, context: any) {
+/* ── GET /api/contacts/:id ──────────────────────────────── */
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const userId = await getAuthUserId();
-    const params = await context.params;
-    const id = params.id;
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "contacts:read");
+    const { id } = await params;
 
-    const result = await d1Query<ContactRow>(`SELECT * FROM contacts WHERE id = ? AND user_id = ?`, [id, userId]);
+    const result = await d1Query<ContactRow>(
+      `SELECT * FROM contacts WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
     const row = result.results[0];
 
-    if (!row) return NextResponse.json({ error: "Contact not found" }, { status: 404 });
+    if (!row) {
+      return NextResponse.json({ error: "Contact not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ contact: formatContact(row) });
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    if (err instanceof AuthError)
+      return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/contacts/:id error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
 
-export async function PUT(request: Request, context: any) {
+/* ── PUT /api/contacts/:id ──────────────────────────────── */
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const userId = await getAuthUserId();
-    const params = await context.params;
-    const id = params.id;
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "contacts:write");
+    const { id } = await params;
     const payload = await request.json();
 
     let firstName = (payload.firstName || "").trim();
     let lastName = (payload.lastName || "").trim();
 
+    // If only a full name was provided, split it
     if (!firstName && !lastName && payload.name) {
       const parsed = splitName(payload.name);
       firstName = parsed.firstName;
@@ -84,7 +55,10 @@ export async function PUT(request: Request, context: any) {
     }
 
     if (!firstName && !lastName) {
-      return NextResponse.json({ error: "firstName and/or lastName required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "firstName and/or lastName required" },
+        { status: 400 },
+      );
     }
     if (!payload.email?.trim()) {
       return NextResponse.json({ error: "email required" }, { status: 400 });
@@ -98,6 +72,10 @@ export async function PUT(request: Request, context: any) {
 
     sets.push(`last_name = ?`);
     paramsArr.push(lastName);
+
+    // Keep legacy name column in sync
+    sets.push(`name = ?`);
+    paramsArr.push([firstName, lastName].filter(Boolean).join(" "));
 
     if (payload.email) {
       sets.push(`email = ?`);
@@ -120,35 +98,50 @@ export async function PUT(request: Request, context: any) {
       paramsArr.push(JSON.stringify(payload.tags || []));
     }
 
-    sets.push(`name = ?`);
-    paramsArr.push([firstName, lastName].filter(Boolean).join(" ")); // keep backward compat
     sets.push(`updated_at = datetime('now')`);
-
     paramsArr.push(id, userId);
 
-    await d1Query(`UPDATE contacts SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`, paramsArr);
+    await d1Query(
+      `UPDATE contacts SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`,
+      paramsArr,
+    );
 
-    const updated = await d1Query<ContactRow>(`SELECT * FROM contacts WHERE id = ? AND user_id = ?`, [id, userId]);
-    if (!updated.results.length) return NextResponse.json({ error: "Contact not found" }, { status: 404 });
+    const updated = await d1Query<ContactRow>(
+      `SELECT * FROM contacts WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+    if (!updated.results.length) {
+      return NextResponse.json({ error: "Contact not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ contact: formatContact(updated.results[0]) });
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    if (err instanceof AuthError)
+      return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("PUT /api/contacts/:id error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request, context: any) {
+/* ── DELETE /api/contacts/:id ───────────────────────────── */
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const userId = await getAuthUserId();
-    const params = await context.params;
-    const id = params.id;
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "contacts:write");
+    const { id } = await params;
 
-    await d1Query(`DELETE FROM contacts WHERE id = ? AND user_id = ?`, [id, userId]);
+    await d1Query(
+      `DELETE FROM contacts WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+
     return NextResponse.json({ success: true });
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    if (err instanceof AuthError)
+      return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("DELETE /api/contacts/:id error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

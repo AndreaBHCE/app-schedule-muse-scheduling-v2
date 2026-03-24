@@ -1,63 +1,10 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
-
-interface ContactRow {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  name: string | null;
-  email: string;
-  phone: string;
-  company: string;
-  tags: string;
-  notes: string;
-  total_meetings: number;
-  last_meeting_at: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ContactPayload {
-  firstName?: string;
-  lastName?: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  tags?: string[];
-  notes?: string;
-}
-
-export function formatContact(row: ContactRow) {
-  const firstName = (row.first_name || "").trim();
-  const lastName = (row.last_name || "").trim();
-  const fullName = [firstName, lastName].filter(Boolean).join(" ");
-
-  return {
-    id: row.id,
-    firstName,
-    lastName,
-    name: fullName,
-    email: row.email,
-    phone: row.phone,
-    company: row.company,
-    tags: JSON.parse(row.tags || "[]"),
-    notes: row.notes,
-    totalMeetings: row.total_meetings,
-    lastMeetingAt: row.last_meeting_at,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-export function splitName(name: string): { firstName: string; lastName: string } {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length <= 1) {
-    return { firstName: parts[0] || "", lastName: "" };
-  }
-  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
-}
+import { resolveAuth, AuthError } from "@/lib/auth";
+import { requireScope } from "@/lib/apikey";
+import { dispatchWebhooks } from "@/lib/webhooks";
+import { formatContact, splitName, type ContactRow, type ContactPayload } from "@/lib/contacts";
+import { firstError, requiredString, optionalString, validEmail, MAX_LONG } from "@/lib/validate";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -65,8 +12,8 @@ export async function GET(request: Request) {
   const tag = url.searchParams.get("tag") || "";
 
   try {
-    const userId = await getAuthUserId();
-
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "contacts:read");
     let sql = `SELECT * FROM contacts WHERE user_id = ?`;
     const params: (string | number)[] = [userId];
 
@@ -102,18 +49,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "contacts:write");
     const payload: ContactPayload = await request.json();
+
+    const err = firstError(
+      requiredString("firstName", payload.firstName),
+      requiredString("lastName", payload.lastName),
+      validEmail("email", payload.email),
+      optionalString("phone", payload.phone),
+      optionalString("company", payload.company),
+      optionalString("notes", payload.notes, MAX_LONG),
+    );
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
 
     const firstName = (payload.firstName || "").trim();
     const lastName = (payload.lastName || "").trim();
-
-    if (!firstName || !lastName) {
-      return NextResponse.json({ error: "firstName and lastName required" }, { status: 400 });
-    }
-    if (!payload.email?.trim()) {
-      return NextResponse.json({ error: "email required" }, { status: 400 });
-    }
+    const email = (payload.email || "").trim();
 
     const id = `contact-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 
@@ -126,7 +78,7 @@ export async function POST(request: Request) {
         firstName,
         lastName,
         [firstName, lastName].filter(Boolean).join(" "),
-        payload.email.trim(),
+        email,
         payload.phone || "",
         payload.company || "",
         JSON.stringify(payload.tags || []),
@@ -134,7 +86,12 @@ export async function POST(request: Request) {
       ],
     );
 
-    return NextResponse.json({ contact: { id, firstName, lastName, name: [firstName, lastName].filter(Boolean).join(" ") } }, { status: 201 });
+    const contact = { id, firstName, lastName, name: [firstName, lastName].filter(Boolean).join(" ") };
+
+    // Fire-and-forget: dispatch webhook event
+    dispatchWebhooks(userId, "contact.created", { contact }).catch(() => {});
+
+    return NextResponse.json({ contact }, { status: 201 });
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("POST /api/contacts error:", err);
@@ -144,8 +101,9 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const userId = await getAuthUserId();
-    const { id, ...fields } = await request.json() as { id?: string } & ContactPayload;
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "contacts:write");
+    const { id, ...fields } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     const sets: string[] = [];
@@ -197,6 +155,11 @@ export async function PATCH(request: Request) {
 
     if (sets.length === 0) return NextResponse.json({ error: "nothing to update" }, { status: 400 });
 
+    // Keep legacy name column in sync whenever first_name or last_name changes
+    if (fields.firstName || fields.lastName) {
+      sets.push(`name = TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, ''))`);
+    }
+
     sets.push(`updated_at = datetime('now')`);
     params.push(id, userId);
 
@@ -212,7 +175,8 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "contacts:write");
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
+import { requireScope } from "@/lib/apikey";
 
 interface BookingPageRow {
   id: string;
@@ -26,7 +27,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(_request);
+    requireScope(scopes, "bookings:read");
     const { id } = await params;
 
     const result = await d1Query<BookingPageRow>(
@@ -73,7 +75,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(request);
+    requireScope(scopes, "bookings:write");
     const { id } = await params;
     const payload = await request.json();
 
@@ -118,8 +121,31 @@ export async function PUT(
       ],
     );
 
+    // Re-fetch the updated row so the response reflects the real DB state
+    const updated = await d1Query<BookingPageRow>(
+      `SELECT * FROM booking_pages WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
+    const row = updated.results[0];
+
     return NextResponse.json({
-      booking: { id, title: payload.title?.trim(), status: "Published" },
+      booking: {
+        id: row.id,
+        title: row.title,
+        slug: row.slug,
+        description: row.description,
+        durationMinutes: row.duration_minutes,
+        bufferMinutes: row.buffer_minutes,
+        status: row.status.charAt(0).toUpperCase() + row.status.slice(1),
+        color: row.color,
+        locationType: row.location_type,
+        locationDetails: row.location_details,
+        config: JSON.parse(row.config || "{}"),
+        bookingsLast7Days: row.bookings_last_7d,
+        conversionDeltaPercent: row.conversion_delta_pct,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      },
     });
   } catch (err) {
     if (err instanceof AuthError)
@@ -135,7 +161,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const userId = await getAuthUserId();
+    const { userId, scopes } = await resolveAuth(_request);
+    requireScope(scopes, "bookings:write");
     const { id } = await params;
 
     // Verify ownership

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AppSidebar from "@/components/layout/AppSidebar";
 
 type Analytics = {
   period: { days: number; since: string };
@@ -35,7 +34,8 @@ export default function AnalyticsPage() {
         const res = await fetch(`/api/analytics?days=${days}`);
         const json = await res.json();
         if (!dead) setData(json);
-      } catch {
+      } catch (err) {
+        console.warn("Failed to load analytics:", err);
         if (!dead) setData(null);
       } finally {
         if (!dead) setLoading(false);
@@ -87,10 +87,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="app-layout">
-      <AppSidebar />
-
-      <main className="app-main">
+    <>
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
@@ -185,7 +182,6 @@ export default function AnalyticsPage() {
             </section>
           </>
         )}
-      </main>
-    </div>
+    </>
   );
 }

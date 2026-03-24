@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import AppSidebar from "@/components/layout/AppSidebar";
 import UserProfile from "@/components/layout/UserProfile";
 
 type Booking = {
@@ -66,43 +65,23 @@ export default function DashboardPage() {
 
   const today = new Date();
 
-  const kpis = (() => {
-    const now = new Date();
-    const minus7 = new Date(now);
-    minus7.setDate(minus7.getDate() - 7);
-    const minus30 = new Date(now);
-    minus30.setDate(minus30.getDate() - 30);
+  /* ── Server-side KPIs ── */
+  const [kpis, setKpis] = useState({
+    bookings7d: 0, bookings30d: 0,
+    meetingsCompleted7d: 0, meetingsCompleted30d: 0,
+    noShowsPct7d: 0,
+  });
 
-    const bookings7d = bookings.filter((booking) => {
-      const created = new Date(booking.createdAt);
-      return created >= minus7 && created <= now;
-    }).length;
-    const bookings30d = bookings.filter((booking) => {
-      const created = new Date(booking.createdAt);
-      return created >= minus30 && created <= now;
-    }).length;
-
-    const meetingsCompleted7d = events.filter((event) => {
-      const start = new Date(event.startTime);
-      return start >= minus7 && start <= now && event.status === "confirmed";
-    }).length;
-    const meetingsCompleted30d = events.filter((event) => {
-      const start = new Date(event.startTime);
-      return start >= minus30 && start <= now && event.status === "confirmed";
-    }).length;
-
-    const candidate7d = events.filter((event) => {
-      const start = new Date(event.startTime);
-      return start >= minus7 && start <= now && ["confirmed", "canceled"].includes(event.status);
-    }).length;
-    const noShows7d = events.filter((event) => {
-      const start = new Date(event.startTime);
-      return start >= minus7 && start <= now && event.status === "canceled";
-    }).length;
-    const noShowsPct7d = candidate7d > 0 ? Number(((noShows7d / candidate7d) * 100).toFixed(1)) : 0;
-
-    return { bookings7d, bookings30d, meetingsCompleted7d, meetingsCompleted30d, noShowsPct7d };
-  })();
+  useEffect(() => {
+    fetch("/api/dashboard")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.bookings7d !== undefined) setKpis(data);
+      })
+      .catch((err: unknown) => {
+        console.warn("Failed to load dashboard KPIs:", err);
+      });
+  }, []);
 
   useEffect(() => {
     let canceled = false;
@@ -311,10 +290,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="app-layout">
-      <AppSidebar />
-
-      <main className="app-main">
+    <>
         <header className="app-header relative">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
@@ -474,7 +450,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-      </main>
-    </div>
+    </>
   );
 }

@@ -5,10 +5,24 @@
  * These run server-side only (Next.js API routes / Server Components).
  */
 
-const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
-const D1_DB_ID = process.env.CLOUDFLARE_D1_DATABASE_ID!;
-const KV_NS_ID = process.env.CLOUDFLARE_KV_NAMESPACE_ID!;
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
+/**
+ * Read an env var or throw a clear startup error.
+ */
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}. ` +
+      `Set it in .env.local (dev) or your deployment environment.`,
+    );
+  }
+  return value;
+}
+
+const ACCOUNT_ID = requireEnv("CLOUDFLARE_ACCOUNT_ID");
+const D1_DB_ID   = requireEnv("CLOUDFLARE_D1_DATABASE_ID");
+const KV_NS_ID   = requireEnv("CLOUDFLARE_KV_NAMESPACE_ID");
+const API_TOKEN  = requireEnv("CLOUDFLARE_API_TOKEN");
 
 const CF_BASE = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}`;
 
