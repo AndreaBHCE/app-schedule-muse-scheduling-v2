@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
+import { getAuthUserId, AuthError } from "@/lib/auth";
 
 export async function POST() {
   try {
+    const userId = await getAuthUserId();
+
+    // TODO: Add admin role check here
+    // For now, any authenticated user can migrate (restrict in production)
     // Add missing columns to contacts table
     await d1Query(`ALTER TABLE contacts ADD COLUMN first_name TEXT DEFAULT ''`);
     await d1Query(`ALTER TABLE contacts ADD COLUMN last_name TEXT DEFAULT ''`);

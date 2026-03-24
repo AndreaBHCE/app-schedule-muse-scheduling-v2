@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
 import { getAuthUserId, AuthError } from "@/lib/auth";
+import { encryptToken, decryptToken } from "@/lib/crypto";
 
 interface IntegrationRow {
   id: string;
   provider: string;
   status: string;
-  external_id: string;
-  config: string;
-  last_synced_at: string;
+  access_token: string;
+  refresh_token: string;
+  metadata: string;
+  connected_at: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,16 +23,25 @@ export async function GET() {
       [userId],
     );
 
-    const integrations = result.results.map((row) => ({
-      id: row.id,
-      provider: row.provider,
-      status: row.status,
-      externalId: row.external_id,
-      config: JSON.parse(row.config || "{}"),
-      lastSyncedAt: row.last_synced_at,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
+    const integrations = result.results.map((row) => {
+      let metadata = {};
+      try {
+        metadata = JSON.parse(row.metadata || "{}");
+      } catch (e) {
+        console.error("Failed to parse metadata:", e);
+      }
+      return {
+        id: row.id,
+        provider: row.provider,
+        status: row.status,
+        accessToken: row.access_token ? decryptToken(row.access_token) : null,
+        refreshToken: row.refresh_token ? decryptToken(row.refresh_token) : null,
+        metadata,
+        connectedAt: row.connected_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    });
 
     return NextResponse.json({ integrations });
   } catch (err) {
@@ -43,15 +54,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const userId = await getAuthUserId();
-    const { provider, externalId, config } = await request.json();
+    const { provider, accessToken, refreshToken, metadata } = await request.json();
     if (!provider) return NextResponse.json({ error: "provider required" }, { status: 400 });
 
     const id = `int-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+    const encryptedAccess = accessToken ? encryptToken(accessToken) : "";
+    const encryptedRefresh = refreshToken ? encryptToken(refreshToken) : "";
 
     await d1Query(
-      `INSERT INTO integrations (id, user_id, provider, status, external_id, config, last_synced_at)
-       VALUES (?, ?, ?, 'connected', ?, ?, datetime('now'))`,
-      [id, userId, provider, externalId || "", JSON.stringify(config || {})],
+      `INSERT INTO integrations (id, user_id, provider, status, access_token, refresh_token, metadata, connected_at)
+       VALUES (?, ?, ?, 'connected', ?, ?, ?, datetime('now'))`,
+      [id, userId, provider, encryptedAccess, encryptedRefresh, JSON.stringify(metadata || {})],
     );
 
     return NextResponse.json({ integration: { id, provider, status: "connected" } }, { status: 201 });

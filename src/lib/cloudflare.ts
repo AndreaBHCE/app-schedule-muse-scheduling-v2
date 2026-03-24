@@ -66,18 +66,30 @@ export async function d1Query<T = Record<string, unknown>>(
 }
 
 /**
- * Run multiple SQL statements in a single request (batch).
+ * Run multiple SQL statements in a single atomic batch request.
  */
 export async function d1Batch(
   statements: { sql: string; params?: unknown[] }[],
 ): Promise<D1Result[]> {
-  // D1 REST API doesn't have a true batch endpoint, so we run sequentially.
-  // For schema creation we just use multi-statement queries separated by ;
-  const results: D1Result[] = [];
-  for (const stmt of statements) {
-    results.push(await d1Query(stmt.sql, stmt.params ?? []));
+  const res = await fetch(`${CF_BASE}/d1/database/${D1_DB_ID}/query`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(statements.map(stmt => ({ sql: stmt.sql, params: stmt.params ?? [] }))),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`D1 batch query failed (${res.status}): ${text}`);
   }
-  return results;
+
+  const json = await res.json();
+
+  if (!json.success) {
+    throw new Error(`D1 batch query error: ${JSON.stringify(json.errors)}`);
+  }
+
+  // The batch API returns an array of result sets
+  return json.result as D1Result[];
 }
 
 /* ─────────────────────────── KV ─────────────────────────── */
