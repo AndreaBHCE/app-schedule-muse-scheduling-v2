@@ -7,7 +7,7 @@ import crypto from "crypto";
 export function encryptToken(plaintext: string): string {
   const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex"); // 32 bytes hex
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher("aes-256-gcm", key);
+  const cipher = crypto.createCipher("aes-256-gcm", key) as any;
   cipher.setIV(iv);
 
   let encrypted = cipher.update(plaintext, "utf8", "base64");
@@ -30,7 +30,7 @@ export function decryptToken(ciphertext: string): string {
   const authTag = data.subarray(16, 32);
   const encrypted = data.subarray(32);
 
-  const decipher = crypto.createDecipher("aes-256-gcm", key);
+  const decipher = crypto.createDecipher("aes-256-gcm", key) as any;
   decipher.setIV(iv);
   decipher.setAuthTag(authTag);
 
