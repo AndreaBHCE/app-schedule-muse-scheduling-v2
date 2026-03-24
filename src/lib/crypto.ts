@@ -5,7 +5,11 @@ import crypto from "crypto";
  * Returns base64-encoded string: [12-byte IV][16-byte auth tag][ciphertext]
  */
 export function encryptToken(plaintext: string): string {
-  const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex"); // 32-byte key from 64-char hex
+  const envKey = process.env.ENCRYPTION_KEY;
+  if (!envKey) {
+    throw new Error("Missing ENCRYPTION_KEY environment variable — cannot encrypt tokens");
+  }
+  const key = Buffer.from(envKey, "hex"); // 32-byte key from 64-char hex
   const iv = crypto.randomBytes(12); // 96-bit IV — GCM standard
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
 
@@ -22,7 +26,11 @@ export function encryptToken(plaintext: string): string {
  * Decrypts ciphertext produced by encryptToken.
  */
 export function decryptToken(ciphertext: string): string {
-  const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex");
+  const envKey = process.env.ENCRYPTION_KEY;
+  if (!envKey) {
+    throw new Error("Missing ENCRYPTION_KEY environment variable — cannot decrypt tokens");
+  }
+  const key = Buffer.from(envKey, "hex");
   const data = Buffer.from(ciphertext, "base64");
 
   const iv = data.subarray(0, 12);        // 12-byte IV

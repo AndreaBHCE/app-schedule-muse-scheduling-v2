@@ -232,6 +232,10 @@ async function ensureUserExists(userId: string, email: string, displayName: stri
 async function storeZoomTokens(userId: string, tokenData: any) {
   const id = `int-zoom-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 
+  if (!tokenData.access_token || typeof tokenData.access_token !== "string") {
+    throw new Error("Zoom token response missing access_token");
+  }
+
   const encryptedAccessToken = encryptToken(tokenData.access_token);
   const encryptedRefreshToken = tokenData.refresh_token
     ? encryptToken(tokenData.refresh_token)
