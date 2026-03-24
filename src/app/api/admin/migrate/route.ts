@@ -58,6 +58,28 @@ export async function POST() {
       // Column already exists
     }
 
+    // Add token/metadata columns to integrations if missing (for Zoom OAuth)
+    try {
+      await d1Query(`ALTER TABLE integrations ADD COLUMN access_token TEXT DEFAULT ''`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      await d1Query(`ALTER TABLE integrations ADD COLUMN refresh_token TEXT DEFAULT ''`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      await d1Query(`ALTER TABLE integrations ADD COLUMN metadata TEXT DEFAULT '{}'`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      await d1Query(`ALTER TABLE integrations ADD COLUMN connected_at TEXT`);
+    } catch {
+      // Column already exists
+    }
+
     return NextResponse.json({
       success: true,
       message: "Migration completed — columns added/verified, name column synced.",
