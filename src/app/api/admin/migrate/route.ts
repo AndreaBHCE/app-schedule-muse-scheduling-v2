@@ -91,3 +91,8 @@ export async function POST() {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
+
+// Allow GET so you can trigger migration by visiting the URL in a browser
+export async function GET() {
+  return POST();
+}
