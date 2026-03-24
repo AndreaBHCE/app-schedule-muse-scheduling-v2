@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { d1Query } from "@/lib/cloudflare";
 import { encryptToken } from "@/lib/crypto";
 import crypto from "crypto";
@@ -139,7 +139,17 @@ export async function GET(request: NextRequest) {
     }
 
     // --- Ensure user row exists (FK constraint) ---
-    await ensureUserExists(userId);
+    // Fetch the user's email & name from Clerk so the INSERT satisfies NOT NULL columns
+    let email = "";
+    let displayName = "";
+    try {
+      const clerkUser = await currentUser();
+      email = clerkUser?.emailAddresses?.[0]?.emailAddress || "";
+      displayName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || "";
+    } catch (e) {
+      console.warn("Could not fetch Clerk user profile for DB upsert:", e);
+    }
+    await ensureUserExists(userId, email, displayName);
 
     // --- Store the tokens ---
     await storeZoomTokens(userId, tokenResponse);
@@ -204,13 +214,17 @@ async function exchangeCodeForToken(code: string) {
   return await response.json();
 }
 
-// Ensure the user row exists in D1 so the FK on integrations.user_id won't fail
-async function ensureUserExists(userId: string) {
+// Ensure the user row exists in D1 so the FK on integrations.user_id won't fail.
+// The users table requires `email NOT NULL`, so we must supply it on INSERT.
+async function ensureUserExists(userId: string, email: string, displayName: string) {
   await d1Query(
-    `INSERT INTO users (id, created_at, updated_at)
-     VALUES (?, datetime('now'), datetime('now'))
-     ON CONFLICT(id) DO NOTHING`,
-    [userId]
+    `INSERT INTO users (id, email, display_name, created_at, updated_at)
+     VALUES (?, ?, ?, datetime('now'), datetime('now'))
+     ON CONFLICT(id) DO UPDATE SET
+       email = CASE WHEN users.email = '' THEN excluded.email ELSE users.email END,
+       display_name = CASE WHEN users.display_name = '' THEN excluded.display_name ELSE users.display_name END,
+       updated_at = datetime('now')`,
+    [userId, email || "unknown@placeholder", displayName]
   );
 }
 
