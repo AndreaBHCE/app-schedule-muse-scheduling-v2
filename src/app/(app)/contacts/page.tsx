@@ -282,7 +282,7 @@ export default function ContactsPage() {
                               <button
                                 onClick={() => deleteContact(c.id)}
                                 className="w-full text-left px-4 py-2 text-sm hover:opacity-80"
-                                style={{ color: "#b91c1c" }}
+                                style={{ color: "#0d4f4f" }}
                               >
                                 Delete
                               </button>
