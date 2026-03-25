@@ -324,14 +324,14 @@ export default function YourMeetingsPage() {
                         <div className="font-semibold" style={{ color: "var(--cal-heading)" }}>{m.guestName}</div>
                         <div className="text-xs" style={{ color: "var(--cal-mid)" }}>{m.guestEmail}</div>
                       </td>
-                      <td className="py-3 px-3">{m.meetingType}</td>
-                      <td className="py-3 px-3">
+                      <td className="py-3 px-3" style={{ color: "#ffffff" }}>{m.meetingType}</td>
+                      <td className="py-3 px-3" style={{ color: "#ffffff" }}>
                         <div>{dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</div>
                         <div className="text-xs" style={{ color: "var(--cal-mid)" }}>
                           {dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                         </div>
                       </td>
-                      <td className="py-3 px-3">
+                      <td className="py-3 px-3" style={{ color: "#ffffff" }}>
                         <span className="text-xs">{m.locationType}</span>
                       </td>
                       <td className="py-3 px-3">
