@@ -1,4 +1,5 @@
 import AppSidebar from "@/components/layout/AppSidebar";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default function AuthenticatedLayout({
   children,
@@ -6,9 +7,11 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="app-layout">
-      <AppSidebar />
-      <main className="app-main">{children}</main>
-    </div>
+    <ToastProvider>
+      <div className="app-layout">
+        <AppSidebar />
+        <main className="app-main">{children}</main>
+      </div>
+    </ToastProvider>
   );
 }

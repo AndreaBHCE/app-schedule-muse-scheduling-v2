@@ -30,38 +30,67 @@ interface BookingPageRow {
   updated_at: string;
 }
 
+function formatBooking(row: BookingPageRow) {
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    description: row.description,
+    durationMinutes: row.duration_minutes,
+    bufferMinutes: row.buffer_minutes,
+    status:
+      (row.status.charAt(0).toUpperCase() + row.status.slice(1)) as
+        | "Published"
+        | "Draft"
+        | "Paused",
+    color: row.color,
+    locationType: row.location_type,
+    locationDetails: row.location_details,
+    config: JSON.parse(row.config || "{}"),
+    bookingsLast7Days: row.bookings_last_7d,
+    conversionDeltaPercent: row.conversion_delta_pct,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function GET(request: Request) {
   try {
     const { userId, scopes } = await resolveAuth(request);
     requireScope(scopes, "bookings:read");
-    const result = await d1Query<BookingPageRow>(
-      `SELECT * FROM booking_pages WHERE user_id = ? ORDER BY updated_at DESC`,
+
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.min(
+      Math.max(1, parseInt(searchParams.get("limit") || "50", 10)),
+      100,
+    );
+    const offset = (page - 1) * limit;
+
+    // Total count
+    const countResult = await d1Query<{ count: number }>(
+      `SELECT COUNT(*) as count FROM booking_pages WHERE user_id = ?`,
       [userId],
     );
+    const total = countResult.results[0]?.count ?? 0;
 
-    const bookings = result.results.map((row) => ({
-      id: row.id,
-      title: row.title,
-      slug: row.slug,
-      description: row.description,
-      durationMinutes: row.duration_minutes,
-      bufferMinutes: row.buffer_minutes,
-      status: row.status.charAt(0).toUpperCase() + row.status.slice(1) as "Published" | "Draft" | "Paused",
-      color: row.color,
-      locationType: row.location_type,
-      locationDetails: row.location_details,
-      config: JSON.parse(row.config || "{}"),
-      bookingsLast7Days: row.bookings_last_7d,
-      conversionDeltaPercent: row.conversion_delta_pct,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
+    // Paginated results
+    const result = await d1Query<BookingPageRow>(
+      `SELECT * FROM booking_pages WHERE user_id = ? ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+      [userId, limit, offset],
+    );
 
-    return NextResponse.json({ bookings });
+    const bookings = result.results.map(formatBooking);
+
+    return NextResponse.json({ bookings, total, page, limit });
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    if (err instanceof AuthError)
+      return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("GET /api/bookings error:", err);
-    return NextResponse.json({ bookings: [], error: (err as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { bookings: [], error: (err as Error).message },
+      { status: 500 },
+    );
   }
 }
 
@@ -82,11 +111,18 @@ export async function POST(request: Request) {
 
     // Reject oversized config blobs
     if (payload.config && JSON.stringify(payload.config).length > MAX_JSON) {
-      return NextResponse.json({ error: `config must be ${MAX_JSON} characters or fewer` }, { status: 400 });
+      return NextResponse.json(
+        { error: `config must be ${MAX_JSON} characters or fewer` },
+        { status: 400 },
+      );
     }
 
     const id = `bp-${Date.now()}-${Math.round(Math.random() * 100000)}`;
-    const slug = payload.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const slug = payload.title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
 
     // Check slug uniqueness for this user before INSERT
     const existing = await d1Query<{ id: string }>(
@@ -95,7 +131,9 @@ export async function POST(request: Request) {
     );
     if (existing.results.length > 0) {
       return NextResponse.json(
-        { error: `A booking page with the slug "${slug}" already exists. Choose a different title.` },
+        {
+          error: `A booking page with the slug "${slug}" already exists. Choose a different title.`,
+        },
         { status: 409 },
       );
     }
@@ -104,10 +142,17 @@ export async function POST(request: Request) {
       `INSERT INTO booking_pages (id, user_id, title, slug, description, duration_minutes, buffer_minutes, status, color, location_type, location_details, config)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, userId, payload.title.trim(), slug,
-        payload.description || "", payload.durationMinutes, payload.bufferMinutes || 0,
-        "published", payload.color || "#0d9488",
-        payload.locationType || "virtual", payload.locationDetails || "",
+        id,
+        userId,
+        payload.title.trim(),
+        slug,
+        payload.description || "",
+        payload.durationMinutes,
+        payload.bufferMinutes || 0,
+        "published",
+        payload.color || "#0d9488",
+        payload.locationType || "virtual",
+        payload.locationDetails || "",
         JSON.stringify(payload.config || {}),
       ],
     );
@@ -115,12 +160,18 @@ export async function POST(request: Request) {
     const booking = { id, title: payload.title.trim(), status: "Published" };
 
     // Fire-and-forget: dispatch webhook event
-    dispatchWebhooks(userId, "booking_page.created", { booking }).catch(() => {});
+    dispatchWebhooks(userId, "booking_page.created", { booking }).catch(
+      () => {},
+    );
 
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });
+    if (err instanceof AuthError)
+      return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("POST /api/bookings error:", err);
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (err as Error).message },
+      { status: 500 },
+    );
   }
 }

@@ -2,24 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { d1Query } from "@/lib/cloudflare";
 
-const WEBHOOK_SECRET = process.env.ZOOM_WEBHOOK_SECRET_TOKEN!;
-
 /**
  * Verify that the request genuinely came from Zoom.
  * Zoom signs every webhook with HMAC-SHA256:
  *   message  = "v0:{timestamp}:{rawBody}"
  *   expected = "v0=" + hmac_sha256(secret, message)
  * The signature is sent in the x-zm-signature header.
+ *
+ * Returns true only if the secret is configured AND the signature is valid.
+ * If the secret env var is missing, returns false (fail closed).
  */
 function verifyZoomSignature(
   rawBody: string,
   timestamp: string | null,
   signature: string | null,
 ): boolean {
+  const secret = process.env.ZOOM_WEBHOOK_SECRET_TOKEN;
+  if (!secret) {
+    console.error(
+      "ZOOM_WEBHOOK_SECRET_TOKEN is not set — rejecting webhook. " +
+        "Configure this env var to process Zoom deauthorization events.",
+    );
+    return false;
+  }
   if (!timestamp || !signature) return false;
 
   const message = `v0:${timestamp}:${rawBody}`;
-  const expected = `v0=${crypto.createHmac("sha256", WEBHOOK_SECRET).update(message).digest("hex")}`;
+  const expected = `v0=${crypto.createHmac("sha256", secret).update(message).digest("hex")}`;
 
   // Timing-safe comparison to prevent timing attacks
   if (expected.length !== signature.length) return false;
@@ -44,13 +53,16 @@ export async function POST(request: NextRequest) {
     const { user_id: zoomUserId, account_id: zoomAccountId } = body;
 
     if (!zoomUserId && !zoomAccountId) {
-      return NextResponse.json({ error: "Missing user_id or account_id" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing user_id or account_id" },
+        { status: 400 },
+      );
     }
 
     // Find and disconnect the integration
-    // We need to match by Zoom user ID or account ID stored in metadata
+    // Match by Zoom user ID or account ID stored in metadata
     let query = `UPDATE integrations SET status = 'disconnected', updated_at = datetime('now') WHERE provider = 'zoom'`;
-    let params: any[] = [];
+    const params: string[] = [];
 
     if (zoomUserId) {
       query += ` AND json_extract(metadata, '$.zoom_user_id') = ?`;
@@ -63,13 +75,17 @@ export async function POST(request: NextRequest) {
     const result = await d1Query(query, params);
 
     if (result.meta?.changes && result.meta.changes > 0) {
-      console.log(`Zoom integration disconnected for user: ${zoomUserId || zoomAccountId}`);
-      return NextResponse.json({ success: true });
+      console.log(
+        `Zoom integration disconnected for user: ${zoomUserId || zoomAccountId}`,
+      );
     } else {
-      console.warn(`No Zoom integration found for user: ${zoomUserId || zoomAccountId}`);
-      return NextResponse.json({ success: true }); // Still return success to Zoom
+      console.warn(
+        `No Zoom integration found for user: ${zoomUserId || zoomAccountId}`,
+      );
     }
 
+    // Always return success to Zoom to prevent retries
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Zoom deauthorization error:", err);
     // Return success to Zoom even on error to avoid retries
@@ -78,7 +94,6 @@ export async function POST(request: NextRequest) {
 }
 
 // Zoom may also send GET requests for verification
-export async function GET(request: NextRequest) {
-  // Return success for any GET requests (Zoom verification)
+export async function GET(_request: NextRequest) {
   return NextResponse.json({ success: true });
 }

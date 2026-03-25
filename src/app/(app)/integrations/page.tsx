@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { useToast } from "@/components/ui/toast";
 
 type Integration = {
   id: string;
@@ -44,6 +45,7 @@ const STATUS_STYLES: Record<string, { text: string; dot: string }> = {
 
 export default function IntegrationsPage() {
   const { user } = useUser();
+  const { toast } = useToast();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -66,19 +68,21 @@ export default function IntegrationsPage() {
 
     // Check for OAuth success/error messages in URL
     const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('success');
-    const error = urlParams.get('error');
+    const success = urlParams.get("success");
+    const error = urlParams.get("error");
 
-    if (success === 'zoom_connected') {
-      // Clear URL and show success message
-      window.history.replaceState({}, '', '/integrations');
-      alert('Zoom connected successfully!');
+    if (success === "zoom_connected") {
+      window.history.replaceState({}, "", "/integrations");
+      toast("Zoom connected successfully!", "success");
       load(); // Reload to show updated status
     } else if (error) {
-      const details = urlParams.get('details');
-      // Clear URL and show error message
-      window.history.replaceState({}, '', '/integrations');
-      alert(`Zoom connection failed: ${error}${details ? '\n\nDetails: ' + decodeURIComponent(details) : ''}`);
+      const details = urlParams.get("details");
+      window.history.replaceState({}, "", "/integrations");
+      toast(
+        `Zoom connection failed: ${error}${details ? " — " + decodeURIComponent(details) : ""}`,
+        "error",
+        6000,
+      );
     }
   }, []);
 
@@ -138,14 +142,14 @@ export default function IntegrationsPage() {
       const res = await fetch("/api/integrations/connect", { method: "POST" });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        alert(json.error || "Failed to start Zoom connection");
+        toast(json.error || "Failed to start Zoom connection", "error");
         return;
       }
       const { url } = await res.json();
       window.location.href = url;
     } catch (err) {
       console.warn("Failed to initiate Zoom OAuth:", err);
-      alert("Could not connect to Zoom — please try again.");
+      toast("Could not connect to Zoom — please try again.", "error");
     }
   }
 
@@ -162,7 +166,7 @@ export default function IntegrationsPage() {
             const style = STATUS_STYLES[status] || STATUS_STYLES.disconnected;
             return (
               <div key={p.key} className="rounded-xl border p-5 flex flex-col justify-between"
-                style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg)" }}>
+                   style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg)" }}>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <img src={p.icon} alt={p.name} className="w-8 h-8 object-contain" />
@@ -178,7 +182,7 @@ export default function IntegrationsPage() {
                     </span>
                     {integration?.config && typeof integration.config === 'string' && (
                       <span className="text-xs text-gray-500">
-                        ({JSON.parse(integration.config).account_type || 'Basic'})
+                        ({JSON.parse(integration.config as unknown as string).account_type || 'Basic'})
                       </span>
                     )}
                   </div>
