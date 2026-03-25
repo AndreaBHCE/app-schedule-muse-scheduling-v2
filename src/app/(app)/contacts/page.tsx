@@ -269,19 +269,19 @@ export default function ContactsPage() {
                           {openMenuId === c.id && (
                             <div
                               ref={menuRef}
-                              className="absolute right-3 bottom-full mb-1 z-50 rounded-lg shadow-xl border py-1 min-w-[140px]"
+                              className="absolute right-0 bottom-full mb-1 z-50 rounded-lg shadow-xl border flex min-w-[200px]"
                               style={{ background: "#ffffff", borderColor: "#e0e0e0" }}
                             >
                               <button
                                 onClick={() => openEdit(c)}
-                                className="w-full text-left px-4 py-2 text-sm font-medium hover:opacity-80"
-                                style={{ color: "#0d4f4f" }}
+                                className="flex-1 text-center px-4 py-2.5 text-sm font-medium hover:opacity-80 rounded-l-lg"
+                                style={{ color: "#0d4f4f", borderRight: "1px solid #e0e0e0" }}
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => deleteContact(c.id)}
-                                className="w-full text-left px-4 py-2 text-sm font-medium hover:opacity-80"
+                                className="flex-1 text-center px-4 py-2.5 text-sm font-medium hover:opacity-80 rounded-r-lg"
                                 style={{ color: "#0d4f4f" }}
                               >
                                 Delete
