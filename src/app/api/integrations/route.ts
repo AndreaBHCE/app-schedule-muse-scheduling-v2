@@ -34,8 +34,6 @@ export async function GET() {
         id: row.id,
         provider: row.provider,
         status: row.status,
-        accessToken: row.access_token ? decryptToken(row.access_token) : null,
-        refreshToken: row.refresh_token ? decryptToken(row.refresh_token) : null,
         metadata,
         connectedAt: row.connected_at,
         createdAt: row.created_at,
