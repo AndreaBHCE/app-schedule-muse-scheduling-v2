@@ -52,6 +52,12 @@ export default async function HomePage() {
           </a>
         </div>
       </section>
+
+      <footer className="mx-auto w-full max-w-6xl px-6 pb-8 pt-4 flex items-center justify-center gap-6 text-xs text-white/50">
+        <span>© {new Date().getFullYear()} ScheduleMuseAI</span>
+        <a href="/privacy" className="hover:text-white underline">Privacy Policy</a>
+        <a href="/terms-of-use" className="hover:text-white underline">Terms of Service</a>
+      </footer>
     </main>
   );
 }
