@@ -4,7 +4,7 @@
 :root {
   --cal-bg:        oklch(0.989 0.011 180);
   --cal-bg-alt:    oklch(0.977 0.019 180);
-  --cal-hover:     oklch(0.954 0.044 180);
+  --cal-hover:     rgba(13, 148, 136, 0.25);
   --cal-today-bg:  oklch(0.928 0.065 180);
   --cal-border:    oklch(0.898 0.086 180);
   --cal-btn:       oklch(0.863 0.107 180);
