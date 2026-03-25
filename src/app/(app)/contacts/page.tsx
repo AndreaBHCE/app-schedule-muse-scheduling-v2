@@ -231,7 +231,7 @@ export default function ContactsPage() {
           ) : contacts.length === 0 ? (
             <div className="p-8 text-center" style={{ color: "var(--cal-mid)" }}>No contacts found.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-visible relative">
               <table className="w-full text-sm" style={{ color: "var(--cal-text)" }}>
                 <thead>
                   <tr style={{ borderBottom: "2px solid var(--cal-border)" }}>
@@ -269,19 +269,19 @@ export default function ContactsPage() {
                           {openMenuId === c.id && (
                             <div
                               ref={menuRef}
-                              className="absolute right-3 top-full mt-1 z-50 rounded-lg shadow-xl border py-1 min-w-[140px]"
+                              className="absolute right-3 bottom-full mb-1 z-50 rounded-lg shadow-xl border py-1 min-w-[140px]"
                               style={{ background: "#ffffff", borderColor: "#e0e0e0" }}
                             >
                               <button
                                 onClick={() => openEdit(c)}
-                                className="w-full text-left px-4 py-2 text-sm hover:opacity-80"
+                                className="w-full text-left px-4 py-2 text-sm font-medium hover:opacity-80"
                                 style={{ color: "#0d4f4f" }}
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => deleteContact(c.id)}
-                                className="w-full text-left px-4 py-2 text-sm hover:opacity-80"
+                                className="w-full text-left px-4 py-2 text-sm font-medium hover:opacity-80"
                                 style={{ color: "#0d4f4f" }}
                               >
                                 Delete
