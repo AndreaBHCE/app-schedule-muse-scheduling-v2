@@ -275,16 +275,16 @@ export default function ContactsPage() {
                               <button
                                 onClick={() => openEdit(c)}
                                 className="w-full text-left px-4 py-2 text-sm hover:opacity-80"
-                                style={{ color: "#ffffff" }}
+                                style={{ color: "#0d4f4f" }}
                               >
-                                ✏️ Edit
+                                Edit
                               </button>
                               <button
                                 onClick={() => deleteContact(c.id)}
                                 className="w-full text-left px-4 py-2 text-sm hover:opacity-80"
-                                style={{ color: "#f43f5e" }}
+                                style={{ color: "#b91c1c" }}
                               >
-                                🗑 Delete
+                                Delete
                               </button>
                             </div>
                           )}
