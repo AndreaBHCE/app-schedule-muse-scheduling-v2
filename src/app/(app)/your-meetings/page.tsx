@@ -129,51 +129,47 @@ export default function YourMeetingsPage() {
 
         {/* Booking calendar cards */}
         {!calendarsLoading && calendars.length > 0 && (
-          <div className="mb-5 -mx-1 overflow-x-auto">
-            <div className="flex gap-3 px-1 pb-1" style={{ minWidth: "min-content" }}>
-              {calendars.map((cal) => {
-                const statusDot =
-                  cal.status === "Published" ? "var(--cal-primary)"
-                    : cal.status === "Draft" ? "#f59e0b"
-                      : "var(--cal-mid)";
-                return (
-                  <Link
-                    key={cal.id}
-                    href={`/meeting-setup?edit=${cal.id}`}
-                    className="flex-shrink-0 rounded-xl border px-5 py-4 transition-shadow hover:shadow-md"
-                    style={{
-                      borderColor: "var(--cal-border)",
-                      background: "var(--cal-bg)",
-                      minWidth: 280,
-                      maxWidth: 360,
-                      borderLeft: `4px solid ${cal.color || "var(--cal-primary)"}`,
-                    }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ background: statusDot }}
-                        title={cal.status}
-                      />
-                      <span
-                        className="font-semibold truncate"
-                        style={{ color: "var(--cal-heading)", fontSize: 15 }}
-                      >
-                        {cal.title}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium" style={{ color: "var(--cal-mid)" }}>
-                        {cal.durationMinutes} min · {cal.status}
-                      </span>
-                      <span className="text-sm font-bold" style={{ color: "var(--cal-primary)" }}>
-                        {cal.bookingsLast7Days} <span className="text-xs font-normal">bookings (7d)</span>
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+          <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {calendars.map((cal) => {
+              const statusDot =
+                cal.status === "Published" ? "var(--cal-primary)"
+                  : cal.status === "Draft" ? "#f59e0b"
+                    : "var(--cal-mid)";
+              return (
+                <Link
+                  key={cal.id}
+                  href={`/meeting-setup?edit=${cal.id}`}
+                  className="rounded-xl border px-6 py-5 transition-shadow hover:shadow-lg"
+                  style={{
+                    borderColor: "var(--cal-border)",
+                    background: "var(--cal-bg)",
+                    borderLeft: `4px solid ${cal.color || "var(--cal-primary)"}`,
+                  }}
+                >
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ background: statusDot }}
+                      title={cal.status}
+                    />
+                    <span
+                      className="font-bold truncate"
+                      style={{ color: "var(--cal-heading)", fontSize: 17 }}
+                    >
+                      {cal.title}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm" style={{ color: "var(--cal-mid)" }}>
+                      {cal.durationMinutes} min · {cal.status}
+                    </span>
+                    <span className="text-lg font-bold" style={{ color: "var(--cal-primary)" }}>
+                      {cal.bookingsLast7Days} <span className="text-xs font-normal" style={{ color: "var(--cal-mid)" }}>bookings (7d)</span>
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
 
