@@ -26,6 +26,8 @@ type BookingCalendar = {
   status: "Published" | "Draft" | "Paused";
   bookingsLast7Days: number;
   color: string;
+  locationType: string;
+  locationDetails: string;
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
@@ -47,6 +49,22 @@ export default function YourMeetingsPage() {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const limit = 10;
+
+  /* ── Add Meeting modal state ── */
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    calendarId: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    date: "",
+    time: "",
+    location: "virtual" as string,
+    locationDetails: "",
+    notes: "",
+  });
+  const [addSubmitting, setAddSubmitting] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   const [calendars, setCalendars] = useState<BookingCalendar[]>([]);
   const [calendarsLoading, setCalendarsLoading] = useState(true);
@@ -103,6 +121,97 @@ export default function YourMeetingsPage() {
     setMeetings((prev) => prev.map((m) => m.id === cancelId ? { ...m, status: "canceled" } : m));
   }
 
+  /* ── Add Meeting submit ── */
+  function openAddModal() {
+    const defaultCal = calendars.length > 0 ? calendars[0] : null;
+    setAddForm({
+      calendarId: defaultCal?.id || "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      date: new Date().toISOString().split("T")[0],
+      time: "09:00",
+      location: defaultCal?.locationType || "virtual",
+      locationDetails: defaultCal?.locationDetails || "",
+      notes: "",
+    });
+    setAddError(null);
+    setShowAddModal(true);
+  }
+
+  function handleCalendarChange(calId: string) {
+    const cal = calendars.find((c) => c.id === calId);
+    setAddForm((prev) => ({
+      ...prev,
+      calendarId: calId,
+      location: cal?.locationType || prev.location,
+      locationDetails: cal?.locationDetails || prev.locationDetails,
+    }));
+  }
+
+  async function submitAddMeeting() {
+    setAddError(null);
+    const { calendarId, firstName, lastName, email, date, time, location, locationDetails, notes } = addForm;
+
+    if (!firstName.trim()) { setAddError("First name is required."); return; }
+    if (!lastName.trim()) { setAddError("Last name is required."); return; }
+    if (!email.trim() || !email.includes("@")) { setAddError("Valid email is required."); return; }
+    if (!date || !time) { setAddError("Date and time are required."); return; }
+
+    const selectedCal = calendars.find((c) => c.id === calendarId);
+    const duration = selectedCal?.durationMinutes || 30;
+    const startTime = new Date(`${date}T${time}:00`);
+    const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+    setAddSubmitting(true);
+    try {
+      // 1. Auto-create contact if not exists
+      await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          tags: ["auto-created"],
+        }),
+      });
+      // Ignore errors (contact may already exist)
+
+      // 2. Create the meeting
+      const guestName = `${firstName.trim()} ${lastName.trim()}`;
+      const res = await fetch("/api/meetings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          booking_page_id: calendarId || undefined,
+          guest_name: guestName,
+          guest_email: email.trim(),
+          meeting_type: selectedCal?.title || "Meeting",
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          location,
+          location_details: locationDetails,
+          notes,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "Failed to create meeting");
+      }
+
+      setShowAddModal(false);
+      // Refresh the meetings list
+      setPage(1);
+      setTab("upcoming");
+    } catch (err) {
+      setAddError((err as Error).message);
+    } finally {
+      setAddSubmitting(false);
+    }
+  }
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "upcoming", label: "Upcoming" },
     { key: "past",     label: "Past" },
@@ -122,7 +231,8 @@ export default function YourMeetingsPage() {
               View, filter, and manage all your scheduled meetings in one place.
             </p>
           </div>
-          <div className="app-cta">
+          <div className="app-cta flex gap-2">
+            <button onClick={openAddModal} className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90" style={{ border: "1.5px solid var(--cal-primary)", color: "var(--cal-primary)", background: "transparent" }}>+ Add meeting</button>
             <Link href="/meeting-setup" className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90" style={{ background: "var(--cal-primary)", color: "white" }}>+ New booking page</Link>
           </div>
         </header>
@@ -291,6 +401,166 @@ export default function YourMeetingsPage() {
                 </button>
                 <button onClick={cancelMeeting} className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: "#e11d48" }}>
                   Confirm Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Meeting modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="rounded-xl p-6 shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ background: "var(--cal-bg)" }}>
+              <h3 className="text-lg font-bold mb-4" style={{ color: "var(--cal-heading)" }}>Add Meeting</h3>
+
+              {addError && (
+                <p className="text-sm mb-3 rounded-lg px-3 py-2" style={{ background: "#fee2e2", color: "#b91c1c" }}>{addError}</p>
+              )}
+
+              {/* Booking calendar */}
+              {calendars.length > 0 && (
+                <label className="block mb-3">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Booking Calendar</span>
+                  <select
+                    value={addForm.calendarId}
+                    onChange={(e) => handleCalendarChange(e.target.value)}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  >
+                    {calendars.map((c) => (
+                      <option key={c.id} value={c.id}>{c.title} ({c.durationMinutes} min)</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {/* Guest info */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <label className="block">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>First Name *</span>
+                  <input
+                    type="text"
+                    value={addForm.firstName}
+                    onChange={(e) => setAddForm((p) => ({ ...p, firstName: e.target.value }))}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Last Name *</span>
+                  <input
+                    type="text"
+                    value={addForm.lastName}
+                    onChange={(e) => setAddForm((p) => ({ ...p, lastName: e.target.value }))}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  />
+                </label>
+              </div>
+
+              <label className="block mb-3">
+                <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Email *</span>
+                <input
+                  type="email"
+                  value={addForm.email}
+                  onChange={(e) => setAddForm((p) => ({ ...p, email: e.target.value }))}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                />
+              </label>
+
+              {/* Date & Time */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <label className="block">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Date *</span>
+                  <input
+                    type="date"
+                    value={addForm.date}
+                    onChange={(e) => setAddForm((p) => ({ ...p, date: e.target.value }))}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Start Time *</span>
+                  <input
+                    type="time"
+                    value={addForm.time}
+                    onChange={(e) => setAddForm((p) => ({ ...p, time: e.target.value }))}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  />
+                </label>
+              </div>
+
+              {/* Duration preview */}
+              {addForm.calendarId && (() => {
+                const cal = calendars.find((c) => c.id === addForm.calendarId);
+                return cal ? (
+                  <p className="text-xs mb-3" style={{ color: "var(--cal-muted)" }}>
+                    Duration: {cal.durationMinutes} min · Ends at{" "}
+                    {(() => {
+                      const s = new Date(`${addForm.date}T${addForm.time}:00`);
+                      const e = new Date(s.getTime() + cal.durationMinutes * 60 * 1000);
+                      return e.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                    })()}
+                  </p>
+                ) : null;
+              })()}
+
+              {/* Location */}
+              <label className="block mb-3">
+                <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Location</span>
+                <select
+                  value={addForm.location}
+                  onChange={(e) => setAddForm((p) => ({ ...p, location: e.target.value }))}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                >
+                  <option value="virtual">Virtual (Zoom)</option>
+                  <option value="phone">Phone Call</option>
+                  <option value="in-person">In Person</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+
+              {addForm.location !== "virtual" && (
+                <label className="block mb-3">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Location Details</span>
+                  <input
+                    type="text"
+                    value={addForm.locationDetails}
+                    onChange={(e) => setAddForm((p) => ({ ...p, locationDetails: e.target.value }))}
+                    placeholder={addForm.location === "phone" ? "Phone number" : addForm.location === "in-person" ? "Address" : "Details"}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  />
+                </label>
+              )}
+
+              {/* Notes */}
+              <label className="block mb-4">
+                <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Notes</span>
+                <textarea
+                  value={addForm.notes}
+                  onChange={(e) => setAddForm((p) => ({ ...p, notes: e.target.value }))}
+                  rows={2}
+                  placeholder="Optional meeting notes…"
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                />
+              </label>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowAddModal(false)} className="btn-secondary" disabled={addSubmitting}>Cancel</button>
+                <button
+                  onClick={submitAddMeeting}
+                  disabled={addSubmitting}
+                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  style={{ background: "var(--cal-primary)" }}
+                >
+                  {addSubmitting ? "Creating…" : "Create Meeting"}
                 </button>
               </div>
             </div>
