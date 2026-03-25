@@ -171,10 +171,10 @@ export default function ContactsPage() {
                 </div>
                 <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Email *" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
                 <input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="Company" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
-                <input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Phone" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
+                <input value={newPhone} onChange={(e) => { const digits = e.target.value.replace(/\D/g, "").slice(0, 10); let formatted = digits; if (digits.length > 6) formatted = `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`; else if (digits.length > 3) formatted = `${digits.slice(0,3)}-${digits.slice(3)}`; setNewPhone(formatted); }} placeholder="000-000-0000" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
               </div>
               <div className="mt-4 flex justify-end gap-2">
-                <button onClick={() => setShowAdd(false)} className="btn-secondary">Cancel</button>
+                <button onClick={() => setShowAdd(false)} className="rounded-full px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-90" style={{ border: "2px solid #00bfa5", color: "#00bfa5", background: "transparent" }}>Cancel</button>
                 <button onClick={addContact} className="btn-primary">Add</button>
               </div>
             </div>
