@@ -19,6 +19,15 @@ type Meeting = {
   createdAt: string;
 };
 
+type BookingCalendar = {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  status: "Published" | "Draft" | "Paused";
+  bookingsLast7Days: number;
+  color: string;
+};
+
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
   confirmed:  { bg: "var(--cal-hover)",  text: "var(--cal-heading)", dot: "var(--cal-primary)" },
   pending:    { bg: "#fef3c7",           text: "#92400e",            dot: "#f59e0b" },
@@ -38,6 +47,27 @@ export default function YourMeetingsPage() {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const limit = 10;
+
+  const [calendars, setCalendars] = useState<BookingCalendar[]>([]);
+  const [calendarsLoading, setCalendarsLoading] = useState(true);
+
+  /* Load booking calendars once */
+  useEffect(() => {
+    let dead = false;
+    async function loadCalendars() {
+      try {
+        const res = await fetch("/api/bookings?limit=50");
+        const json = await res.json();
+        if (!dead) setCalendars(json.bookings || []);
+      } catch {
+        if (!dead) setCalendars([]);
+      } finally {
+        if (!dead) setCalendarsLoading(false);
+      }
+    }
+    loadCalendars();
+    return () => { dead = true; };
+  }, []);
 
   useEffect(() => {
     let dead = false;
@@ -96,6 +126,56 @@ export default function YourMeetingsPage() {
             <Link href="/meeting-setup" className="btn-primary">Create booking page</Link>
           </div>
         </header>
+
+        {/* Booking calendar cards */}
+        {!calendarsLoading && calendars.length > 0 && (
+          <div className="mb-5 -mx-1 overflow-x-auto">
+            <div className="flex gap-3 px-1 pb-1" style={{ minWidth: "min-content" }}>
+              {calendars.map((cal) => {
+                const statusDot =
+                  cal.status === "Published" ? "var(--cal-primary)"
+                    : cal.status === "Draft" ? "#f59e0b"
+                      : "var(--cal-mid)";
+                return (
+                  <Link
+                    key={cal.id}
+                    href={`/meeting-setup?edit=${cal.id}`}
+                    className="flex-shrink-0 rounded-xl border px-4 py-3 transition-shadow hover:shadow-md"
+                    style={{
+                      borderColor: "var(--cal-border)",
+                      background: "var(--cal-bg)",
+                      minWidth: 180,
+                      maxWidth: 240,
+                      borderLeft: `3px solid ${cal.color || "var(--cal-primary)"}`,
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: statusDot }}
+                        title={cal.status}
+                      />
+                      <span
+                        className="text-sm font-semibold truncate"
+                        style={{ color: "var(--cal-heading)" }}
+                      >
+                        {cal.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs" style={{ color: "var(--cal-mid)" }}>
+                        {cal.durationMinutes} min
+                      </span>
+                      <span className="text-xs font-medium" style={{ color: "var(--cal-primary)" }}>
+                        {cal.bookingsLast7Days} bookings
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-4">
