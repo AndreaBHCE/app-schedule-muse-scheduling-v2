@@ -71,6 +71,11 @@ ZOOM_CLIENT_SECRET=...
 ZOOM_REDIRECT_URI=https://your-domain.com/api/integrations/callback
 ZOOM_WEBHOOK_SECRET_TOKEN=...      # For deauthorize webhook verification
 
+# Gmail OAuth (https://console.cloud.google.com)
+GMAIL_CLIENT_ID=...
+GMAIL_CLIENT_SECRET=...
+GMAIL_REDIRECT_URI=https://your-domain.com/api/integrations/callback
+
 # Encryption
 ENCRYPTION_KEY=...                 # 32-byte hex string for AES-256-GCM
 ```

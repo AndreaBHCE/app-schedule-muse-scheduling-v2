@@ -74,12 +74,16 @@ export default function IntegrationsPage() {
     if (success === "zoom_connected") {
       window.history.replaceState({}, "", "/integrations");
       toast("Zoom connected successfully!", "success");
-      load(); // Reload to show updated status
+      load();
+    } else if (success === "gmail_connected") {
+      window.history.replaceState({}, "", "/integrations");
+      toast("Gmail connected successfully!", "success");
+      load();
     } else if (error) {
       const details = urlParams.get("details");
       window.history.replaceState({}, "", "/integrations");
       toast(
-        `Zoom connection failed: ${error}${details ? " — " + decodeURIComponent(details) : ""}`,
+        `Connection failed: ${error}${details ? " — " + decodeURIComponent(details) : ""}`,
         "error",
         6000,
       );
@@ -96,7 +100,6 @@ export default function IntegrationsPage() {
     // Special handling for Zoom OAuth
     if (providerKey === "zoom") {
       if (existing && existing.status === "connected") {
-        // Disconnect Zoom
         await fetch("/api/integrations", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -104,8 +107,22 @@ export default function IntegrationsPage() {
         });
         load();
       } else {
-        // Initiate Zoom OAuth flow
-        initiateZoomOAuth();
+        initiateOAuth("zoom");
+      }
+      return;
+    }
+
+    // Special handling for Gmail OAuth
+    if (providerKey === "gmail") {
+      if (existing && existing.status === "connected") {
+        await fetch("/api/integrations", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: existing.id, status: "disconnected" }),
+        });
+        load();
+      } else {
+        initiateOAuth("gmail");
       }
       return;
     }
@@ -136,20 +153,24 @@ export default function IntegrationsPage() {
     load();
   }
 
-  async function initiateZoomOAuth() {
+  async function initiateOAuth(provider: string) {
+    const label = provider === "gmail" ? "Gmail" : provider === "zoom" ? "Zoom" : provider;
     try {
-      // Generate the OAuth URL server-side (includes HMAC-signed state)
-      const res = await fetch("/api/integrations/connect", { method: "POST" });
+      const res = await fetch("/api/integrations/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        toast(json.error || "Failed to start Zoom connection", "error");
+        toast(json.error || `Failed to start ${label} connection`, "error");
         return;
       }
       const { url } = await res.json();
       window.location.href = url;
     } catch (err) {
-      console.warn("Failed to initiate Zoom OAuth:", err);
-      toast("Could not connect to Zoom — please try again.", "error");
+      console.warn(`Failed to initiate ${label} OAuth:`, err);
+      toast(`Could not connect to ${label} — please try again.`, "error");
     }
   }
 
