@@ -269,8 +269,8 @@ export default function ContactsPage() {
                           {openMenuId === c.id && (
                             <div
                               ref={menuRef}
-                              className="absolute right-3 top-full mt-1 z-50 rounded-lg shadow-xl border py-1 min-w-[120px]"
-                              style={{ background: "var(--cal-bg)", borderColor: "var(--cal-border)" }}
+                              className="absolute right-3 top-full mt-1 z-50 rounded-lg shadow-xl border py-1 min-w-[140px]"
+                              style={{ background: "#ffffff", borderColor: "#e0e0e0" }}
                             >
                               <button
                                 onClick={() => openEdit(c)}
