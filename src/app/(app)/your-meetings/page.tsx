@@ -129,7 +129,7 @@ export default function YourMeetingsPage() {
 
         {/* Booking calendar cards */}
         {!calendarsLoading && calendars.length > 0 && (
-          <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={`mb-6 grid gap-3 ${calendars.length === 1 ? "grid-cols-1" : calendars.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
             {calendars.map((cal) => {
               const statusDot =
                 cal.status === "Published" ? "var(--cal-primary)"
