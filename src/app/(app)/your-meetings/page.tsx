@@ -239,7 +239,9 @@ export default function YourMeetingsPage() {
 
         {/* Booking calendar cards */}
         {!calendarsLoading && calendars.length > 0 && (
-          <div className={`mb-6 grid gap-3 ${calendars.length === 1 ? "grid-cols-1" : calendars.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold mb-3" style={{ color: "#ffffff" }}>Meeting Calendar</h2>
+            <div className={`grid gap-3 ${calendars.length === 1 ? "grid-cols-1" : calendars.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
             {calendars.map((cal) => {
               const statusDot =
                 cal.status === "Published" ? "var(--cal-primary)"
@@ -280,6 +282,7 @@ export default function YourMeetingsPage() {
                 </Link>
               );
             })}
+            </div>
           </div>
         )}
 
