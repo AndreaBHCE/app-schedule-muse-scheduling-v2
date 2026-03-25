@@ -240,7 +240,6 @@ export default function YourMeetingsPage() {
         {/* Booking calendar cards */}
         {!calendarsLoading && calendars.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-sm font-semibold mb-3" style={{ color: "#ffffff" }}>Meeting Calendar</h2>
             <div className={`grid gap-3 ${calendars.length === 1 ? "grid-cols-1" : calendars.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
             {calendars.map((cal) => {
               const statusDot =
@@ -258,6 +257,7 @@ export default function YourMeetingsPage() {
                     borderLeft: `4px solid ${cal.color || "var(--cal-primary)"}`,
                   }}
                 >
+                  <div className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#0d4f4f" }}>Meeting Calendar</div>
                   <div className="flex items-center gap-2.5 mb-3">
                     <span
                       className="w-3 h-3 rounded-full flex-shrink-0"
@@ -286,7 +286,8 @@ export default function YourMeetingsPage() {
           </div>
         )}
 
-        {/* Tabs */}
+        {/* Scheduled Meetings */}
+        <h2 className="text-sm font-semibold mb-3" style={{ color: "#ffffff" }}>Scheduled Meetings</h2>
         <div className="flex items-center gap-1 mb-4">
           {tabs.map((t) => (
             <button
