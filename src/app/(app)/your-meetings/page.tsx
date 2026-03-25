@@ -321,13 +321,13 @@ export default function YourMeetingsPage() {
                   return (
                     <tr key={m.id} className="cal-row" style={{ borderBottom: "1px solid var(--cal-border)" }}>
                       <td className="py-3 px-3">
-                        <div className="font-semibold" style={{ color: "var(--cal-heading)" }}>{m.guestName}</div>
-                        <div className="text-xs" style={{ color: "var(--cal-mid)" }}>{m.guestEmail}</div>
+                        <div className="font-semibold" style={{ color: "#ffffff" }}>{m.guestName}</div>
+                        <div className="text-xs" style={{ color: "#ffffff" }}>{m.guestEmail}</div>
                       </td>
                       <td className="py-3 px-3" style={{ color: "#ffffff" }}>{m.meetingType}</td>
                       <td className="py-3 px-3" style={{ color: "#ffffff" }}>
                         <div>{dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</div>
-                        <div className="text-xs" style={{ color: "var(--cal-mid)" }}>
+                        <div className="text-xs" style={{ color: "#ffffff" }}>
                           {dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                         </div>
                       </td>
