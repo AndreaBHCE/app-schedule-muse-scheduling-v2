@@ -123,7 +123,7 @@ export default function YourMeetingsPage() {
             </p>
           </div>
           <div className="app-cta">
-            <Link href="/meeting-setup" className="btn-primary">Create booking page</Link>
+            <Link href="/meeting-setup" className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90" style={{ background: "var(--cal-primary)", color: "white" }}>+ New booking page</Link>
           </div>
         </header>
 
@@ -140,34 +140,34 @@ export default function YourMeetingsPage() {
                   <Link
                     key={cal.id}
                     href={`/meeting-setup?edit=${cal.id}`}
-                    className="flex-shrink-0 rounded-xl border px-4 py-3 transition-shadow hover:shadow-md"
+                    className="flex-shrink-0 rounded-xl border px-5 py-4 transition-shadow hover:shadow-md"
                     style={{
                       borderColor: "var(--cal-border)",
                       background: "var(--cal-bg)",
-                      minWidth: 180,
-                      maxWidth: 240,
-                      borderLeft: `3px solid ${cal.color || "var(--cal-primary)"}`,
+                      minWidth: 280,
+                      maxWidth: 360,
+                      borderLeft: `4px solid ${cal.color || "var(--cal-primary)"}`,
                     }}
                   >
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                       <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ background: statusDot }}
                         title={cal.status}
                       />
                       <span
-                        className="text-sm font-semibold truncate"
-                        style={{ color: "var(--cal-heading)" }}
+                        className="font-semibold truncate"
+                        style={{ color: "var(--cal-heading)", fontSize: 15 }}
                       >
                         {cal.title}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs" style={{ color: "var(--cal-mid)" }}>
-                        {cal.durationMinutes} min
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium" style={{ color: "var(--cal-mid)" }}>
+                        {cal.durationMinutes} min · {cal.status}
                       </span>
-                      <span className="text-xs font-medium" style={{ color: "var(--cal-primary)" }}>
-                        {cal.bookingsLast7Days} bookings
+                      <span className="text-sm font-bold" style={{ color: "var(--cal-primary)" }}>
+                        {cal.bookingsLast7Days} <span className="text-xs font-normal">bookings (7d)</span>
                       </span>
                     </div>
                   </Link>
