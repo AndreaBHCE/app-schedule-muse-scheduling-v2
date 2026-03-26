@@ -15,7 +15,7 @@ export default function TermsOfUse() {
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Terms of Use</h1>
-          <p className="text-sm text-gray-600 mb-8">Last updated: March 1, 2026</p>
+          <p className="text-sm text-gray-600 mb-8">Last updated: March 26, 2026</p>
 
           <div className="prose prose-gray max-w-none">
             <section className="mb-8">
@@ -90,6 +90,7 @@ export default function TermsOfUse() {
               <ul className="list-disc pl-6 text-gray-700 mb-4">
                 <li><strong>Zoom</strong> - Video conferencing and meeting management</li>
                 <li><strong>Google Calendar</strong> - Calendar synchronization</li>
+                <li><strong>Gmail</strong> - Sending meeting invitations and reminders via your connected Gmail account</li>
                 <li><strong>Microsoft Outlook</strong> - Email and calendar integration</li>
                 <li><strong>Payment processors</strong> - Subscription and billing</li>
               </ul>

@@ -84,10 +84,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: `status must be one of: ${allowed.join(", ")}` }, { status: 400 });
     }
 
-    await d1Query(
-      `UPDATE integrations SET status = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
-      [status, id, userId],
-    );
+    // When disconnecting, delete stored tokens (required by Google API Services User Data Policy)
+    if (status === "disconnected") {
+      await d1Query(
+        `UPDATE integrations SET status = ?, access_token = '', refresh_token = '', updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
+        [status, id, userId],
+      );
+    } else {
+      await d1Query(
+        `UPDATE integrations SET status = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
+        [status, id, userId],
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

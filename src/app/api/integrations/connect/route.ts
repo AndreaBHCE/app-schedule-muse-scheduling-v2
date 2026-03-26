@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       const clientSecret = process.env.GMAIL_CLIENT_SECRET;
       const redirectUri =
         process.env.GMAIL_REDIRECT_URI ||
-        "https://app.app.schedulemuseai.com/api/integrations/callback";
+        "https://app.schedulemuseai.com/api/integrations/callback";
 
       if (!clientId || !clientSecret) {
         return NextResponse.json(
