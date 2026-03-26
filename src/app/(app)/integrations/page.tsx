@@ -48,6 +48,11 @@ export default function IntegrationsPage() {
   const { toast } = useToast();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [smtpModal, setSmtpModal] = useState(false);
+  const [smtpForm, setSmtpForm] = useState({
+    host: "", port: "587", username: "", password: "", from_email: "", encryption: "tls",
+  });
+  const [smtpLoading, setSmtpLoading] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -127,6 +132,22 @@ export default function IntegrationsPage() {
       return;
     }
 
+    // Special handling for SMTP — open credential form
+    if (providerKey === "smtp") {
+      if (existing && existing.status === "connected") {
+        await fetch("/api/integrations", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: existing.id, status: "disconnected" }),
+        });
+        load();
+      } else {
+        setSmtpForm({ host: "", port: "587", username: "", password: "", from_email: "", encryption: "tls" });
+        setSmtpModal(true);
+      }
+      return;
+    }
+
     // Default behavior for other providers
     if (existing && existing.status === "connected") {
       // Disconnect
@@ -171,6 +192,30 @@ export default function IntegrationsPage() {
     } catch (err) {
       console.warn(`Failed to initiate ${label} OAuth:`, err);
       toast(`Could not connect to ${label} — please try again.`, "error");
+    }
+  }
+
+  async function submitSmtp() {
+    setSmtpLoading(true);
+    try {
+      const res = await fetch("/api/integrations/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: "smtp", ...smtpForm, port: Number(smtpForm.port) }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast(json.error || "Failed to connect SMTP", "error", 6000);
+        return;
+      }
+      toast("SMTP connected successfully!", "success");
+      setSmtpModal(false);
+      load();
+    } catch (err) {
+      console.warn("SMTP connect error:", err);
+      toast("Could not connect SMTP — please try again.", "error");
+    } finally {
+      setSmtpLoading(false);
     }
   }
 
@@ -254,6 +299,73 @@ export default function IntegrationsPage() {
               "Choose where booked events should appear.",
               "calendar",
             )}
+          </div>
+        )}
+
+        {/* SMTP Credentials Modal */}
+        {smtpModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="rounded-xl p-6 w-full max-w-md shadow-2xl" style={{ background: "var(--cal-bg)", border: "1px solid var(--cal-border)" }}>
+              <h3 className="text-lg font-bold mb-1" style={{ color: "var(--cal-heading)" }}>Connect SMTP</h3>
+              <p className="text-sm mb-5" style={{ color: "var(--cal-mid)" }}>Enter your mail server credentials to send booking emails from your own address.</p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--cal-text)" }}>SMTP Host</label>
+                  <input type="text" placeholder="smtp.example.com" value={smtpForm.host}
+                    onChange={(e) => setSmtpForm({ ...smtpForm, host: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--cal-surface)", border: "1px solid var(--cal-border)", color: "var(--cal-text)" }} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1" style={{ color: "var(--cal-text)" }}>Port</label>
+                    <input type="number" placeholder="587" value={smtpForm.port}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, port: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--cal-surface)", border: "1px solid var(--cal-border)", color: "var(--cal-text)" }} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1" style={{ color: "var(--cal-text)" }}>Encryption</label>
+                    <select value={smtpForm.encryption}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, encryption: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--cal-surface)", border: "1px solid var(--cal-border)", color: "var(--cal-text)" }}>
+                      <option value="tls">TLS (port 465)</option>
+                      <option value="starttls">STARTTLS (port 587)</option>
+                      <option value="none">None (port 25)</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--cal-text)" }}>Username</label>
+                  <input type="text" placeholder="you@example.com" value={smtpForm.username}
+                    onChange={(e) => setSmtpForm({ ...smtpForm, username: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--cal-surface)", border: "1px solid var(--cal-border)", color: "var(--cal-text)" }} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--cal-text)" }}>Password</label>
+                  <input type="password" placeholder="••••••••" value={smtpForm.password}
+                    onChange={(e) => setSmtpForm({ ...smtpForm, password: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--cal-surface)", border: "1px solid var(--cal-border)", color: "var(--cal-text)" }} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--cal-text)" }}>From Email</label>
+                  <input type="email" placeholder="you@example.com" value={smtpForm.from_email}
+                    onChange={(e) => setSmtpForm({ ...smtpForm, from_email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "var(--cal-surface)", border: "1px solid var(--cal-border)", color: "var(--cal-text)" }} />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setSmtpModal(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium" style={{ color: "var(--cal-text)" }}>
+                  Cancel
+                </button>
+                <button onClick={submitSmtp} disabled={smtpLoading}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+                  style={{ background: "var(--cal-primary)" }}>
+                  {smtpLoading ? "Connecting…" : "Connect"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
     </>

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import crypto from "crypto";
+import { validateSmtpCredentials } from "@/lib/smtp";
+import { encryptToken } from "@/lib/crypto";
+import { d1Query } from "@/lib/cloudflare";
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -36,9 +39,10 @@ export async function POST(request: Request) {
 
     // Default to "zoom" for backward compatibility (the old UI sent no body)
     let provider = "zoom";
+    let body: Record<string, unknown> = {};
     try {
-      const body = await request.json();
-      if (body?.provider) provider = body.provider;
+      body = await request.json();
+      if (body?.provider) provider = body.provider as string;
     } catch {
       // Empty body → default to zoom
     }
@@ -104,6 +108,66 @@ export async function POST(request: Request) {
       url.searchParams.set("prompt", "consent");       // Force consent to always get refresh_token
 
       return NextResponse.json({ url: url.toString() });
+    }
+
+    /* ── SMTP ──────────────────────────────────────────── */
+    if (provider === "smtp") {
+      const host = body.host as string | undefined;
+      const port = body.port as number | undefined;
+      const username = body.username as string | undefined;
+      const password = body.password as string | undefined;
+      const from_email = body.from_email as string | undefined;
+      const encryption = body.encryption as string | undefined;
+
+      if (!host || !port || !username || !password || !from_email) {
+        return NextResponse.json(
+          { error: "Missing required SMTP fields: host, port, username, password, from_email" },
+          { status: 400 },
+        );
+      }
+
+      const validEncryption = ["tls", "starttls", "none"] as const;
+      const enc = validEncryption.includes(encryption as typeof validEncryption[number])
+        ? (encryption as "tls" | "starttls" | "none")
+        : "tls";
+
+      // Validate credentials by connecting to the SMTP server
+      const validation = await validateSmtpCredentials({
+        host, port: Number(port), username, password, from_email, encryption: enc,
+      });
+
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: `SMTP connection failed: ${validation.error}` },
+          { status: 422 },
+        );
+      }
+
+      // Encrypt password, store config in metadata
+      const encryptedPassword = encryptToken(password);
+      const metadata = JSON.stringify({ host, port: Number(port), username, from_email, encryption: enc });
+      const id = `int-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+
+      // Upsert: if SMTP integration already exists for this user, update it
+      const existing = await d1Query(
+        `SELECT id FROM integrations WHERE user_id = ? AND provider = 'smtp'`,
+        [userId],
+      );
+
+      if (existing.results && existing.results.length > 0) {
+        await d1Query(
+          `UPDATE integrations SET status = 'connected', access_token = ?, metadata = ?, connected_at = datetime('now'), updated_at = datetime('now') WHERE user_id = ? AND provider = 'smtp'`,
+          [encryptedPassword, metadata, userId],
+        );
+      } else {
+        await d1Query(
+          `INSERT INTO integrations (id, user_id, provider, status, access_token, refresh_token, metadata, connected_at)
+           VALUES (?, ?, 'smtp', 'connected', ?, '', ?, datetime('now'))`,
+          [id, userId, encryptedPassword, metadata],
+        );
+      }
+
+      return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ error: `Unsupported provider: ${provider}` }, { status: 400 });
