@@ -35,4 +35,4 @@ After every string-level edit, automatically grep to confirm: all intended insta
 Before any commit: (1) every requested change implemented, (2) no unrequested changes, (3) no duplicated hardcoded values, (4) error paths fail loudly, (5) zero compile/lint errors, (6) grep confirms no residual old patterns.
 
 ## Project Context
-ScheduleMuse AI — Next.js scheduling platform. Frontend hosted on Vercel. Backend database on Cloudflare D1 (no Workers — Vercel conflict). Production domain: app.schedulemuseai.com.
+ScheduleMuse AI — Next.js scheduling platform. Frontend hosted on Vercel. Backend database on Cloudflare D1 (no Workers — Vercel conflict). Subscriber platform: app.schedulemuseai.com. Marketing platform: schedulemuseai.com.
