@@ -24,11 +24,11 @@ export default function UserProfile() {
       {/* Profile Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-4 rounded-lg p-3 hover:bg-white/10 transition-colors"
+        className="flex items-center gap-3 w-full rounded-lg p-2 hover:bg-white/10 transition-colors"
         aria-label="User menu"
       >
         {/* Avatar */}
-        <div className="w-12 h-12 rounded-full bg-slate-600 flex items-center justify-center overflow-hidden border-2 border-white/20">
+        <div className="w-9 h-9 shrink-0 rounded-full bg-slate-600 flex items-center justify-center overflow-hidden border border-white/20">
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -36,23 +36,23 @@ export default function UserProfile() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-lg font-semibold text-white">
+            <span className="text-sm font-semibold text-white">
               {displayName.charAt(0).toUpperCase()}
             </span>
           )}
         </div>
 
         {/* User Info */}
-        <div className="text-left">
-          <div className="text-base font-medium text-white">{displayName}</div>
+        <div className="text-left min-w-0 flex-1">
+          <div className="text-sm font-medium text-white truncate">{displayName}</div>
           {email && (
-            <div className="text-sm text-white/70">{email}</div>
+            <div className="text-xs text-white/50 truncate">{email}</div>
           )}
         </div>
 
         {/* Dropdown Arrow */}
         <svg
-          className={`w-5 h-5 text-white/70 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 shrink-0 text-white/70 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -71,7 +71,7 @@ export default function UserProfile() {
           />
 
           {/* Menu */}
-          <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-slate-700 bg-slate-800 shadow-xl z-20">
+          <div className="absolute left-0 bottom-full mb-2 w-56 rounded-lg border border-slate-700 bg-slate-800 shadow-xl z-20">
             <div className="p-3 border-b border-slate-700">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center overflow-hidden">

@@ -1,4 +1,5 @@
 import AppSidebar from "@/components/layout/AppSidebar";
+import Footer from "@/components/layout/Footer";
 import { ToastProvider } from "@/components/ui/toast";
 
 export default function AuthenticatedLayout({
@@ -10,7 +11,10 @@ export default function AuthenticatedLayout({
     <ToastProvider>
       <div className="app-layout">
         <AppSidebar />
-        <main className="app-main">{children}</main>
+        <main className="app-main">
+          {children}
+        </main>
+        <Footer />
       </div>
     </ToastProvider>
   );

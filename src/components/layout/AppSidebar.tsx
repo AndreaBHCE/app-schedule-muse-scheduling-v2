@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import UserProfile from "@/components/layout/UserProfile";
 
 const navItems = [
   { href: "/dashboard",     label: "Dashboard" },
@@ -38,21 +39,9 @@ export default function AppSidebar() {
         })}
       </nav>
 
-      <footer className="app-sidebar__footer">
-        <div className="app-sidebar__footer-links">
-          <Link href="/support" className="app-sidebar__footer-link">Support</Link>
-          <span className="app-sidebar__footer-sep">·</span>
-          <Link href="/docs" className="app-sidebar__footer-link">Docs</Link>
-          <span className="app-sidebar__footer-sep">·</span>
-          <Link href="/privacy" className="app-sidebar__footer-link">Privacy</Link>
-          <span className="app-sidebar__footer-sep">·</span>
-          <Link href="/terms-of-use" className="app-sidebar__footer-link">Terms</Link>
-        </div>
-        <p className="app-sidebar__copyright">
-          © 2026 Live Laugh Sail Media Production LLC.<br />for ScheduleMuse AI
-        </p>
-        <p className="app-sidebar__version">v1.0</p>
-      </footer>
+      <div className="app-sidebar__user">
+        <UserProfile />
+      </div>
     </aside>
   );
 }
