@@ -305,9 +305,10 @@ export async function GET(request: NextRequest) {
       new URL("/integrations?error=unsupported_provider", request.url),
     );
   } catch (err) {
-    console.error("OAuth callback failed:", err instanceof Error ? err.message : err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("OAuth callback failed:", msg);
     return NextResponse.redirect(
-      new URL("/integrations?error=callback_failed", request.url),
+      new URL(`/integrations?error=callback_failed&details=${encodeURIComponent(msg)}`, request.url),
     );
   }
 }
