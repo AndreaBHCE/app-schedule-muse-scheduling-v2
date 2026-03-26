@@ -135,7 +135,7 @@ export default function DevelopersPage() {
         <header className="app-header">
           <div>
             <h1 className="app-company-name">ScheduleMuseAI</h1>
-            <h2 className="app-page-name">Developers</h2>
+            <h2 className="app-page-name">API / Webhook</h2>
             <p className="app-subtitle">
               Manage API keys and webhook endpoints for custom integrations.
             </p>
