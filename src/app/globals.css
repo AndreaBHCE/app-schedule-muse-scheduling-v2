@@ -252,8 +252,8 @@ a {
   align-items: center;
   justify-content: center;
   padding: 1.25rem 2rem;
-  border-top: 1px solid rgba(0, 56, 62, 0.1);
-  background: rgba(0, 56, 62, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 56, 62, 0.35);
 }
 
 .app-footer__inner {
@@ -274,18 +274,18 @@ a {
 
 .app-footer__link {
   font-size: 0.8125rem;
-  color: rgba(0, 56, 62, 0.55);
+  color: rgba(255, 255, 255, 0.6);
   transition: color 0.15s ease;
 }
 
 .app-footer__link:hover {
-  color: #00383e;
+  color: #fff;
   text-decoration: underline;
 }
 
 .app-footer__copyright {
   font-size: 0.75rem;
-  color: rgba(0, 56, 62, 0.45);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* ── Public layout ── */
