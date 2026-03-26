@@ -120,8 +120,15 @@ export async function POST(request: Request) {
       const encryption = body.encryption as string | undefined;
 
       if (!host || !port || !username || !password || !from_email) {
+        const missing = [
+          !host && "host",
+          !port && "port",
+          !username && "username",
+          !password && "password",
+          !from_email && "from_email",
+        ].filter(Boolean);
         return NextResponse.json(
-          { error: "Missing required SMTP fields: host, port, username, password, from_email" },
+          { error: `Missing required SMTP fields: ${missing.join(", ")}` },
           { status: 400 },
         );
       }
