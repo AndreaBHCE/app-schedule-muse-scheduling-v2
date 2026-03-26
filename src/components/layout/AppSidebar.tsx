@@ -38,29 +38,21 @@ export default function AppSidebar() {
         })}
       </nav>
 
-      <div className="text-xs text-white/70">
-        Version 1.0
-        <div className="mt-2 space-y-1">
-          <div>
-            Need help? <Link href="/support" className="underline hover:text-white">Support</Link>
-          </div>
-          <div>
-            <Link href="/docs" className="underline hover:text-white">
-              Documentation
-            </Link>
-          </div>
-          <div>
-            <Link href="/privacy" className="underline hover:text-white">
-              Privacy Policy
-            </Link>
-          </div>
-          <div>
-            <Link href="/terms-of-use" className="underline hover:text-white">
-              Terms of Service
-            </Link>
-          </div>
+      <footer className="app-sidebar__footer">
+        <div className="app-sidebar__footer-links">
+          <Link href="/support" className="app-sidebar__footer-link">Support</Link>
+          <span className="app-sidebar__footer-sep">·</span>
+          <Link href="/docs" className="app-sidebar__footer-link">Docs</Link>
+          <span className="app-sidebar__footer-sep">·</span>
+          <Link href="/privacy" className="app-sidebar__footer-link">Privacy</Link>
+          <span className="app-sidebar__footer-sep">·</span>
+          <Link href="/terms-of-use" className="app-sidebar__footer-link">Terms</Link>
         </div>
-      </div>
+        <p className="app-sidebar__copyright">
+          © 2026 Live Laugh Sail Media Production LLC.<br />for ScheduleMuse AI
+        </p>
+        <p className="app-sidebar__version">v1.0</p>
+      </footer>
     </aside>
   );
 }
