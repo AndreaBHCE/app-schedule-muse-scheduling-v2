@@ -48,7 +48,7 @@ function mondayWeekStart(d: Date): Date {
 export default function CalendarPage() {
   const [events, setEvents] = useState<MeetingEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [range, setRange] = useState<"day" | "week" | "month">("week");
+  const [range, setRange] = useState<"day" | "week" | "month">("month");
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedEvent, setSelectedEvent] = useState<MeetingEvent | null>(null);
   const today = new Date();
