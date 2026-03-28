@@ -521,7 +521,7 @@ export default function YourMeetingsPage() {
                   className="w-full rounded-lg border px-3 py-2 text-sm"
                   style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
                 >
-                  <option value="virtual">Virtual (Zoom)</option>
+                  <option value="virtual">Virtual</option>
                   <option value="phone">Phone Call</option>
                   <option value="in-person">In Person</option>
                   <option value="other">Other</option>
