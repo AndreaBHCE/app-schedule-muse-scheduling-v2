@@ -149,7 +149,7 @@ export async function POST(request: Request) {
       // Encrypt password, store config in metadata
       const encryptedPassword = encryptToken(password);
       const metadata = JSON.stringify({ host, port: Number(port), username, from_email, encryption: enc });
-      const id = `int-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+      const id = `int-${crypto.randomUUID()}`;
 
       // Upsert: if SMTP integration already exists for this user, update it
       const existing = await d1Query(

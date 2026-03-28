@@ -100,7 +100,7 @@ async function exchangeZoomCode(code: string) {
 }
 
 async function storeZoomTokens(userId: string, tokenData: Record<string, unknown>) {
-  const id = `int-zoom-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+  const id = `int-zoom-${crypto.randomUUID()}`;
 
   const encryptedAccess = encryptToken(String(tokenData.access_token));
   const encryptedRefresh = tokenData.refresh_token
@@ -177,7 +177,7 @@ async function fetchGmailEmail(accessToken: string): Promise<string> {
 }
 
 async function storeGmailTokens(userId: string, tokenData: Record<string, unknown>) {
-  const id = `int-gmail-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+  const id = `int-gmail-${crypto.randomUUID()}`;
 
   const encryptedAccess = encryptToken(String(tokenData.access_token));
   const encryptedRefresh = tokenData.refresh_token

@@ -93,7 +93,7 @@ export function Input({
           borderColor: "var(--cal-border)",
           color: "var(--cal-heading)",
           background: "white",
-          "--tw-ring-color": "oklch(0.618 0.182 180 / 0.2)",
+          "--tw-ring-color": "rgba(106, 142, 142, 0.2)",
           ...style,
         } as React.CSSProperties
       }

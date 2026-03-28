@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const { provider, accessToken, refreshToken, metadata } = await request.json();
     if (!provider) return NextResponse.json({ error: "provider required" }, { status: 400 });
 
-    const id = `int-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+    const id = `int-${crypto.randomUUID()}`;
     const encryptedAccess = accessToken ? encryptToken(accessToken) : "";
     const encryptedRefresh = refreshToken ? encryptToken(refreshToken) : "";
 

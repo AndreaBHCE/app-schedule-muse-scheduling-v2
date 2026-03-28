@@ -347,20 +347,20 @@ export default function DashboardPage() {
 
         <section className="card">
           <div className="grid gap-3 sm:grid-cols-3">
-            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.846 0.039 196.711)', borderColor: 'oklch(0.78 0.06 196.711)' }}>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Bookings created</p>
-              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.03 196.711)' }}>{(kpis?.bookings7d ?? 0)} / {(kpis?.bookings30d ?? 0)}</p>
-              <p className="text-xs mt-1" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Last 7d / 30d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'var(--cal-today-bg)', borderColor: 'var(--cal-border)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--cal-heading)' }}>Bookings created</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--cal-heading)' }}>{(kpis?.bookings7d ?? 0)} / {(kpis?.bookings30d ?? 0)}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--cal-heading)' }}>Last 7d / 30d</p>
             </article>
-            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.846 0.039 196.711)', borderColor: 'oklch(0.78 0.06 196.711)' }}>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Meetings completed</p>
-              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.03 196.711)' }}>{(kpis?.meetingsCompleted7d ?? 0)} / {(kpis?.meetingsCompleted30d ?? 0)}</p>
-              <p className="text-xs mt-1" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Last 7d / 30d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'var(--cal-today-bg)', borderColor: 'var(--cal-border)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--cal-heading)' }}>Meetings completed</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--cal-heading)' }}>{(kpis?.meetingsCompleted7d ?? 0)} / {(kpis?.meetingsCompleted30d ?? 0)}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--cal-heading)' }}>Last 7d / 30d</p>
             </article>
-            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'oklch(0.846 0.039 196.711)', borderColor: 'oklch(0.78 0.06 196.711)' }}>
-              <p className="text-xs uppercase tracking-wide" style={{ color: 'oklch(0.35 0.04 196.711)' }}>No-shows</p>
-              <p className="text-3xl font-bold" style={{ color: 'oklch(0.15 0.03 196.711)' }}>{(kpis?.noShowsPct7d ?? 0).toFixed(1)}%</p>
-              <p className="text-xs mt-1" style={{ color: 'oklch(0.35 0.04 196.711)' }}>Last 7d</p>
+            <article className="rounded-xl border p-4 shadow-sm" style={{ background: 'var(--cal-today-bg)', borderColor: 'var(--cal-border)' }}>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--cal-heading)' }}>No-shows</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--cal-heading)' }}>{(kpis?.noShowsPct7d ?? 0).toFixed(1)}%</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--cal-heading)' }}>Last 7d</p>
             </article>
           </div>
         </section>

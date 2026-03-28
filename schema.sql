@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS booking_pages (
   duration_minutes    INTEGER NOT NULL DEFAULT 30,
   buffer_minutes      INTEGER NOT NULL DEFAULT 0,
   status              TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('published','draft','paused')),
-  color               TEXT DEFAULT '#0d9488',
+  color               TEXT DEFAULT '#6A8E8E',
   location_type       TEXT DEFAULT 'virtual' CHECK(location_type IN ('virtual','phone','in-person')),
   location_details    TEXT DEFAULT '',
   config              TEXT DEFAULT '{}',

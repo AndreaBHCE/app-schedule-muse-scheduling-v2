@@ -36,7 +36,7 @@ export async function POST() {
 
     // ── Seed booking pages ─────────────────────────────────
     const bookingPages = [
-      { id: "bp-1", title: "30-min Strategy Session", slug: "strategy-30", desc: "A quick strategy call to align on goals.", dur: 30, buf: 5, status: "published", color: "#0d9488", loc: "virtual", locD: "https://meet.schedulemuseai.com/strategy", b7: 12, conv: 8.5 },
+      { id: "bp-1", title: "30-min Strategy Session", slug: "strategy-30", desc: "A quick strategy call to align on goals.", dur: 30, buf: 5, status: "published", color: "#6A8E8E", loc: "virtual", locD: "https://meet.schedulemuseai.com/strategy", b7: 12, conv: 8.5 },
       { id: "bp-2", title: "60-min Deep Dive", slug: "deep-dive-60", desc: "Extended session for complex topics.", dur: 60, buf: 10, status: "published", color: "#6366f1", loc: "virtual", locD: "https://meet.schedulemuseai.com/deepdive", b7: 6, conv: 3.2 },
       { id: "bp-3", title: "15-min Quick Check-in", slug: "checkin-15", desc: "Fast sync for ongoing projects.", dur: 15, buf: 5, status: "published", color: "#f59e0b", loc: "phone", locD: "+1-555-0100", b7: 18, conv: 12.1 },
       { id: "bp-4", title: "Coffee Chat", slug: "coffee-chat", desc: "Informal meet & greet over coffee.", dur: 30, buf: 0, status: "draft", color: "#ec4899", loc: "in-person", locD: "Cafe Luma, Downtown", b7: 0, conv: 0 },

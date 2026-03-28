@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
 
       const rawKey = `smuse_${crypto.randomBytes(24).toString("hex")}`;
-      const id = `key-${Date.now()}`;
+      const id = `key-${crypto.randomUUID()}`;
       const prefix = rawKey.slice(0, 12) + "...";
       const hash = crypto.createHash("sha256").update(rawKey).digest("hex");
 
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       const urlErr = validUrl("url", payload.url);
       if (urlErr) return NextResponse.json({ error: urlErr }, { status: 400 });
 
-      const id = `wh-${Date.now()}`;
+      const id = `wh-${crypto.randomUUID()}`;
       const secret = `whsec_${crypto.randomBytes(16).toString("hex")}`;
 
       await d1Query(

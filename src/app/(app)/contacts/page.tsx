@@ -312,7 +312,7 @@ export default function ContactsPage() {
                 <input value={newPhone} onChange={(e) => setNewPhone(formatPhoneInput(e.target.value))} placeholder="000-000-0000" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
               </div>
               <div className="mt-4 flex justify-end gap-2">
-                <button onClick={() => setShowAdd(false)} className="rounded-full px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-90" style={{ border: "2px solid #00bfa5", color: "#00bfa5", background: "transparent" }}>Cancel</button>
+                <button onClick={() => setShowAdd(false)} className="rounded-full px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-90" style={{ border: "2px solid var(--cal-primary)", color: "var(--cal-primary)", background: "transparent" }}>Cancel</button>
                 <button onClick={addContact} className="btn-primary">Add</button>
               </div>
             </div>
@@ -334,7 +334,7 @@ export default function ContactsPage() {
                 <input value={editPhone} onChange={(e) => setEditPhone(formatPhoneInput(e.target.value))} placeholder="000-000-0000" className="w-full rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }} />
               </div>
               <div className="mt-4 flex justify-end gap-2">
-                <button onClick={() => setEditContact(null)} className="rounded-full px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-90" style={{ border: "2px solid #00bfa5", color: "#00bfa5", background: "transparent" }} disabled={editSaving}>Cancel</button>
+                <button onClick={() => setEditContact(null)} className="rounded-full px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-90" style={{ border: "2px solid var(--cal-primary)", color: "var(--cal-primary)", background: "transparent" }} disabled={editSaving}>Cancel</button>
                 <button onClick={saveEdit} className="btn-primary" disabled={editSaving}>{editSaving ? "Saving…" : "Save"}</button>
               </div>
             </div>

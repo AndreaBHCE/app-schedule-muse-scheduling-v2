@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     const lastName = (payload.lastName || "").trim();
     const email = (payload.email || "").trim();
 
-    const id = `contact-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+    const id = `contact-${crypto.randomUUID()}`;
 
     await d1Query(
       `INSERT INTO contacts (id, user_id, first_name, last_name, email, phone, company, tags, notes)

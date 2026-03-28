@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const id = `bp-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+    const id = `bp-${crypto.randomUUID()}`;
     const slug = payload.title
       .trim()
       .toLowerCase()
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
         payload.durationMinutes,
         payload.bufferMinutes || 0,
         "published",
-        payload.color || "#0d9488",
+        payload.color || "#6A8E8E",
         payload.locationType || "virtual",
         payload.locationDetails || "",
         JSON.stringify(payload.config || {}),

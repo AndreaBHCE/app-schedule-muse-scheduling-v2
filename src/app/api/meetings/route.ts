@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create meeting record in database
-    const meetingId = `meeting-${Date.now()}-${Math.round(Math.random() * 100000)}`;
+    const meetingId = `meeting-${crypto.randomUUID()}`;
 
     await d1Query(
       `INSERT INTO meetings (

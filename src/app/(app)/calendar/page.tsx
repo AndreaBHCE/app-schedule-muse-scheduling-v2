@@ -288,7 +288,7 @@ export default function CalendarPage() {
                 </p>
               </div>
               <div className="mt-4 flex justify-end">
-                <button onClick={() => setSelectedEvent(null)} className="rounded-lg px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90" style={{ background: "#0d9488", color: "#ffffff" }}>Close</button>
+                <button onClick={() => setSelectedEvent(null)} className="rounded-lg px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90" style={{ background: "var(--cal-primary)", color: "#ffffff" }}>Close</button>
               </div>
             </div>
           </div>
