@@ -52,34 +52,50 @@ export async function resolveAuth(request: Request): Promise<ResolvedAuth> {
 }
 
 /**
- * Ensure a user row exists in D1 with current Clerk profile data.
- * INSERT OR IGNORE creates the row on first call.
- * Then UPDATE syncs email + display_name from Clerk (cheap no-op if unchanged).
+ * Ensure a user row exists in D1.
+ *
+ * Fast path (99% of requests): SELECT confirms row exists → 1 query, done.
+ * First sign-in: fetches Clerk profile, INSERTs with real data. Fails loudly
+ * if Clerk returns no email — never creates a row with empty required fields.
+ *
+ * Profile sync (email/name changes) is a separate concern, not per-request overhead.
  */
 async function ensureUserRow(userId: string): Promise<void> {
-  // 1. Ensure the row exists
-  await d1Query(
-    `INSERT OR IGNORE INTO users (id, email, display_name, timezone)
-     VALUES (?, '', '', 'America/New_York')`,
+  const existing = await d1Query(
+    `SELECT id FROM users WHERE id = ?`,
     [userId],
   );
 
-  // 2. Fetch real profile from Clerk and sync
-  try {
-    const user = await currentUser();
-    if (user) {
-      const email = user.emailAddresses?.[0]?.emailAddress || "";
-      const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "";
-      await d1Query(
-        `UPDATE users SET email = ?, display_name = ?, updated_at = datetime('now')
-         WHERE id = ? AND (email != ? OR display_name != ?)`,
-        [email, displayName, userId, email, displayName],
-      );
-    }
-  } catch (err) {
-    // Don't block auth if Clerk profile fetch fails
-    console.error("Failed to sync user profile from Clerk:", err);
+  if (existing.results && existing.results.length > 0) {
+    return; // Row exists — fast path, 1 query
   }
+
+  // First sign-in: create the row with real Clerk data
+  const user = await currentUser();
+  if (!user) {
+    throw new AuthError(
+      "Clerk session valid but currentUser() returned null — cannot create user row",
+      500,
+    );
+  }
+
+  const email = user.emailAddresses?.[0]?.emailAddress;
+  if (!email) {
+    throw new AuthError(
+      "Clerk user has no email address — cannot create user row",
+      500,
+    );
+  }
+
+  const displayName =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || "";
+
+  await d1Query(
+    `INSERT INTO users (id, email, display_name, timezone)
+     VALUES (?, ?, ?, 'America/New_York')
+     ON CONFLICT(id) DO NOTHING`,
+    [userId, email, displayName],
+  );
 }
 
 /**
