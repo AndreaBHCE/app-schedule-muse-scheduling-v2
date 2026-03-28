@@ -48,7 +48,8 @@ export default function PrivacyPolicy() {
               <ul className="list-disc pl-6 text-gray-700 mb-4">
                 <li>Calendar access (Google Calendar, Outlook)</li>
                 <li>Gmail: When you connect your Gmail account, we use Google&apos;s Gmail API solely to send meeting invitations, confirmations, cancellations, and reminders on your behalf. We access only the gmail.send scope and your email address for identification. We do not read, scan, index, or store the content of your emails.</li>
-                <li>Video conferencing data (Zoom, Microsoft Teams)</li>
+                <li>Video conferencing data (Zoom, GoTo Meeting, Microsoft Teams)</li>
+                <li>GoTo Meeting: When you connect your GoTo Meeting account, we access GoTo Meeting APIs solely to create, update, and manage video conference meetings on your behalf when you schedule appointments. We access only the minimum data necessary to generate meeting links and manage scheduled sessions. We do not access recordings, attendee lists beyond scheduling needs, or unrelated account data.</li>
                 <li>CRM and contact management system data</li>
               </ul>
             </section>
@@ -73,6 +74,7 @@ export default function PrivacyPolicy() {
               </p>
               <ul className="list-disc pl-6 text-gray-700 mb-4">
                 <li>Zoom: Meeting details to create video conferences</li>
+                <li>GoTo Meeting: Meeting details to create and manage video conferences on your behalf</li>
                 <li>Calendar Providers: Appointment data for calendar syncing</li>
                 <li>Gmail: When you connect your Gmail account, we use Google&apos;s Gmail API solely to send meeting invitations, confirmations, cancellations, and reminders on your behalf. We access only the gmail.send scope and your email address for identification. We do not read, scan, index, or store the content of your emails.</li>
               </ul>
@@ -201,7 +203,34 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">14. Compliance</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">14. GoTo Meeting Services — User Data Disclosure</h2>
+              <p className="text-gray-700 mb-4">
+                When you connect your GoTo Meeting account to ScheduleMuse AI, we request access to specific GoTo services. This section describes exactly what data we access, why, and how it is handled.
+              </p>
+
+              <h3 className="text-xl font-medium text-gray-800 mb-3">14.1 Scopes and Data Accessed</h3>
+              <ul className="list-disc pl-6 text-gray-700 mb-4">
+                <li>GoTo Meeting scopes: Used solely to create, update, and manage video conference meetings on your behalf when you schedule appointments through ScheduleMuse AI. We access only the minimum data necessary to generate meeting links, invitations, and manage scheduled sessions. We do not access or store any recordings, attendee lists beyond scheduling needs, or unrelated account data.</li>
+              </ul>
+
+              <h3 className="text-xl font-medium text-gray-800 mb-3">14.2 How GoTo Data Is Used</h3>
+              <p className="text-gray-700 mb-4">
+                GoTo user data is used exclusively to provide the scheduling features you requested — specifically, creating and managing GoTo Meeting video conferences for meetings you schedule.
+              </p>
+
+              <h3 className="text-xl font-medium text-gray-800 mb-3">14.3 Storage and Protection of GoTo Data</h3>
+              <p className="text-gray-700 mb-4">
+                OAuth tokens are encrypted and stored securely. They are decrypted only when needed to create or manage a meeting and are never logged in plaintext or exposed to client-side code.
+              </p>
+
+              <h3 className="text-xl font-medium text-gray-800 mb-3">14.4 Revocation and Deletion</h3>
+              <p className="text-gray-700 mb-4">
+                You may disconnect your GoTo Meeting account at any time from your integration settings. Upon disconnection, all stored OAuth tokens are immediately and permanently deleted.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">15. Compliance</h2>
               <p className="text-gray-700 mb-4">
                 This Privacy Policy is designed to comply with applicable laws including GDPR, CCPA, and the Google API Services User Data Policy.
               </p>

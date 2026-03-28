@@ -173,6 +173,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    /* ── GoTo Meeting ──────────────────────────────────────── */
+    if (provider === "goto") {
+      const clientId = process.env.GoToMeeting_Client_ID;
+      const clientSecret = process.env.GoToMeeting_Secret;
+      const redirectUri = process.env.GoToMeeting_Redirect_URI;
+
+      if (!clientId || !clientSecret || !redirectUri) {
+        return NextResponse.json(
+          { error: "GoTo Meeting credentials not configured — set GoToMeeting_Client_ID, GoToMeeting_Secret, and GoToMeeting_Redirect_URI" },
+          { status: 500 },
+        );
+      }
+
+      const state = buildSignedState("goto-oauth", userId, clientSecret);
+
+      const url = new URL("https://authentication.logmeininc.com/oauth/authorize");
+      url.searchParams.set("response_type", "code");
+      url.searchParams.set("client_id", clientId);
+      url.searchParams.set("redirect_uri", redirectUri);
+      url.searchParams.set("state", state);
+
+      return NextResponse.json({ url: url.toString() });
+    }
+
     return NextResponse.json({ error: `Unsupported provider: ${provider}` }, { status: 400 });
   } catch (err) {
     console.error("POST /api/integrations/connect error:", err);

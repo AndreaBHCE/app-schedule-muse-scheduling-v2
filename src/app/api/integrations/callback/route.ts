@@ -47,9 +47,10 @@ function verifyState(
 }
 
 /** Detect provider from the state prefix. */
-function detectProvider(state: string): "zoom" | "gmail" | null {
+function detectProvider(state: string): "zoom" | "gmail" | "goto" | null {
   if (state.startsWith("zoom-oauth.")) return "zoom";
   if (state.startsWith("gmail-oauth.")) return "gmail";
+  if (state.startsWith("goto-oauth.")) return "goto";
   return null;
 }
 
@@ -207,6 +208,70 @@ async function storeGmailTokens(userId: string, tokenData: Record<string, unknow
   );
 }
 
+/* ── GoTo Meeting-specific ────────────────────────────────── */
+
+async function exchangeGoToCode(code: string) {
+  const clientId = process.env.GoToMeeting_Client_ID;
+  const clientSecret = process.env.GoToMeeting_Secret;
+  const redirectUri = process.env.GoToMeeting_Redirect_URI;
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new Error("GoTo Meeting credentials not configured — set GoToMeeting_Client_ID, GoToMeeting_Secret, and GoToMeeting_Redirect_URI");
+  }
+
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+
+  const response = await fetch("https://authentication.logmeininc.com/oauth/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: redirectUri,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("GoTo token exchange failed:", response.status, errorBody);
+    throw new Error(`GoTo token exchange failed (${response.status})`);
+  }
+
+  return await response.json();
+}
+
+async function storeGoToTokens(userId: string, tokenData: Record<string, unknown>) {
+  const id = `int-goto-${crypto.randomUUID()}`;
+
+  const encryptedAccess = encryptToken(String(tokenData.access_token));
+  const encryptedRefresh = tokenData.refresh_token
+    ? encryptToken(String(tokenData.refresh_token))
+    : "";
+
+  const metadata = JSON.stringify({
+    organizer_key: tokenData.organizer_key || "",
+    account_key: tokenData.account_key || "",
+    principal: tokenData.principal || "",
+    token_type: tokenData.token_type || "bearer",
+  });
+
+  await d1Query(
+    `INSERT INTO integrations (id, user_id, provider, status, access_token, refresh_token, metadata, connected_at)
+     VALUES (?, ?, 'goto', 'connected', ?, ?, ?, datetime('now'))
+     ON CONFLICT(user_id, provider) DO UPDATE SET
+       status = 'connected',
+       access_token = excluded.access_token,
+       refresh_token = excluded.refresh_token,
+       metadata = excluded.metadata,
+       connected_at = datetime('now'),
+       updated_at = datetime('now')`,
+    [id, userId, encryptedAccess, encryptedRefresh, metadata],
+  );
+}
+
 /* ── GET /api/integrations/callback ──────────────────────── */
 
 // NOTE: This route is marked as public in middleware.ts because
@@ -256,7 +321,9 @@ export async function GET(request: NextRequest) {
       const secret =
         provider === "zoom"
           ? process.env.ZOOM_CLIENT_SECRET
-          : process.env.GMAIL_CLIENT_SECRET;
+          : provider === "gmail"
+            ? process.env.GMAIL_CLIENT_SECRET
+            : process.env.GoToMeeting_Secret;
 
       if (secret) {
         userId = verifyState(state, secret, `${provider}-oauth`);
@@ -296,6 +363,19 @@ export async function GET(request: NextRequest) {
       await storeGmailTokens(userId, tokenResponse);
       return NextResponse.redirect(
         new URL("/integrations?success=gmail_connected", request.url),
+      );
+    }
+
+    if (provider === "goto") {
+      const tokenResponse = await exchangeGoToCode(code);
+      if (!tokenResponse.access_token) {
+        return NextResponse.redirect(
+          new URL("/integrations?error=token_exchange_failed", request.url),
+        );
+      }
+      await storeGoToTokens(userId, tokenResponse);
+      return NextResponse.redirect(
+        new URL("/integrations?success=goto_connected", request.url),
       );
     }
 
