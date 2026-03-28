@@ -156,18 +156,17 @@ export default function PrivacyPolicy() {
               <h3 className="text-xl font-medium text-gray-800 mb-3">13.1 Scopes and Data Accessed</h3>
               <ul className="list-disc pl-6 text-gray-700 mb-4">
                 <li>Gmail Send (gmail.send): Used solely to send meeting invitations, confirmations, cancellations, and reminders from your Gmail account on your behalf. We do not read, scan, index, or store any of your existing emails or inbox content.</li>
-                <li>Calendar Events (calendar.events): Used to create and manage calendar events for meetings you schedule through ScheduleMuse AI. We do not access or store calendar data beyond what is necessary to perform these scheduling actions.</li>
                 <li>Email Address (userinfo.email): Retrieved to identify your connected account and display it in your integration settings.</li>
               </ul>
 
               <h3 className="text-xl font-medium text-gray-800 mb-3">13.2 How Google Data Is Used</h3>
               <p className="text-gray-700 mb-4">
-                Google user data is used exclusively to provide the scheduling features you requested — specifically, sending meeting-related communications through your connected Gmail account and managing calendar events for meetings you schedule.
+                Google user data is used exclusively to provide the scheduling features you requested — specifically, sending meeting-related communications through your connected Gmail account.
               </p>
 
               <h3 className="text-xl font-medium text-gray-800 mb-3">13.3 Storage and Protection of Google Data</h3>
               <p className="text-gray-700 mb-4">
-                OAuth tokens are encrypted and stored securely. They are decrypted only when needed to send an email or manage a calendar event and are never logged in plaintext or exposed to client-side code.
+                OAuth tokens are encrypted and stored securely. They are decrypted only when needed to send an email and are never logged in plaintext or exposed to client-side code.
               </p>
 
               <h3 className="text-xl font-medium text-gray-800 mb-3">13.4 Revocation and Deletion</h3>

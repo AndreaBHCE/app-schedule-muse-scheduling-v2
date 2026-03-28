@@ -22,7 +22,6 @@ const SAMPLE_CONTACT = {
   firstName: "Jane",
   lastName: "Doe",
   email: "jane.doe@example.com",
-  name: "Jane Doe",
 } as const;
 
 /* ================================================================

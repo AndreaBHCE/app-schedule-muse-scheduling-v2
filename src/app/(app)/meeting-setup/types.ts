@@ -143,5 +143,4 @@ export interface SampleContact {
   firstName: string;
   lastName: string;
   email: string;
-  name: string;
 }

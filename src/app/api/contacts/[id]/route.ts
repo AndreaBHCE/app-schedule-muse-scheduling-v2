@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
 import { resolveAuth, AuthError } from "@/lib/auth";
 import { requireScope } from "@/lib/apikey";
-import { formatContact, splitName, type ContactRow } from "@/lib/contacts";
+import { formatContact, type ContactRow } from "@/lib/contacts";
 
 /* ── GET /api/contacts/:id ──────────────────────────────── */
 export async function GET(
@@ -44,15 +44,8 @@ export async function PUT(
     const { id } = await params;
     const payload = await request.json();
 
-    let firstName = (payload.firstName || "").trim();
-    let lastName = (payload.lastName || "").trim();
-
-    // If only a full name was provided, split it
-    if (!firstName && !lastName && payload.name) {
-      const parsed = splitName(payload.name);
-      firstName = parsed.firstName;
-      lastName = parsed.lastName;
-    }
+    const firstName = (payload.firstName || "").trim();
+    const lastName = (payload.lastName || "").trim();
 
     if (!firstName && !lastName) {
       return NextResponse.json(
@@ -72,10 +65,6 @@ export async function PUT(
 
     sets.push(`last_name = ?`);
     paramsArr.push(lastName);
-
-    // Keep legacy name column in sync
-    sets.push(`name = ?`);
-    paramsArr.push([firstName, lastName].filter(Boolean).join(" "));
 
     if (payload.email) {
       sets.push(`email = ?`);

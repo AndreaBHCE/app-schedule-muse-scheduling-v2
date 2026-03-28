@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { requireAdmin, AuthError } from "@/lib/auth";
 
 export async function POST() {
   try {
-    const userId = await getAuthUserId();
-
-    // TODO: Add admin role check here
-    // For now, any authenticated user can migrate (restrict in production)
+    const userId = await requireAdmin();
 
     // Add first_name / last_name columns if missing (idempotent)
     try {
@@ -28,21 +25,12 @@ export async function POST() {
       // Column might already be renamed or not exist
     }
 
-    // Add name column if missing (keep for backward compatibility)
+    // Drop legacy name column if it exists (canonical source is first_name + last_name)
     try {
-      await d1Query(`ALTER TABLE contacts ADD COLUMN name TEXT DEFAULT ''`);
+      await d1Query(`ALTER TABLE contacts DROP COLUMN name`);
     } catch {
-      // Column already exists
+      // Column may not exist
     }
-
-    // Backfill: sync name from first_name + last_name for any rows that have
-    // first_name/last_name but an empty name column
-    await d1Query(
-      `UPDATE contacts
-       SET name = TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, ''))
-       WHERE (name IS NULL OR name = '')
-         AND (first_name != '' OR last_name != '')`,
-    );
 
     // Add scopes column to api_keys if missing (for H5 API key scopes)
     try {
@@ -82,7 +70,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: "Migration completed — columns added/verified, name column synced.",
+      message: "Migration completed — columns added/verified, legacy name column dropped.",
     });
   } catch (err) {
     if (err instanceof AuthError)
@@ -90,9 +78,4 @@ export async function POST() {
     console.error("Migration error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
-}
-
-// Allow GET so you can trigger migration by visiting the URL in a browser
-export async function GET() {
-  return POST();
 }

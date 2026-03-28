@@ -125,3 +125,5 @@ tmp/
 temp/
 *.tmp
 *.temp
+# VS Code workspace files
+*.code-workspace

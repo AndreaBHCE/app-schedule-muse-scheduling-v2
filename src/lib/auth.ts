@@ -82,6 +82,28 @@ async function ensureUserRow(userId: string): Promise<void> {
   }
 }
 
+/**
+ * Require the current user to be an admin.
+ * Reads CLERK_ADMIN_USER_IDS env var (comma-separated Clerk user IDs).
+ * Throws if CLERK_ADMIN_USER_IDS is not set (fail-fast).
+ * Throws 403 if the authenticated user is not in the list.
+ */
+export async function requireAdmin(): Promise<string> {
+  const userId = await getAuthUserId();
+
+  const raw = process.env.CLERK_ADMIN_USER_IDS;
+  if (!raw) {
+    throw new Error("Missing CLERK_ADMIN_USER_IDS — set in environment");
+  }
+
+  const adminIds = raw.split(",").map((id) => id.trim()).filter(Boolean);
+  if (!adminIds.includes(userId)) {
+    throw new AuthError("Forbidden — admin access required", 403);
+  }
+
+  return userId;
+}
+
 export class AuthError extends Error {
   status: number;
   constructor(message: string, status: number) {

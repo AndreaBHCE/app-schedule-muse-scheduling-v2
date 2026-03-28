@@ -6,8 +6,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ScheduleMuseAI',
-  description: 'AI-powered scheduling platform for AetherMuse clients',
+  title: 'ScheduleMuse AI',
+  description: 'AI-powered scheduling platform — share one link, let the AI handle the rest.',
 }
 
 export default function RootLayout({

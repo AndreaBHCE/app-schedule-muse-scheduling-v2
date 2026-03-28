@@ -69,10 +69,10 @@ async function ensureUserExists(userId: string) {
 async function exchangeZoomCode(code: string) {
   const zoomClientId = process.env.ZOOM_CLIENT_ID;
   const zoomClientSecret = process.env.ZOOM_CLIENT_SECRET;
-  const redirectUri = process.env.ZOOM_REDIRECT_URI || "https://app.schedulemuseai.com/api/integrations/callback";
+  const redirectUri = process.env.ZOOM_REDIRECT_URI;
 
-  if (!zoomClientId || !zoomClientSecret) {
-    throw new Error("Zoom credentials not configured");
+  if (!zoomClientId || !zoomClientSecret || !redirectUri) {
+    throw new Error("Zoom credentials not configured — set ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_REDIRECT_URI");
   }
 
   const credentials = Buffer.from(`${zoomClientId}:${zoomClientSecret}`).toString("base64");
@@ -133,12 +133,10 @@ async function storeZoomTokens(userId: string, tokenData: Record<string, unknown
 async function exchangeGmailCode(code: string) {
   const clientId = process.env.GMAIL_CLIENT_ID;
   const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-  const redirectUri =
-    process.env.GMAIL_REDIRECT_URI ||
-    "https://app.schedulemuseai.com/api/integrations/callback";
+  const redirectUri = process.env.GMAIL_REDIRECT_URI;
 
-  if (!clientId || !clientSecret) {
-    throw new Error("Gmail credentials not configured");
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new Error("Gmail credentials not configured — set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REDIRECT_URI");
   }
 
   const response = await fetch("https://oauth2.googleapis.com/token", {

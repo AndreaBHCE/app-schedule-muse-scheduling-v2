@@ -1,14 +1,13 @@
 /**
- * Email service — Resend-backed with graceful degradation.
+ * Email service — Resend-backed.
  *
- * If RESEND_API_KEY is not set, emails are logged to the console
- * and skipped. The calling code never has to care — it just calls
- * sendMeetingConfirmation() and moves on.
+ * Throws at call time if RESEND_API_KEY is not set.
+ * A missing key is a configuration failure, not a graceful-skip scenario.
  *
  * Config:
- *   RESEND_API_KEY   – Resend API key (re_...)
- *   FROM_EMAIL       – Sender address (default: noreply@schedulemuseai.com)
- *   APP_NAME         – Brand name in emails (default: ScheduleMuseAI)
+ *   RESEND_API_KEY      – Resend API key (re_...) (required)
+ *   RESEND_FROM_EMAIL   – Sender address (required)
+ *   RESEND_FROM_NAME    – Brand name in emails (required)
  */
 
 import { Resend } from "resend";
@@ -16,13 +15,19 @@ import { Resend } from "resend";
 /* ── Config ──────────────────────────────────────────────── */
 
 const API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@schedulemuseai.com";
-const APP_NAME = process.env.APP_NAME || "ScheduleMuseAI";
+
+function requireEmailEnv(name: string): string {
+  const val = process.env[name];
+  if (!val) throw new Error(`Missing ${name} — set in environment`);
+  return val;
+}
 
 let resend: Resend | null = null;
 
-function getResend(): Resend | null {
-  if (!API_KEY) return null;
+function requireResend(): Resend {
+  if (!API_KEY) {
+    throw new Error("Missing RESEND_API_KEY — set in environment");
+  }
   if (!resend) resend = new Resend(API_KEY);
   return resend;
 }
@@ -62,14 +67,7 @@ export interface MeetingEmailData {
 export async function sendMeetingConfirmation(
   data: MeetingEmailData,
 ): Promise<{ sent: boolean; error?: string }> {
-  const client = getResend();
-  if (!client) {
-    console.warn(
-      "[email] RESEND_API_KEY not configured — skipping meeting confirmation emails. " +
-        "Set RESEND_API_KEY in your environment to enable email delivery.",
-    );
-    return { sent: false, error: "Email service not configured" };
-  }
+  const client = requireResend();
 
   const startDate = new Date(data.startTime);
   const endDate = new Date(data.endTime);
@@ -95,13 +93,13 @@ export async function sendMeetingConfirmation(
     // Send both emails concurrently
     const [hostResult, guestResult] = await Promise.allSettled([
       client.emails.send({
-        from: `${APP_NAME} <${FROM_EMAIL}>`,
+        from: `${requireEmailEnv("RESEND_FROM_NAME")} <${requireEmailEnv("RESEND_FROM_EMAIL")}>`,
         to: data.hostEmail,
         subject: `Meeting confirmed: ${data.guestName} — ${formattedDate}`,
         html: buildHostEmail(data, formattedDate, timeRange),
       }),
       client.emails.send({
-        from: `${APP_NAME} <${FROM_EMAIL}>`,
+        from: `${requireEmailEnv("RESEND_FROM_NAME")} <${requireEmailEnv("RESEND_FROM_EMAIL")}>`,
         to: data.guestEmail,
         subject: `Your meeting with ${data.hostName} is confirmed — ${formattedDate}`,
         html: buildGuestEmail(data, formattedDate, timeRange),
@@ -136,11 +134,7 @@ export async function sendMeetingCancellation(data: {
   startTime: string;
   reason?: string;
 }): Promise<{ sent: boolean }> {
-  const client = getResend();
-  if (!client) {
-    console.warn("[email] RESEND_API_KEY not configured — skipping cancellation email.");
-    return { sent: false };
-  }
+  const client = requireResend();
 
   const startDate = new Date(data.startTime);
   const formattedDate = startDate.toLocaleDateString("en-US", {
@@ -152,7 +146,7 @@ export async function sendMeetingCancellation(data: {
 
   try {
     await client.emails.send({
-      from: `${APP_NAME} <${FROM_EMAIL}>`,
+      from: `${requireEmailEnv("RESEND_FROM_NAME")} <${requireEmailEnv("RESEND_FROM_EMAIL")}>`,
       to: data.guestEmail,
       subject: `Meeting canceled: ${formattedDate}`,
       html: buildCancellationEmail(data, formattedDate),
@@ -188,7 +182,7 @@ function emailShell(title: string, body: string): string {
 </style>
 </head>
 <body><div class="wrap"><div class="card">${body}</div>
-<div class="footer">Sent by ${APP_NAME}</div></div></body></html>`;
+<div class="footer">Sent by ${requireEmailEnv("RESEND_FROM_NAME")}</div></div></body></html>`;
 }
 
 function detailRow(label: string, value: string): string {
@@ -222,7 +216,7 @@ function buildHostEmail(
   return emailShell(
     `Meeting confirmed with ${data.guestName}`,
     `<div class="header">
-      <div class="brand">${APP_NAME}</div>
+      <div class="brand">${requireEmailEnv("RESEND_FROM_NAME")}</div>
       <div class="title">New meeting confirmed</div>
       <div class="subtitle">You have a new meeting with ${escapeHtml(data.guestName)}</div>
     </div>
@@ -254,7 +248,7 @@ function buildGuestEmail(
   return emailShell(
     `Meeting confirmed with ${data.hostName}`,
     `<div class="header">
-      <div class="brand">${APP_NAME}</div>
+      <div class="brand">${requireEmailEnv("RESEND_FROM_NAME")}</div>
       <div class="title">Your meeting is confirmed</div>
       <div class="subtitle">${escapeHtml(data.hostName)} has scheduled a meeting with you</div>
     </div>
@@ -274,7 +268,7 @@ function buildCancellationEmail(
   return emailShell(
     "Meeting canceled",
     `<div class="header">
-      <div class="brand">${APP_NAME}</div>
+      <div class="brand">${requireEmailEnv("RESEND_FROM_NAME")}</div>
       <div class="title">Meeting canceled</div>
       <div class="subtitle">${escapeHtml(data.hostName)} has canceled the meeting on ${formattedDate}</div>
     </div>

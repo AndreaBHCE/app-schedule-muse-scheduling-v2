@@ -51,13 +51,11 @@ export async function POST(request: Request) {
     if (provider === "zoom") {
       const clientId = process.env.ZOOM_CLIENT_ID;
       const clientSecret = process.env.ZOOM_CLIENT_SECRET;
-      const redirectUri =
-        process.env.ZOOM_REDIRECT_URI ||
-        "https://app.schedulemuseai.com/api/integrations/callback";
+      const redirectUri = process.env.ZOOM_REDIRECT_URI;
 
-      if (!clientId || !clientSecret) {
+      if (!clientId || !clientSecret || !redirectUri) {
         return NextResponse.json(
-          { error: "Zoom credentials not configured" },
+          { error: "Zoom credentials not configured — set ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_REDIRECT_URI" },
           { status: 500 },
         );
       }
@@ -79,13 +77,11 @@ export async function POST(request: Request) {
     if (provider === "gmail") {
       const clientId = process.env.GMAIL_CLIENT_ID;
       const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-      const redirectUri =
-        process.env.GMAIL_REDIRECT_URI ||
-        "https://app.schedulemuseai.com/api/integrations/callback";
+      const redirectUri = process.env.GMAIL_REDIRECT_URI;
 
-      if (!clientId || !clientSecret) {
+      if (!clientId || !clientSecret || !redirectUri) {
         return NextResponse.json(
-          { error: "Gmail credentials not configured" },
+          { error: "Gmail credentials not configured — set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REDIRECT_URI" },
           { status: 500 },
         );
       }

@@ -13,7 +13,7 @@ import { encryptToken, decryptToken } from "./crypto";
  * Required env vars:
  *   GMAIL_CLIENT_ID
  *   GMAIL_CLIENT_SECRET
- *   GMAIL_REDIRECT_URI  (default: https://app.schedulemuseai.com/api/integrations/callback)
+ *   GMAIL_REDIRECT_URI
  */
 
 const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1";

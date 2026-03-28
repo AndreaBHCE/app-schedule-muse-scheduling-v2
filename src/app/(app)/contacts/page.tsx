@@ -4,9 +4,8 @@ import { useEffect, useState, useRef } from "react";
 
 type Contact = {
   id: string;
-  name: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   company: string;

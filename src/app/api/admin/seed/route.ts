@@ -1,92 +1,38 @@
 import { NextResponse } from "next/server";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { requireAdmin, AuthError } from "@/lib/auth";
 
 /**
  * POST /api/admin/seed
  *
  * Creates all tables and inserts sample data for the authenticated user.
  * Uses the real Clerk userId so data belongs to the signed-in account.
+ *
+ * Schema DDL is read from the canonical schema.sql at the project root.
+ * Do NOT duplicate CREATE TABLE statements here.
  */
 export async function POST() {
   try {
-    const USER_ID = await getAuthUserId();
+    const USER_ID = await requireAdmin();
 
-    // ── Create tables ──────────────────────────────────────
-    const tableStatements = [
-      `CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY, email TEXT NOT NULL, display_name TEXT NOT NULL DEFAULT '',
-        avatar_url TEXT DEFAULT '', timezone TEXT NOT NULL DEFAULT 'America/New_York',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-      `CREATE TABLE IF NOT EXISTS booking_pages (
-        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        title TEXT NOT NULL, slug TEXT NOT NULL, description TEXT DEFAULT '',
-        duration_minutes INTEGER NOT NULL DEFAULT 30, buffer_minutes INTEGER NOT NULL DEFAULT 0,
-        status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('published','draft','paused')),
-        color TEXT DEFAULT '#0d9488', location_type TEXT DEFAULT 'virtual' CHECK(location_type IN ('virtual','phone','in-person')),
-        location_details TEXT DEFAULT '', config TEXT DEFAULT '{}',
-        bookings_last_7d INTEGER NOT NULL DEFAULT 0, conversion_delta_pct REAL NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-      `CREATE UNIQUE INDEX IF NOT EXISTS idx_bp_user_slug ON booking_pages(user_id, slug)`,
-      `CREATE TABLE IF NOT EXISTS meetings (
-        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        booking_page_id TEXT REFERENCES booking_pages(id) ON DELETE SET NULL,
-        guest_name TEXT NOT NULL, guest_email TEXT NOT NULL, meeting_type TEXT NOT NULL DEFAULT '',
-        start_time TEXT NOT NULL, end_time TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'confirmed' CHECK(status IN ('confirmed','pending','canceled','completed','no-show')),
-        location_type TEXT DEFAULT 'virtual' CHECK(location_type IN ('virtual','phone','in-person')),
-        location_details TEXT DEFAULT '', notes TEXT DEFAULT '', canceled_reason TEXT DEFAULT '',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-      `CREATE INDEX IF NOT EXISTS idx_meetings_user_start ON meetings(user_id, start_time)`,
-      `CREATE INDEX IF NOT EXISTS idx_meetings_guest_email ON meetings(guest_email)`,
-      `CREATE TABLE IF NOT EXISTS contacts (
-        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        first_name TEXT DEFAULT '', last_name TEXT DEFAULT '', name TEXT DEFAULT '',
-        email TEXT NOT NULL, phone TEXT DEFAULT '', company TEXT DEFAULT '',
-        tags TEXT DEFAULT '[]', notes TEXT DEFAULT '', last_meeting_at TEXT,
-        total_meetings INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-      `CREATE UNIQUE INDEX IF NOT EXISTS idx_contacts_user_email ON contacts(user_id, email)`,
-      `CREATE TABLE IF NOT EXISTS integrations (
-        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        provider TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'disconnected' CHECK(status IN ('connected','disconnected','error')),
-        external_id TEXT DEFAULT '', config TEXT DEFAULT '{}',
-        last_synced_at TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-      `CREATE UNIQUE INDEX IF NOT EXISTS idx_integrations_user_provider ON integrations(user_id, provider)`,
-      `CREATE TABLE IF NOT EXISTS availability_schedules (
-        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        name TEXT NOT NULL DEFAULT 'Default', timezone TEXT NOT NULL DEFAULT 'America/New_York',
-        rules TEXT NOT NULL DEFAULT '{}', is_default INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-      `CREATE TABLE IF NOT EXISTS api_keys (
-        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        name TEXT NOT NULL, key_hash TEXT NOT NULL, key_prefix TEXT NOT NULL,
-        scopes TEXT NOT NULL DEFAULT '["read"]', last_used_at TEXT, expires_at TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-      `CREATE TABLE IF NOT EXISTS webhooks (
-        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        url TEXT NOT NULL, events TEXT NOT NULL DEFAULT '["meeting.created"]',
-        secret TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
-        last_triggered_at TEXT, last_status_code INTEGER, failure_count INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-    ];
+    // ── Create tables from canonical schema.sql ────────────
+    const schemaPath = join(process.cwd(), "schema.sql");
+    const schemaSql = readFileSync(schemaPath, "utf-8");
 
-    for (const sql of tableStatements) {
+    // Split on semicolons, strip comments and whitespace, drop empty entries
+    const statements = schemaSql
+      .split(";")
+      .map((s) => s.replace(/--.*$/gm, "").trim())
+      .filter((s) => s.length > 0);
+
+    for (const sql of statements) {
       await d1Query(sql);
     }
 
-    // ── Ensure user row exists (getAuthUserId already does INSERT OR IGNORE) ──
-    // No additional user insert needed — getAuthUserId() handled it above.
+    // ── Ensure user row exists (requireAdmin → getAuthUserId → ensureUserRow) ──
+    // No additional user insert needed — handled by the auth chain above.
 
     // ── Seed booking pages ─────────────────────────────────
     const bookingPages = [
@@ -156,33 +102,29 @@ export async function POST() {
 
     // ── Seed contacts ──────────────────────────────────────
     const contacts = [
-      { id: "c-1", name: "Jordan Blake",  email: "jordan.blake@example.com",  phone: "+1-555-0101", company: "Blake Consulting",   tags: '["client","vip"]',    mc: 5, lm: at(-1, 9) },
-      { id: "c-2", name: "Skyler Reeves", email: "skyler.reeves@example.com", phone: "+1-555-0102", company: "Reeves Design Co",   tags: '["prospect"]',        mc: 2, lm: at(-10, 9) },
-      { id: "c-3", name: "Taylor Morgan", email: "taylor.morgan@example.com", phone: "+1-555-0103", company: "Morgan Ventures",    tags: '["client"]',          mc: 3, lm: at(0, 14) },
-      { id: "c-4", name: "Sam Rivera",    email: "sam.rivera@example.com",    phone: "+1-555-0104", company: "Rivera Tech",         tags: '["team","internal"]', mc: 4, lm: at(-14, 10) },
-      { id: "c-5", name: "Alex Chen",     email: "alex.chen@example.com",     phone: "+1-555-0105", company: "Chen Analytics",      tags: '["client"]',          mc: 6, lm: at(-2, 14) },
-      { id: "c-6", name: "Morgan Lee",    email: "morgan.lee@example.com",    phone: "",            company: "FutureStack Inc",     tags: '["prospect"]',        mc: 2, lm: at(-3, 10) },
-      { id: "c-7", name: "Casey Nguyen",  email: "casey.nguyen@example.com",  phone: "+1-555-0107", company: "Nguyen & Partners",   tags: '["client","vip"]',    mc: 8, lm: at(-21, 16) },
-      { id: "c-8", name: "Riley Patel",   email: "riley.patel@example.com",   phone: "+1-555-0108", company: "Patel Solutions",     tags: '["prospect"]',        mc: 1, lm: at(-5, 15) },
-      { id: "c-9", name: "Jamie Foster",  email: "jamie.foster@example.com",  phone: "+1-555-0109", company: "Foster Creative",     tags: '["client"]',          mc: 3, lm: at(-7, 11) },
-      { id: "c-10",name: "Drew Simmons",  email: "drew.simmons@example.com",  phone: "",            company: "Simmons Group",       tags: '["team"]',            mc: 2, lm: null },
-      { id: "c-11",name: "Avery Kim",     email: "avery.kim@example.com",     phone: "+1-555-0111", company: "Kim Enterprises",     tags: '["client"]',          mc: 1, lm: null },
-      { id: "c-12",name: "Quinn Ortiz",   email: "quinn.ortiz@example.com",   phone: "+1-555-0112", company: "Ortiz & Associates",  tags: '["client","vip"]',    mc: 4, lm: null },
+      { id: "c-1",  firstName: "Jordan",  lastName: "Blake",   email: "jordan.blake@example.com",  phone: "+1-555-0101", company: "Blake Consulting",   tags: '["client","vip"]',    mc: 5, lm: at(-1, 9) },
+      { id: "c-2",  firstName: "Skyler",  lastName: "Reeves",  email: "skyler.reeves@example.com", phone: "+1-555-0102", company: "Reeves Design Co",   tags: '["prospect"]',        mc: 2, lm: at(-10, 9) },
+      { id: "c-3",  firstName: "Taylor",  lastName: "Morgan",  email: "taylor.morgan@example.com", phone: "+1-555-0103", company: "Morgan Ventures",    tags: '["client"]',          mc: 3, lm: at(0, 14) },
+      { id: "c-4",  firstName: "Sam",     lastName: "Rivera",  email: "sam.rivera@example.com",    phone: "+1-555-0104", company: "Rivera Tech",         tags: '["team","internal"]', mc: 4, lm: at(-14, 10) },
+      { id: "c-5",  firstName: "Alex",    lastName: "Chen",    email: "alex.chen@example.com",     phone: "+1-555-0105", company: "Chen Analytics",      tags: '["client"]',          mc: 6, lm: at(-2, 14) },
+      { id: "c-6",  firstName: "Morgan",  lastName: "Lee",     email: "morgan.lee@example.com",    phone: "",            company: "FutureStack Inc",     tags: '["prospect"]',        mc: 2, lm: at(-3, 10) },
+      { id: "c-7",  firstName: "Casey",   lastName: "Nguyen",  email: "casey.nguyen@example.com",  phone: "+1-555-0107", company: "Nguyen & Partners",   tags: '["client","vip"]',    mc: 8, lm: at(-21, 16) },
+      { id: "c-8",  firstName: "Riley",   lastName: "Patel",   email: "riley.patel@example.com",   phone: "+1-555-0108", company: "Patel Solutions",     tags: '["prospect"]',        mc: 1, lm: at(-5, 15) },
+      { id: "c-9",  firstName: "Jamie",   lastName: "Foster",  email: "jamie.foster@example.com",  phone: "+1-555-0109", company: "Foster Creative",     tags: '["client"]',          mc: 3, lm: at(-7, 11) },
+      { id: "c-10", firstName: "Drew",    lastName: "Simmons", email: "drew.simmons@example.com",  phone: "",            company: "Simmons Group",       tags: '["team"]',            mc: 2, lm: null },
+      { id: "c-11", firstName: "Avery",   lastName: "Kim",     email: "avery.kim@example.com",     phone: "+1-555-0111", company: "Kim Enterprises",     tags: '["client"]',          mc: 1, lm: null },
+      { id: "c-12", firstName: "Quinn",   lastName: "Ortiz",   email: "quinn.ortiz@example.com",   phone: "+1-555-0112", company: "Ortiz & Associates",  tags: '["client","vip"]',    mc: 4, lm: null },
     ];
 
     for (const c of contacts) {
-      const split = c.name ? c.name.split(/\s+/) : [];
-      const firstName = split[0] || "";
-      const lastName = split.length > 1 ? split.slice(1).join(" ") : "";
-
       await d1Query(
         `INSERT OR IGNORE INTO contacts (id, user_id, first_name, last_name, email, phone, company, tags, total_meetings, last_meeting_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           c.id,
           USER_ID,
-          firstName,
-          lastName,
+          c.firstName,
+          c.lastName,
           c.email,
           c.phone,
           c.company,

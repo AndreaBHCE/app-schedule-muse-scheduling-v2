@@ -3,7 +3,7 @@ import { d1Query } from "@/lib/cloudflare";
 import { resolveAuth, AuthError } from "@/lib/auth";
 import { requireScope } from "@/lib/apikey";
 import { dispatchWebhooks } from "@/lib/webhooks";
-import { formatContact, splitName, type ContactRow, type ContactPayload } from "@/lib/contacts";
+import { formatContact, type ContactRow, type ContactPayload } from "@/lib/contacts";
 import { firstError, requiredString, optionalString, validEmail, MAX_LONG } from "@/lib/validate";
 
 export async function GET(request: Request) {
@@ -23,11 +23,10 @@ export async function GET(request: Request) {
           first_name LIKE ? OR
           last_name LIKE ? OR
           (first_name || ' ' || last_name) LIKE ? OR
-          name LIKE ? OR
           email LIKE ? OR
           company LIKE ?
         )`;
-      params.push(q, q, q, q, q, q);
+      params.push(q, q, q, q, q);
     }
     if (tag) {
       sql += ` AND tags LIKE ?`;
@@ -70,14 +69,13 @@ export async function POST(request: Request) {
     const id = `contact-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 
     await d1Query(
-      `INSERT INTO contacts (id, user_id, first_name, last_name, name, email, phone, company, tags, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO contacts (id, user_id, first_name, last_name, email, phone, company, tags, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         userId,
         firstName,
         lastName,
-        [firstName, lastName].filter(Boolean).join(" "),
         email,
         payload.phone || "",
         payload.company || "",
@@ -86,7 +84,7 @@ export async function POST(request: Request) {
       ],
     );
 
-    const contact = { id, firstName, lastName, name: [firstName, lastName].filter(Boolean).join(" ") };
+    const contact = { id, firstName, lastName };
 
     // Fire-and-forget: dispatch webhook event
     dispatchWebhooks(userId, "contact.created", { contact }).catch(() => {});
@@ -109,12 +107,6 @@ export async function PATCH(request: Request) {
     const sets: string[] = [];
     const params: (string | number)[] = [];
 
-    if (fields.name && (!fields.firstName || !fields.lastName)) {
-      const parsed = splitName(fields.name);
-      fields.firstName = fields.firstName || parsed.firstName;
-      fields.lastName = fields.lastName || parsed.lastName;
-    }
-
     for (const [key, value] of Object.entries(fields)) {
       if (key === "firstName") {
         sets.push(`first_name = ?`);
@@ -122,19 +114,6 @@ export async function PATCH(request: Request) {
       } else if (key === "lastName") {
         sets.push(`last_name = ?`);
         params.push((value as string).trim());
-      } else if (key === "name") {
-        // already normalized by splitName above
-        const parsed = splitName(value as string);
-        sets.push(`name = ?`);
-        params.push((value as string).trim());
-        if (!fields.firstName) {
-          sets.push(`first_name = ?`);
-          params.push(parsed.firstName);
-        }
-        if (!fields.lastName) {
-          sets.push(`last_name = ?`);
-          params.push(parsed.lastName);
-        }
       } else if (key === "email") {
         sets.push(`email = ?`);
         params.push((value as string).trim());
@@ -154,11 +133,6 @@ export async function PATCH(request: Request) {
     }
 
     if (sets.length === 0) return NextResponse.json({ error: "nothing to update" }, { status: 400 });
-
-    // Keep legacy name column in sync whenever first_name or last_name changes
-    if (fields.firstName || fields.lastName) {
-      sets.push(`name = TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, ''))`);
-    }
 
     sets.push(`updated_at = datetime('now')`);
     params.push(id, userId);
