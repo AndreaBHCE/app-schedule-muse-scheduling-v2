@@ -58,10 +58,10 @@ export async function refreshGoToToken(userId: string): Promise<GoToTokens | nul
   }
 
   const clientId = process.env.GOTOMEETING_CLIENT_ID;
-  const clientSecret = process.env.GOTOMEETING_CLIENT_SECRET;
+  const clientSecret = process.env.GOTOMEETING_SECRET;
 
   if (!clientId || !clientSecret) {
-    throw new Error("GoTo Meeting credentials not configured — set GOTOMEETING_CLIENT_ID and GOTOMEETING_CLIENT_SECRET");
+    throw new Error("GoTo Meeting credentials not configured — set GOTOMEETING_CLIENT_ID and GOTOMEETING_SECRET");
   }
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
