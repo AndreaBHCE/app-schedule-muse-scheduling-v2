@@ -34,7 +34,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> =
   confirmed:  { bg: "var(--cal-hover)",  text: "var(--cal-heading)", dot: "var(--cal-primary)" },
   pending:    { bg: "#fef3c7",           text: "#92400e",            dot: "#f59e0b" },
   completed:  { bg: "var(--cal-bg-alt)", text: "var(--cal-text)",    dot: "var(--cal-mid)" },
-  canceled:   { bg: "#ffe4e6",           text: "#9f1239",            dot: "#f43f5e" },
+  canceled:   { bg: "#e1eae8",           text: "#3A5858",            dot: "#6A8E8E" },
   "no-show":  { bg: "#fef3c7",           text: "#92400e",            dot: "#f97316" },
 };
 
@@ -165,20 +165,7 @@ export default function YourMeetingsPage() {
 
     setAddSubmitting(true);
     try {
-      // 1. Auto-create contact if not exists
-      await fetch("/api/contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
-          tags: ["auto-created"],
-        }),
-      });
-      // Ignore errors (contact may already exist)
-
-      // 2. Create the meeting
+      // Contact is auto-upserted server-side in POST /api/meetings
       const guestName = `${firstName.trim()} ${lastName.trim()}`;
       const res = await fetch("/api/meetings", {
         method: "POST",
@@ -352,7 +339,7 @@ export default function YourMeetingsPage() {
                           <button
                             onClick={() => setCancelId(m.id)}
                             className="rounded px-3 py-1 text-xs font-semibold hover:opacity-80"
-                            style={{ background: "#ffe4e6", color: "#9f1239" }}
+                            style={{ background: "#e1eae8", color: "#3A5858" }}
                           >
                             Cancel
                           </button>
@@ -403,7 +390,7 @@ export default function YourMeetingsPage() {
                 <button onClick={() => { setCancelId(null); setCancelReason(""); }} className="btn-secondary">
                   Keep Meeting
                 </button>
-                <button onClick={cancelMeeting} className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: "#e11d48" }}>
+                <button onClick={cancelMeeting} className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: "var(--cal-primary)" }}>
                   Confirm Cancel
                 </button>
               </div>
@@ -418,7 +405,7 @@ export default function YourMeetingsPage() {
               <h3 className="text-lg font-bold mb-4" style={{ color: "var(--cal-heading)" }}>Add Meeting</h3>
 
               {addError && (
-                <p className="text-sm mb-3 rounded-lg px-3 py-2" style={{ background: "#fee2e2", color: "#b91c1c" }}>{addError}</p>
+                <p className="text-sm mb-3 rounded-lg px-3 py-2" style={{ background: "#fef3c7", color: "#92400e" }}>{addError}</p>
               )}
 
               {/* Booking calendar */}

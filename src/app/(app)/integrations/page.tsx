@@ -41,7 +41,7 @@ const PROVIDERS: ProviderInfo[] = [
 const STATUS_STYLES: Record<string, { text: string; dot: string }> = {
   connected:    { text: "var(--cal-primary)",  dot: "var(--cal-primary)" },
   disconnected: { text: "var(--cal-mid)",      dot: "var(--cal-border)" },
-  error:        { text: "#e11d48",             dot: "#e11d48" },
+  error:        { text: "#92400e",             dot: "#f59e0b" },
 };
 
 export default function IntegrationsPage() {

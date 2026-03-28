@@ -239,11 +239,11 @@ function MeetingSetupPageContent() {
             style={{
               background:
                 saveMsg.startsWith("Error") || saveMsg.startsWith("Could not")
-                  ? "#ffe4e6"
+                  ? "#e1eae8"
                   : "var(--cal-hover)",
               color:
                 saveMsg.startsWith("Error") || saveMsg.startsWith("Could not")
-                  ? "#9f1239"
+                  ? "#3A5858"
                   : "var(--cal-heading)",
             }}
           >

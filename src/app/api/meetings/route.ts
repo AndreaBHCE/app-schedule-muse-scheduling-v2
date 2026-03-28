@@ -176,6 +176,24 @@ export async function POST(request: NextRequest) {
       ],
     );
 
+    // Auto-upsert guest into contacts — every meeting path gets this for free
+    const nameParts = data.guest_name.trim().split(/\s+/);
+    const guestFirstName = nameParts[0] || "";
+    const guestLastName = nameParts.slice(1).join(" ") || "";
+    const contactId = `contact-${crypto.randomUUID()}`;
+
+    await d1Query(
+      `INSERT INTO contacts (id, user_id, first_name, last_name, email, total_meetings, last_meeting_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?)
+       ON CONFLICT(user_id, email) DO UPDATE SET
+         first_name = CASE WHEN excluded.first_name != '' THEN excluded.first_name ELSE contacts.first_name END,
+         last_name = CASE WHEN excluded.last_name != '' THEN excluded.last_name ELSE contacts.last_name END,
+         total_meetings = contacts.total_meetings + 1,
+         last_meeting_at = excluded.last_meeting_at,
+         updated_at = datetime('now')`,
+      [contactId, userId, guestFirstName, guestLastName, data.guest_email, data.start_time],
+    );
+
     const meeting = {
       id: meetingId,
       guest_name: data.guest_name,

@@ -763,7 +763,7 @@ a {
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
-  background: #ef4444;
+  background: var(--cal-primary);
   color: white;
   border: none;
   cursor: pointer;

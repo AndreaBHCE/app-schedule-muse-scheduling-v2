@@ -17,7 +17,7 @@ type MeetingEvent = {
 const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   confirmed:  { bg: "var(--cal-hover)",  text: "var(--cal-heading)", border: "var(--cal-primary)" },
   pending:    { bg: "#fef3c7",           text: "#92400e",            border: "#f59e0b" },
-  canceled:   { bg: "#ffe4e6",           text: "#9f1239",            border: "#f43f5e" },
+  canceled:   { bg: "#e1eae8",           text: "#3A5858",            border: "#6A8E8E" },
   completed:  { bg: "var(--cal-bg-alt)", text: "var(--cal-text)",    border: "var(--cal-mid)" },
   "no-show":  { bg: "#fef3c7",           text: "#92400e",            border: "#f97316" },
 };
