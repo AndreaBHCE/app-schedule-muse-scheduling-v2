@@ -1,5 +1,5 @@
-import { d1Query } from "./cloudflare";
-import { encryptToken, decryptToken } from "./crypto";
+import { d1Query } from "../cloudflare";
+import { encryptToken, decryptToken } from "../crypto";
 
 // GoTo Meeting API configuration
 const GOTO_API_BASE = "https://api.getgo.com/G2M/rest/v1";
@@ -57,11 +57,11 @@ export async function refreshGoToToken(userId: string): Promise<GoToTokens | nul
     return null;
   }
 
-  const clientId = process.env.GoToMeeting_Client_ID;
-  const clientSecret = process.env.GoToMeeting_Secret;
+  const clientId = process.env.GOTOMEETING_CLIENT_ID;
+  const clientSecret = process.env.GOTOMEETING_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    throw new Error("GoTo Meeting credentials not configured — set GoToMeeting_Client_ID and GoToMeeting_Secret");
+    throw new Error("GoTo Meeting credentials not configured — set GOTOMEETING_CLIENT_ID and GOTOMEETING_CLIENT_SECRET");
   }
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");

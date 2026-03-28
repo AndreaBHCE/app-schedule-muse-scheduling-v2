@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
-import { d1Query } from "./cloudflare";
-import { encryptToken, decryptToken } from "./crypto";
+import { d1Query } from "../cloudflare";
+import { encryptToken, decryptToken } from "../crypto";
 
 /**
  * SMTP integration — subscriber-provided SMTP credentials.

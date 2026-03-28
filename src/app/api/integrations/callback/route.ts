@@ -211,12 +211,12 @@ async function storeGmailTokens(userId: string, tokenData: Record<string, unknow
 /* ── GoTo Meeting-specific ────────────────────────────────── */
 
 async function exchangeGoToCode(code: string) {
-  const clientId = process.env.GoToMeeting_Client_ID;
-  const clientSecret = process.env.GoToMeeting_Secret;
-  const redirectUri = process.env.GoToMeeting_Redirect_URI;
+  const clientId = process.env.GOTOMEETING_CLIENT_ID;
+  const clientSecret = process.env.GOTOMEETING_CLIENT_SECRET;
+  const redirectUri = process.env.GOTOMEETING_REDIRECT_URI;
 
   if (!clientId || !clientSecret || !redirectUri) {
-    throw new Error("GoTo Meeting credentials not configured — set GoToMeeting_Client_ID, GoToMeeting_Secret, and GoToMeeting_Redirect_URI");
+    throw new Error("GoTo Meeting credentials not configured — set GOTOMEETING_CLIENT_ID, GOTOMEETING_CLIENT_SECRET, and GOTOMEETING_REDIRECT_URI");
   }
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
@@ -323,7 +323,7 @@ export async function GET(request: NextRequest) {
           ? process.env.ZOOM_CLIENT_SECRET
           : provider === "gmail"
             ? process.env.GMAIL_CLIENT_SECRET
-            : process.env.GoToMeeting_Secret;
+            : process.env.GOTOMEETING_CLIENT_SECRET;
 
       if (secret) {
         userId = verifyState(state, secret, `${provider}-oauth`);

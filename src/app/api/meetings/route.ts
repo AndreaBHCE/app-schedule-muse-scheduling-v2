@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveAuth, AuthError } from "@/lib/auth";
 import { requireScope } from "@/lib/apikey";
 import { d1Query } from "@/lib/cloudflare";
-import { createZoomMeeting } from "@/lib/zoom";
+import { createZoomMeeting } from "@/lib/integrations/zoom";
 import { dispatchWebhooks } from "@/lib/webhooks";
 import {
   firstError,

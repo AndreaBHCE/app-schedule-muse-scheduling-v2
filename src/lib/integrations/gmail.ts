@@ -1,5 +1,5 @@
-import { d1Query } from "./cloudflare";
-import { encryptToken, decryptToken } from "./crypto";
+import { d1Query } from "../cloudflare";
+import { encryptToken, decryptToken } from "../crypto";
 
 /**
  * Gmail integration — Google OAuth 2.0 + Gmail API.

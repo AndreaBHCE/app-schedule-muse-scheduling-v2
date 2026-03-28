@@ -1,5 +1,5 @@
-import { d1Query } from "./cloudflare";
-import { encryptToken, decryptToken } from "./crypto";
+import { d1Query } from "../cloudflare";
+import { encryptToken, decryptToken } from "../crypto";
 
 // Zoom API configuration
 const ZOOM_BASE_URL = "https://api.zoom.us/v2";

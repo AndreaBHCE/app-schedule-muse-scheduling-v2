@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import crypto from "crypto";
-import { validateSmtpCredentials } from "@/lib/smtp";
+import { validateSmtpCredentials } from "@/lib/integrations/smtp";
 import { encryptToken } from "@/lib/crypto";
 import { d1Query } from "@/lib/cloudflare";
 
@@ -175,13 +175,13 @@ export async function POST(request: Request) {
 
     /* ── GoTo Meeting ──────────────────────────────────────── */
     if (provider === "goto") {
-      const clientId = process.env.GoToMeeting_Client_ID;
-      const clientSecret = process.env.GoToMeeting_Secret;
-      const redirectUri = process.env.GoToMeeting_Redirect_URI;
+      const clientId = process.env.GOTOMEETING_CLIENT_ID;
+      const clientSecret = process.env.GOTOMEETING_CLIENT_SECRET;
+      const redirectUri = process.env.GOTOMEETING_REDIRECT_URI;
 
       if (!clientId || !clientSecret || !redirectUri) {
         return NextResponse.json(
-          { error: "GoTo Meeting credentials not configured — set GoToMeeting_Client_ID, GoToMeeting_Secret, and GoToMeeting_Redirect_URI" },
+          { error: "GoTo Meeting credentials not configured — set GOTOMEETING_CLIENT_ID, GOTOMEETING_CLIENT_SECRET, and GOTOMEETING_REDIRECT_URI" },
           { status: 500 },
         );
       }
