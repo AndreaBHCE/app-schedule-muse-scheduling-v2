@@ -20,21 +20,22 @@ type ProviderInfo = {
   description: string;
   icon: string;
   category: "meeting" | "email" | "calendar";
+  connectionType: "oauth" | "credentials" | "placeholder";
 };
 
 const PROVIDERS: ProviderInfo[] = [
   // Meeting providers
-  { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: "/zoom_icon_1.png", category: "meeting" },
-  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: "/google_meets_icon_1.png", category: "meeting" },
-  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: "/microsoft_teams_icon_1.png", category: "meeting" },
-  { key: "goto_meeting",    name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: "/goto_meeting_icon_1.png", category: "meeting" },
+  { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: "/zoom_icon_1.png",            category: "meeting",  connectionType: "oauth" },
+  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: "/google_meets_icon_1.png",    category: "meeting",  connectionType: "placeholder" },
+  { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: "/microsoft_teams_icon_1.png", category: "meeting",  connectionType: "placeholder" },
+  { key: "goto",            name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: "/goto_meeting_icon_1.png",    category: "meeting",  connectionType: "oauth" },
   // Email providers
-  { key: "gmail",           name: "Gmail",             description: "Send booking emails.",                    icon: "/gmail_icon_1.png", category: "email" },
-  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: "/outlook_icon_1.png", category: "email" },
-  { key: "smtp",            name: "Other Email",       description: "Connect any email provider to send booking emails.", icon: "/smtp_email_icon_1.png", category: "email" },
+  { key: "gmail",           name: "Gmail",             description: "Send booking emails.",                    icon: "/gmail_icon_1.png",           category: "email",    connectionType: "oauth" },
+  { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: "/outlook_icon_1.png",         category: "email",    connectionType: "placeholder" },
+  { key: "smtp",            name: "Other Email",       description: "Connect any email provider to send booking emails.", icon: "/smtp_email_icon_1.png", category: "email", connectionType: "credentials" },
   // Calendar providers
-  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: "/google_calendar_icon_1.png", category: "calendar" },
-  { key: "outlook_calendar",name: "Outlook Calendar",  description: "Write events to this calendar.",          icon: "/outlook_calendar_icon_1.png", category: "calendar" },
+  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: "/google_calendar_icon_1.png", category: "calendar", connectionType: "placeholder" },
+  { key: "outlook_calendar",name: "Outlook Calendar",  description: "Write events to this calendar.",          icon: "/outlook_calendar_icon_1.png",category: "calendar", connectionType: "placeholder" },
 ];
 
 const STATUS_STYLES: Record<string, { text: string; dot: string }> = {
@@ -95,14 +96,14 @@ export default function IntegrationsPage() {
     const success = urlParams.get("success");
     const error = urlParams.get("error");
 
-    if (success === "zoom_connected") {
-      window.history.replaceState({}, "", "/integrations");
-      toast("Zoom connected successfully!", "success");
-      load();
-    } else if (success === "gmail_connected") {
-      window.history.replaceState({}, "", "/integrations");
-      toast("Gmail connected successfully!", "success");
-      load();
+    if (success) {
+      // Generic: any "<key>_connected" query param triggers a toast
+      const provider = PROVIDERS.find((p) => success === `${p.key}_connected`);
+      if (provider) {
+        window.history.replaceState({}, "", "/integrations");
+        toast(`${provider.name} connected successfully!`, "success");
+        load();
+      }
     } else if (error) {
       const details = urlParams.get("details");
       window.history.replaceState({}, "", "/integrations");
@@ -120,82 +121,42 @@ export default function IntegrationsPage() {
 
   async function toggleConnect(providerKey: string) {
     const existing = getStatus(providerKey);
+    const provider = PROVIDERS.find((p) => p.key === providerKey);
+    if (!provider) return;
 
-    // Special handling for Zoom OAuth
-    if (providerKey === "zoom") {
-      if (existing && existing.status === "connected") {
-        await fetch("/api/integrations", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: existing.id, status: "disconnected" }),
-        });
-        load();
-      } else {
-        initiateOAuth("zoom");
-      }
-      return;
-    }
-
-    // Special handling for Gmail OAuth
-    if (providerKey === "gmail") {
-      if (existing && existing.status === "connected") {
-        await fetch("/api/integrations", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: existing.id, status: "disconnected" }),
-        });
-        load();
-      } else {
-        initiateOAuth("gmail");
-      }
-      return;
-    }
-
-    // Special handling for SMTP — open credential form
-    if (providerKey === "smtp") {
-      if (existing && existing.status === "connected") {
-        await fetch("/api/integrations", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: existing.id, status: "disconnected" }),
-        });
-        load();
-      } else {
-        setSmtpProvider("");
-        setSmtpForm({ host: "", port: "587", username: "", password: "", from_email: "", encryption: "tls" });
-        setSmtpModal(true);
-      }
-      return;
-    }
-
-    // Default behavior for other providers
+    // If already connected, disconnect (universal for all types)
     if (existing && existing.status === "connected") {
-      // Disconnect
       await fetch("/api/integrations", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: existing.id, status: "disconnected" }),
       });
-    } else if (existing) {
-      // Reconnect
-      await fetch("/api/integrations", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: existing.id, status: "connected" }),
-      });
-    } else {
-      // Create new connection
-      await fetch("/api/integrations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: providerKey }),
-      });
+      load();
+      return;
     }
-    load();
+
+    // Branch on connection type — the provider config declares HOW it connects
+    switch (provider.connectionType) {
+      case "oauth":
+        initiateOAuth(providerKey);
+        return;
+
+      case "credentials":
+        // Currently only SMTP uses this path
+        setSmtpProvider("");
+        setSmtpForm({ host: "", port: "587", username: "", password: "", from_email: "", encryption: "tls" });
+        setSmtpModal(true);
+        return;
+
+      case "placeholder":
+        toast(`${provider.name} integration coming soon.`, "info");
+        return;
+    }
   }
 
   async function initiateOAuth(provider: string) {
-    const label = provider === "gmail" ? "Gmail" : provider === "zoom" ? "Zoom" : provider;
+    const info = PROVIDERS.find((p) => p.key === provider);
+    const label = info?.name || provider;
     try {
       const res = await fetch("/api/integrations/connect", {
         method: "POST",
