@@ -54,17 +54,6 @@ function detectProvider(state: string): "zoom" | "gmail" | "goto" | null {
   return null;
 }
 
-/* ── Shared helpers ──────────────────────────────────────── */
-
-async function ensureUserExists(userId: string) {
-  await d1Query(
-    `INSERT INTO users (id, created_at, updated_at)
-     VALUES (?, datetime('now'), datetime('now'))
-     ON CONFLICT(id) DO NOTHING`,
-    [userId],
-  );
-}
-
 /* ── Zoom-specific ───────────────────────────────────────── */
 
 async function exchangeZoomCode(code: string) {
@@ -336,8 +325,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // --- Ensure user row exists (FK constraint) ---
-    await ensureUserExists(userId);
+    // --- Verify user row exists (created by ensureUserRow in auth.ts on page load) ---
+    const userCheck = await d1Query(
+      `SELECT id FROM users WHERE id = ?`,
+      [userId],
+    );
+    if (!userCheck.results || userCheck.results.length === 0) {
+      console.error(`OAuth callback: no user row for ${userId} — ensureUserRow should have created it on page load`);
+      return NextResponse.redirect(
+        new URL("/sign-in?redirect=/integrations", request.url),
+      );
+    }
 
     // --- Provider-specific token exchange & storage ---
     if (provider === "zoom") {
