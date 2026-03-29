@@ -113,9 +113,6 @@ Desktop.ini
 # Platform-specific
 .clerk/
 fly.toml
-Dockerfile*
-docker-compose*.yml
-.dockerignore
 .netlify
 .vercel/analytics.json
 .sentryclirc
