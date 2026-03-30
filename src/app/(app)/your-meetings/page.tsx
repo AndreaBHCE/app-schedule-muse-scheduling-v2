@@ -114,10 +114,10 @@ export default function YourMeetingsPage() {
 
   async function cancelMeeting() {
     if (!cancelId) return;
-    await fetch("/api/meetings", {
+    await fetch(`/api/meetings/${cancelId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: cancelId, status: "canceled", canceledReason: cancelReason }),
+      body: JSON.stringify({ status: "canceled", canceledReason: cancelReason }),
     });
     setCancelId(null);
     setCancelReason("");
