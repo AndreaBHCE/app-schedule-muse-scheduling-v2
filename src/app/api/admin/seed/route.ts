@@ -94,9 +94,9 @@ export async function POST() {
 
     for (const mt of meetings) {
       await d1Query(
-        `INSERT OR IGNORE INTO meetings (id, user_id, booking_page_id, guest_name, guest_email, meeting_type, start_time, end_time, status, location_type, location_details)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [mt.id, USER_ID, mt.bp, mt.guest, mt.email, mt.type, at(mt.dOff, mt.h, mt.m), endAt(mt.dOff, mt.h, mt.m, mt.dur), mt.status, mt.loc, mt.locD],
+        `INSERT OR IGNORE INTO meetings (id, user_id, booking_page_id, attendee_email, meeting_type, start_time, end_time, status, location_type, location_details)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [mt.id, USER_ID, mt.bp, mt.email, mt.type, at(mt.dOff, mt.h, mt.m), endAt(mt.dOff, mt.h, mt.m, mt.dur), mt.status, mt.loc, mt.locD],
       );
     }
 

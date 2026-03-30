@@ -136,6 +136,8 @@ export function defaultConfig(): BookingConfig {
       { id: "first_name", label: "First Name", type: "text", required: true, isDefault: true },
       { id: "last_name", label: "Last Name", type: "text", required: true, isDefault: true },
       { id: "email", label: "Email", type: "text", required: true, isDefault: true },
+      { id: "phone", label: "Phone", type: "phone", required: false, isDefault: true },
+      { id: "company", label: "Company", type: "text", required: false, isDefault: true },
     ],
     afterBookingRedirect: "",
     notifications: [

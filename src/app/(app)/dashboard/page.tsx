@@ -19,8 +19,9 @@ type Booking = {
 type MeetingEvent = {
   id: string;
   startTime: string;
-  guestName: string;
-  guestEmail: string;
+  attendeeEmail: string;
+  firstName: string;
+  lastName: string;
   meetingType: string;
   status: "confirmed" | "pending" | "canceled";
   location: "virtual" | "phone" | "in-person";
@@ -182,7 +183,7 @@ export default function DashboardPage() {
           <span className="font-semibold text-sm" style={{ color: colors.text }}>{event.meetingType}</span>
           <span className="text-[10px]" style={{ color: 'var(--cal-mid)' }}>{time}</span>
         </div>
-        <div className="text-xs mt-0.5" style={{ color: 'var(--cal-text)' }}>{event.guestName}</div>
+        <div className="text-xs mt-0.5" style={{ color: 'var(--cal-text)' }}>{event.firstName} {event.lastName}</div>
         <div className="text-[10px]" style={{ color: 'var(--cal-mid)' }}>{event.location} • {event.locationDetails}</div>
       </div>
     );

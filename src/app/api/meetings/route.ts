@@ -15,8 +15,11 @@ import {
 
 interface MeetingData {
   booking_page_id?: string;
-  guest_name: string;
-  guest_email: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  company?: string;
   meeting_type?: string;
   start_time: string;
   end_time: string;
@@ -28,8 +31,7 @@ interface MeetingData {
 interface MeetingRow {
   id: string;
   booking_page_id: string;
-  guest_name: string;
-  guest_email: string;
+  attendee_email: string;
   meeting_type: string;
   start_time: string;
   end_time: string;
@@ -40,14 +42,22 @@ interface MeetingRow {
   canceled_reason: string;
   created_at: string;
   updated_at: string;
+  /* Joined from contacts */
+  first_name: string;
+  last_name: string;
+  phone: string;
+  company: string;
 }
 
 function formatMeeting(row: MeetingRow) {
   return {
     id: row.id,
     bookingPageId: row.booking_page_id,
-    guestName: row.guest_name,
-    guestEmail: row.guest_email,
+    attendeeEmail: row.attendee_email,
+    firstName: row.first_name ?? "",
+    lastName: row.last_name ?? "",
+    phone: row.phone ?? "",
+    company: row.company ?? "",
     meetingType: row.meeting_type,
     startTime: row.start_time,
     endTime: row.end_time,
@@ -101,8 +111,9 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields with proper format checks
     const err = firstError(
-      requiredString("guest_name", data.guest_name),
-      validEmail("guest_email", data.guest_email),
+      requiredString("first_name", data.first_name),
+      requiredString("last_name", data.last_name),
+      validEmail("email", data.email),
       validISODate("start_time", data.start_time),
       validISODate("end_time", data.end_time),
       optionalString("meeting_type", data.meeting_type),
@@ -137,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // Create Zoom meeting if integration exists
     if (zoomIntegration.results && zoomIntegration.results.length > 0) {
-      const meetingTopic = `${data.guest_name} - ${data.meeting_type || "Meeting"}`;
+      const meetingTopic = `${data.first_name} ${data.last_name} - ${data.meeting_type || "Meeting"}`;
       const zoomStartTime = startTime.toISOString();
 
       zoomMeeting = await createZoomMeeting(userId, {
@@ -158,15 +169,14 @@ export async function POST(request: NextRequest) {
 
     await d1Query(
       `INSERT INTO meetings (
-        id, user_id, booking_page_id, guest_name, guest_email, meeting_type,
+        id, user_id, booking_page_id, attendee_email, meeting_type,
         start_time, end_time, status, location_type, location_details, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?)`,
       [
         meetingId,
         userId,
         data.booking_page_id || null,
-        data.guest_name,
-        data.guest_email,
+        data.email,
         data.meeting_type || "",
         data.start_time,
         data.end_time,
@@ -176,28 +186,26 @@ export async function POST(request: NextRequest) {
       ],
     );
 
-    // Auto-upsert guest into contacts — every meeting path gets this for free
-    const nameParts = data.guest_name.trim().split(/\s+/);
-    const guestFirstName = nameParts[0] || "";
-    const guestLastName = nameParts.slice(1).join(" ") || "";
+    // Auto-upsert attendee into contacts — every meeting path gets this for free
     const contactId = `contact-${crypto.randomUUID()}`;
 
     await d1Query(
-      `INSERT INTO contacts (id, user_id, first_name, last_name, email, total_meetings, last_meeting_at)
-       VALUES (?, ?, ?, ?, ?, 1, ?)
+      `INSERT INTO contacts (id, user_id, first_name, last_name, email, phone, company, total_meetings, last_meeting_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
        ON CONFLICT(user_id, email) DO UPDATE SET
          first_name = CASE WHEN excluded.first_name != '' THEN excluded.first_name ELSE contacts.first_name END,
-         last_name = CASE WHEN excluded.last_name != '' THEN excluded.last_name ELSE contacts.last_name END,
+         last_name  = CASE WHEN excluded.last_name  != '' THEN excluded.last_name  ELSE contacts.last_name  END,
+         phone      = CASE WHEN excluded.phone      != '' THEN excluded.phone      ELSE contacts.phone      END,
+         company    = CASE WHEN excluded.company    != '' THEN excluded.company    ELSE contacts.company    END,
          total_meetings = contacts.total_meetings + 1,
          last_meeting_at = excluded.last_meeting_at,
          updated_at = datetime('now')`,
-      [contactId, userId, guestFirstName, guestLastName, data.guest_email, data.start_time],
+      [contactId, userId, data.first_name, data.last_name, data.email, data.phone || "", data.company || "", data.start_time],
     );
 
     const meeting = {
       id: meetingId,
-      guest_name: data.guest_name,
-      guest_email: data.guest_email,
+      attendee_email: data.email,
       start_time: data.start_time,
       end_time: data.end_time,
       location: data.location || "virtual",
@@ -245,9 +253,13 @@ export async function GET(request: NextRequest) {
     );
     const total = countResult.results[0]?.count ?? 0;
 
-    // Fetch the page of meetings
+    // Fetch the page of meetings, JOIN contacts for attendee identity
     const result = await d1Query<MeetingRow>(
-      `SELECT * FROM meetings WHERE user_id = ? ${filter.clause} ORDER BY start_time DESC LIMIT ? OFFSET ?`,
+      `SELECT m.*, c.first_name, c.last_name, c.phone, c.company
+       FROM meetings m
+       LEFT JOIN contacts c ON c.email = m.attendee_email AND c.user_id = m.user_id
+       WHERE m.user_id = ? ${filter.clause}
+       ORDER BY m.start_time DESC LIMIT ? OFFSET ?`,
       [userId, ...filter.params, limit, offset],
     );
 

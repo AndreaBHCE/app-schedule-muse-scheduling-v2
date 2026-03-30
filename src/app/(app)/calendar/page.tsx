@@ -6,8 +6,9 @@ type MeetingEvent = {
   id: string;
   startTime: string;
   endTime: string;
-  guestName: string;
-  guestEmail: string;
+  attendeeEmail: string;
+  firstName: string;
+  lastName: string;
   meetingType: string;
   status: "confirmed" | "pending" | "canceled" | "completed" | "no-show";
   location: "virtual" | "phone" | "in-person";
@@ -117,7 +118,7 @@ export default function CalendarPage() {
           <span className="font-semibold text-sm" style={{ color: c.text }}>{event.meetingType}</span>
           <span className="text-[10px]" style={{ color: "var(--cal-mid)" }}>{time}</span>
         </div>
-        <div className="text-xs mt-0.5" style={{ color: "var(--cal-text)" }}>{event.guestName}</div>
+        <div className="text-xs mt-0.5" style={{ color: "var(--cal-text)" }}>{event.firstName} {event.lastName}</div>
         <div className="text-[10px]" style={{ color: "var(--cal-mid)" }}>{event.location} · {event.locationDetails}</div>
       </button>
     );
@@ -277,7 +278,7 @@ export default function CalendarPage() {
             <div className="rounded-xl p-6 shadow-xl w-full max-w-md" style={{ background: "var(--cal-bg)" }} onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-bold mb-1" style={{ color: "var(--cal-heading)" }}>{selectedEvent.meetingType}</h3>
               <div className="space-y-2 text-sm" style={{ color: "var(--cal-text)" }}>
-                <p><strong>Guest:</strong> {selectedEvent.guestName} ({selectedEvent.guestEmail})</p>
+                <p><strong>Guest:</strong> {selectedEvent.firstName} {selectedEvent.lastName} ({selectedEvent.attendeeEmail})</p>
                 <p><strong>When:</strong> {new Date(selectedEvent.startTime).toLocaleString()} – {new Date(selectedEvent.endTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
                 <p><strong>Location:</strong> {selectedEvent.location} · {selectedEvent.locationDetails}</p>
                 <p><strong>Status:</strong>{" "}

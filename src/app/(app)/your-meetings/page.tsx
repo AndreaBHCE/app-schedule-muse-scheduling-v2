@@ -7,8 +7,9 @@ type Meeting = {
   id: string;
   bookingPageId: string;
   meetingType: string;
-  guestName: string;
-  guestEmail: string;
+  attendeeEmail: string;
+  firstName: string;
+  lastName: string;
   startTime: string;
   endTime: string;
   status: string;
@@ -57,6 +58,8 @@ export default function YourMeetingsPage() {
     firstName: "",
     lastName: "",
     email: "",
+    phone: "",
+    company: "",
     date: "",
     time: "",
     location: "virtual" as string,
@@ -129,6 +132,8 @@ export default function YourMeetingsPage() {
       firstName: "",
       lastName: "",
       email: "",
+      phone: "",
+      company: "",
       date: new Date().toISOString().split("T")[0],
       time: "09:00",
       location: defaultCal?.locationType || "virtual",
@@ -151,7 +156,7 @@ export default function YourMeetingsPage() {
 
   async function submitAddMeeting() {
     setAddError(null);
-    const { calendarId, firstName, lastName, email, date, time, location, locationDetails, notes } = addForm;
+    const { calendarId, firstName, lastName, email, phone, company, date, time, location, locationDetails, notes } = addForm;
 
     if (!firstName.trim()) { setAddError("First name is required."); return; }
     if (!lastName.trim()) { setAddError("Last name is required."); return; }
@@ -166,14 +171,16 @@ export default function YourMeetingsPage() {
     setAddSubmitting(true);
     try {
       // Contact is auto-upserted server-side in POST /api/meetings
-      const guestName = `${firstName.trim()} ${lastName.trim()}`;
       const res = await fetch("/api/meetings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           booking_page_id: calendarId || undefined,
-          guest_name: guestName,
-          guest_email: email.trim(),
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          company: company.trim(),
           meeting_type: selectedCal?.title || "Meeting",
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
@@ -312,8 +319,8 @@ export default function YourMeetingsPage() {
                   return (
                     <tr key={m.id} className="cal-row" style={{ borderBottom: "1px solid var(--cal-border)" }}>
                       <td className="py-3 px-3">
-                        <div className="font-semibold" style={{ color: "#ffffff" }}>{m.guestName}</div>
-                        <div className="text-xs" style={{ color: "#ffffff" }}>{m.guestEmail}</div>
+                        <div className="font-semibold" style={{ color: "#ffffff" }}>{m.firstName} {m.lastName}</div>
+                        <div className="text-xs" style={{ color: "#ffffff" }}>{m.attendeeEmail}</div>
                       </td>
                       <td className="py-3 px-3" style={{ color: "#ffffff" }}>{m.meetingType}</td>
                       <td className="py-3 px-3" style={{ color: "#ffffff" }}>
@@ -459,6 +466,29 @@ export default function YourMeetingsPage() {
                   style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
                 />
               </label>
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <label className="block">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Phone</span>
+                  <input
+                    type="tel"
+                    value={addForm.phone}
+                    onChange={(e) => setAddForm((p) => ({ ...p, phone: e.target.value }))}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Company</span>
+                  <input
+                    type="text"
+                    value={addForm.company}
+                    onChange={(e) => setAddForm((p) => ({ ...p, company: e.target.value }))}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
+                  />
+                </label>
+              </div>
 
               {/* Date & Time */}
               <div className="grid grid-cols-2 gap-3 mb-3">

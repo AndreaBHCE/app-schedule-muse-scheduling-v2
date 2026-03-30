@@ -39,9 +39,10 @@ export interface MeetingEmailData {
   hostName: string;
   hostEmail: string;
 
-  /** Guest info */
-  guestName: string;
-  guestEmail: string;
+  /** Attendee info (from contacts) */
+  firstName: string;
+  lastName: string;
+  attendeeEmail: string;
 
   /** Meeting details */
   meetingType: string;
@@ -95,12 +96,12 @@ export async function sendMeetingConfirmation(
       client.emails.send({
         from: `${requireEmailEnv("RESEND_FROM_NAME")} <${requireEmailEnv("RESEND_FROM_EMAIL")}>`,
         to: data.hostEmail,
-        subject: `Meeting confirmed: ${data.guestName} — ${formattedDate}`,
+        subject: `Meeting confirmed: ${data.firstName} ${data.lastName} — ${formattedDate}`,
         html: buildHostEmail(data, formattedDate, timeRange),
       }),
       client.emails.send({
         from: `${requireEmailEnv("RESEND_FROM_NAME")} <${requireEmailEnv("RESEND_FROM_EMAIL")}>`,
-        to: data.guestEmail,
+        to: data.attendeeEmail,
         subject: `Your meeting with ${data.hostName} is confirmed — ${formattedDate}`,
         html: buildGuestEmail(data, formattedDate, timeRange),
       }),
@@ -128,8 +129,9 @@ export async function sendMeetingConfirmation(
  */
 export async function sendMeetingCancellation(data: {
   hostName: string;
-  guestName: string;
-  guestEmail: string;
+  firstName: string;
+  lastName: string;
+  attendeeEmail: string;
   meetingType: string;
   startTime: string;
   reason?: string;
@@ -147,7 +149,7 @@ export async function sendMeetingCancellation(data: {
   try {
     await client.emails.send({
       from: `${requireEmailEnv("RESEND_FROM_NAME")} <${requireEmailEnv("RESEND_FROM_EMAIL")}>`,
-      to: data.guestEmail,
+      to: data.attendeeEmail,
       subject: `Meeting canceled: ${formattedDate}`,
       html: buildCancellationEmail(data, formattedDate),
     });
@@ -201,7 +203,7 @@ function buildHostEmail(
   timeRange: string,
 ): string {
   const details = [
-    detailRow("Guest", `${data.guestName} (${data.guestEmail})`),
+    detailRow("Attendee", `${data.firstName} ${data.lastName} (${data.attendeeEmail})`),
     detailRow("Date", formattedDate),
     detailRow("Time", timeRange),
     detailRow("Duration", `${data.duration} min`),
@@ -214,11 +216,11 @@ function buildHostEmail(
   ].join("");
 
   return emailShell(
-    `Meeting confirmed with ${data.guestName}`,
+    `Meeting confirmed with ${data.firstName} ${data.lastName}`,
     `<div class="header">
       <div class="brand">${requireEmailEnv("RESEND_FROM_NAME")}</div>
       <div class="title">New meeting confirmed</div>
-      <div class="subtitle">You have a new meeting with ${escapeHtml(data.guestName)}</div>
+      <div class="subtitle">You have a new meeting with ${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}</div>
     </div>
     ${details}`,
   );
@@ -258,7 +260,7 @@ function buildGuestEmail(
 }
 
 function buildCancellationEmail(
-  data: { hostName: string; guestName: string; meetingType: string; reason?: string },
+  data: { hostName: string; firstName: string; lastName: string; meetingType: string; reason?: string },
   formattedDate: string,
 ): string {
   const reasonRow = data.reason

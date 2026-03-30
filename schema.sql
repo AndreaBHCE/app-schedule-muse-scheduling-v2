@@ -50,8 +50,7 @@ CREATE TABLE IF NOT EXISTS meetings (
   id                TEXT PRIMARY KEY,
   user_id           TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   booking_page_id   TEXT REFERENCES booking_pages(id) ON DELETE SET NULL,
-  guest_name        TEXT NOT NULL,
-  guest_email       TEXT NOT NULL,
+  attendee_email    TEXT NOT NULL,
   meeting_type      TEXT NOT NULL DEFAULT '',
   start_time        TEXT NOT NULL,
   end_time          TEXT NOT NULL,
@@ -64,7 +63,7 @@ CREATE TABLE IF NOT EXISTS meetings (
   updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_meetings_user_start ON meetings(user_id, start_time);
-CREATE INDEX IF NOT EXISTS idx_meetings_guest_email ON meetings(guest_email);
+CREATE INDEX IF NOT EXISTS idx_meetings_attendee ON meetings(attendee_email);
 
 -- ────────────────────────────────────────────────
 -- Contacts (CRM-lite)
