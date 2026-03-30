@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
 import { VALID_SCOPES } from "@/lib/apikey";
 import { requiredString, validUrl } from "@/lib/validate";
 import crypto from "crypto";
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   const resource = url.searchParams.get("resource") || "all";
 
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const response: Record<string, unknown> = {};
 
     if (resource === "all" || resource === "keys") {
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const { type, ...payload } = await request.json();
 
     if (type === "key") {
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const { type, id } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 

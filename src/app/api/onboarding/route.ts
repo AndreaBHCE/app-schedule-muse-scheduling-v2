@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
 
 interface OnboardingPayload {
   usage: "solo" | "team" | null;
@@ -19,7 +19,7 @@ interface OnboardingPayload {
  */
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const data: OnboardingPayload = await request.json();
 
     // 1. Store preferences on user record

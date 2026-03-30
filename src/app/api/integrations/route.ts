@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { d1Query } from "@/lib/cloudflare";
-import { getAuthUserId, AuthError } from "@/lib/auth";
+import { resolveAuth, AuthError } from "@/lib/auth";
 import { encryptToken, decryptToken } from "@/lib/crypto";
 
 interface IntegrationRow {
@@ -15,9 +15,9 @@ interface IntegrationRow {
   updated_at: string;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const result = await d1Query<IntegrationRow>(
       `SELECT * FROM integrations WHERE user_id = ? ORDER BY provider ASC`,
       [userId],
@@ -51,7 +51,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const { provider, accessToken, refreshToken, metadata } = await request.json();
     if (!provider) return NextResponse.json({ error: "provider required" }, { status: 400 });
 
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const { id, status } = await request.json();
     if (!id || !status) return NextResponse.json({ error: "id and status required" }, { status: 400 });
 
@@ -107,7 +107,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const userId = await getAuthUserId();
+    const { userId } = await resolveAuth(request);
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
