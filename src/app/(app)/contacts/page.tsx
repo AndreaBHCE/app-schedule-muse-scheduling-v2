@@ -128,10 +128,8 @@ export default function ContactsPage() {
 
   async function deleteContact(id: string) {
     if (!confirm("Delete this contact?")) return;
-    await fetch("/api/contacts", {
+    await fetch(`/api/contacts/${id}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
     });
     setContacts((prev) => prev.filter((c) => c.id !== id));
     setOpenMenuId(null);
@@ -151,11 +149,10 @@ export default function ContactsPage() {
     if (!editContact) return;
     setEditSaving(true);
     try {
-      await fetch("/api/contacts", {
-        method: "PATCH",
+      await fetch(`/api/contacts/${editContact.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: editContact.id,
           firstName: editFirstName.trim(),
           lastName: editLastName.trim(),
           email: editEmail.trim(),
