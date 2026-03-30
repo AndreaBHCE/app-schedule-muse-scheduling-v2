@@ -16,7 +16,7 @@ interface BookingPageRow {
   location_details: string;
   config: string;
   bookings_last_7d: number;
-  conversion_delta_pct: number;
+  bookings_prev_7d: number;
   created_at: string;
   updated_at: string;
 }
@@ -32,7 +32,16 @@ export async function GET(
     const { id } = await params;
 
     const result = await d1Query<BookingPageRow>(
-      `SELECT * FROM booking_pages WHERE id = ? AND user_id = ?`,
+      `SELECT bp.*,
+         (SELECT COUNT(*) FROM meetings m
+          WHERE m.booking_page_id = bp.id
+            AND m.created_at > datetime('now', '-7 days')) AS bookings_last_7d,
+         (SELECT COUNT(*) FROM meetings m
+          WHERE m.booking_page_id = bp.id
+            AND m.created_at > datetime('now', '-14 days')
+            AND m.created_at <= datetime('now', '-7 days')) AS bookings_prev_7d
+       FROM booking_pages bp
+       WHERE bp.id = ? AND bp.user_id = ?`,
       [id, userId],
     );
 
@@ -41,6 +50,9 @@ export async function GET(
     }
 
     const row = result.results[0];
+    const last7 = row.bookings_last_7d ?? 0;
+    const prev7 = row.bookings_prev_7d ?? 0;
+    const delta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 1000) / 10;
 
     return NextResponse.json({
       booking: {
@@ -55,8 +67,8 @@ export async function GET(
         locationType: row.location_type,
         locationDetails: row.location_details,
         config: JSON.parse(row.config || "{}"),
-        bookingsLast7Days: row.bookings_last_7d,
-        conversionDeltaPercent: row.conversion_delta_pct,
+        bookingsLast7Days: last7,
+        conversionDeltaPercent: delta,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       },
@@ -123,10 +135,22 @@ export async function PUT(
 
     // Re-fetch the updated row so the response reflects the real DB state
     const updated = await d1Query<BookingPageRow>(
-      `SELECT * FROM booking_pages WHERE id = ? AND user_id = ?`,
+      `SELECT bp.*,
+         (SELECT COUNT(*) FROM meetings m
+          WHERE m.booking_page_id = bp.id
+            AND m.created_at > datetime('now', '-7 days')) AS bookings_last_7d,
+         (SELECT COUNT(*) FROM meetings m
+          WHERE m.booking_page_id = bp.id
+            AND m.created_at > datetime('now', '-14 days')
+            AND m.created_at <= datetime('now', '-7 days')) AS bookings_prev_7d
+       FROM booking_pages bp
+       WHERE bp.id = ? AND bp.user_id = ?`,
       [id, userId],
     );
     const row = updated.results[0];
+    const last7 = row.bookings_last_7d ?? 0;
+    const prev7 = row.bookings_prev_7d ?? 0;
+    const delta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 1000) / 10;
 
     return NextResponse.json({
       booking: {
@@ -141,8 +165,8 @@ export async function PUT(
         locationType: row.location_type,
         locationDetails: row.location_details,
         config: JSON.parse(row.config || "{}"),
-        bookingsLast7Days: row.bookings_last_7d,
-        conversionDeltaPercent: row.conversion_delta_pct,
+        bookingsLast7Days: last7,
+        conversionDeltaPercent: delta,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       },

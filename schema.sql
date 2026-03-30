@@ -36,8 +36,6 @@ CREATE TABLE IF NOT EXISTS booking_pages (
   location_type       TEXT DEFAULT 'virtual' CHECK(location_type IN ('virtual','phone','in-person')),
   location_details    TEXT DEFAULT '',
   config              TEXT DEFAULT '{}',
-  bookings_last_7d    INTEGER NOT NULL DEFAULT 0,
-  conversion_delta_pct REAL NOT NULL DEFAULT 0,
   created_at          TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at          TEXT NOT NULL DEFAULT (datetime('now'))
 );

@@ -76,9 +76,21 @@ export async function POST() {
       PRIMARY KEY (key, window)
     )`);
 
+    // Drop static analytics columns — now computed live from meetings table
+    try {
+      await d1Query(`ALTER TABLE booking_pages DROP COLUMN bookings_last_7d`);
+    } catch {
+      // Column may not exist
+    }
+    try {
+      await d1Query(`ALTER TABLE booking_pages DROP COLUMN conversion_delta_pct`);
+    } catch {
+      // Column may not exist
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Migration completed — columns added/verified, legacy name column dropped, rate_limits table ensured.",
+      message: "Migration completed — columns added/verified, legacy columns dropped, rate_limits table ensured.",
     });
   } catch (err) {
     if (err instanceof AuthError)
