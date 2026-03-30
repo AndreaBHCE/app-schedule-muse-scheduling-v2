@@ -1,35 +1,19 @@
 import { NextResponse } from "next/server";
-import { readFileSync } from "fs";
-import { join } from "path";
 import { d1Query } from "@/lib/cloudflare";
 import { requireAdmin, AuthError } from "@/lib/auth";
 
 /**
  * POST /api/admin/seed
  *
- * Creates all tables and inserts sample data for the authenticated user.
+ * Inserts sample data for the authenticated user.
  * Uses the real Clerk userId so data belongs to the signed-in account.
  *
- * Schema DDL is read from the canonical schema.sql at the project root.
- * Do NOT duplicate CREATE TABLE statements here.
+ * Prerequisite: Run POST /api/admin/migrate first to create tables.
+ * This route only seeds data — it does not create or alter schema.
  */
 export async function POST() {
   try {
     const USER_ID = await requireAdmin();
-
-    // ── Create tables from canonical schema.sql ────────────
-    const schemaPath = join(process.cwd(), "schema.sql");
-    const schemaSql = readFileSync(schemaPath, "utf-8");
-
-    // Split on semicolons, strip comments and whitespace, drop empty entries
-    const statements = schemaSql
-      .split(";")
-      .map((s) => s.replace(/--.*$/gm, "").trim())
-      .filter((s) => s.length > 0);
-
-    for (const sql of statements) {
-      await d1Query(sql);
-    }
 
     // ── Ensure user row exists (requireAdmin → getAuthUserId → ensureUserRow) ──
     // No additional user insert needed — handled by the auth chain above.
