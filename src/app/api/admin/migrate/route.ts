@@ -68,9 +68,17 @@ export async function POST() {
       // Column already exists
     }
 
+    // Create rate_limits table for middleware-enforced rate limiting (idempotent)
+    await d1Query(`CREATE TABLE IF NOT EXISTS rate_limits (
+      key        TEXT    NOT NULL,
+      window     INTEGER NOT NULL,
+      hits       INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY (key, window)
+    )`);
+
     return NextResponse.json({
       success: true,
-      message: "Migration completed — columns added/verified, legacy name column dropped.",
+      message: "Migration completed — columns added/verified, legacy name column dropped, rate_limits table ensured.",
     });
   } catch (err) {
     if (err instanceof AuthError)
