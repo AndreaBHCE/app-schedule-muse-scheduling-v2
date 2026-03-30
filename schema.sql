@@ -135,6 +135,16 @@ CREATE TABLE IF NOT EXISTS api_keys (
 );
 
 -- ────────────────────────────────────────────────
+-- Rate Limits (middleware-enforced, per-request)
+-- ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key        TEXT    NOT NULL,
+  window     INTEGER NOT NULL,
+  hits       INTEGER NOT NULL DEFAULT 1,
+  PRIMARY KEY (key, window)
+);
+
+-- ────────────────────────────────────────────────
 -- Webhooks (developer page)
 -- ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS webhooks (
