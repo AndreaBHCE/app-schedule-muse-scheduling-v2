@@ -34,7 +34,7 @@ export async function GET(
 }
 
 /* ── PUT /api/contacts/:id ──────────────────────────────── */
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -44,29 +44,29 @@ export async function PUT(
     const { id } = await params;
     const payload = await request.json();
 
-    const firstName = (payload.firstName || "").trim();
-    const lastName = (payload.lastName || "").trim();
-
-    if (!firstName && !lastName) {
+    // Validate fields only when present — true partial-update semantics
+    if (payload.firstName !== undefined && !payload.firstName.trim()) {
       return NextResponse.json(
-        { error: "firstName and/or lastName required" },
+        { error: "firstName cannot be empty" },
         { status: 400 },
       );
     }
-    if (!payload.email?.trim()) {
-      return NextResponse.json({ error: "email required" }, { status: 400 });
+    if (payload.email !== undefined && !payload.email.trim()) {
+      return NextResponse.json({ error: "email cannot be empty" }, { status: 400 });
     }
 
     const sets: string[] = [];
     const paramsArr: (string | number)[] = [];
 
-    sets.push(`first_name = ?`);
-    paramsArr.push(firstName);
-
-    sets.push(`last_name = ?`);
-    paramsArr.push(lastName);
-
-    if (payload.email) {
+    if (payload.firstName !== undefined) {
+      sets.push(`first_name = ?`);
+      paramsArr.push(payload.firstName.trim());
+    }
+    if (payload.lastName !== undefined) {
+      sets.push(`last_name = ?`);
+      paramsArr.push((payload.lastName || "").trim());
+    }
+    if (payload.email !== undefined) {
       sets.push(`email = ?`);
       paramsArr.push(payload.email.trim());
     }
@@ -85,6 +85,13 @@ export async function PUT(
     if (payload.tags !== undefined) {
       sets.push(`tags = ?`);
       paramsArr.push(JSON.stringify(payload.tags || []));
+    }
+
+    if (sets.length === 0) {
+      return NextResponse.json(
+        { error: "No fields to update" },
+        { status: 400 },
+      );
     }
 
     sets.push(`updated_at = datetime('now')`);
@@ -107,7 +114,7 @@ export async function PUT(
   } catch (err) {
     if (err instanceof AuthError)
       return NextResponse.json({ error: err.message }, { status: err.status });
-    console.error("PUT /api/contacts/:id error:", err);
+    console.error("PATCH /api/contacts/:id error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

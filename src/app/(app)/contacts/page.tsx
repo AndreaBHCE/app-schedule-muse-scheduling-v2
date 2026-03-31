@@ -150,7 +150,7 @@ export default function ContactsPage() {
     setEditSaving(true);
     try {
       await fetch(`/api/contacts/${editContact.id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName: editFirstName.trim(),

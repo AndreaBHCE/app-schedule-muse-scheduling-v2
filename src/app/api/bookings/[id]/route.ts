@@ -82,7 +82,7 @@ export async function GET(
 }
 
 /* ── PUT /api/bookings/:id ────────────────────────────────── */
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -174,7 +174,7 @@ export async function PUT(
   } catch (err) {
     if (err instanceof AuthError)
       return NextResponse.json({ error: err.message }, { status: err.status });
-    console.error("PUT /api/bookings/:id error:", err);
+    console.error("PATCH /api/bookings/:id error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

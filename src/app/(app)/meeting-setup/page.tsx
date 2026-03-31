@@ -155,7 +155,7 @@ function MeetingSetupPageContent() {
         res = await fetch(
           `/api/bookings/${encodeURIComponent(editingId)}`,
           {
-            method: "PUT",
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           },
