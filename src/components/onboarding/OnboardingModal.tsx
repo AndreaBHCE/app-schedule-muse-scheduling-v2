@@ -8,7 +8,7 @@ import { useState, useCallback } from "react";
 type OnboardingData = {
   usage: "solo" | "team" | null;
   useCases: string[];
-  role: string | null;
+  roles: string[];
   availability: Record<string, { enabled: boolean; start: string; end: string }>;
   meetingLocation: string | null;
   aiSummary: boolean;
@@ -87,7 +87,7 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
   const [data, setData] = useState<OnboardingData>({
     usage: null,
     useCases: [],
-    role: null,
+    roles: [],
     availability: defaultAvailability(),
     meetingLocation: null,
     aiSummary: true,
@@ -104,7 +104,7 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
         body: JSON.stringify(payload ?? {
           usage: null,
           useCases: [],
-          role: null,
+          roles: [],
           availability: defaultAvailability(),
           meetingLocation: null,
           aiSummary: true,
@@ -225,8 +225,13 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
           {ROLES.map((r) => (
             <button
               key={r.id}
-              className={`ob-card ob-card--compact ${data.role === r.id ? "ob-card--selected" : ""}`}
-              onClick={() => setData((p) => ({ ...p, role: r.id }))}
+              className={`ob-card ob-card--compact ${data.roles.includes(r.id) ? "ob-card--selected" : ""}`}
+              onClick={() => setData((p) => ({
+                ...p,
+                roles: p.roles.includes(r.id)
+                  ? p.roles.filter((id) => id !== r.id)
+                  : [...p.roles, r.id],
+              }))}
             >
               <span className="ob-card__icon">{r.icon}</span>
               <span className="ob-card__label">{r.label}</span>
@@ -239,7 +244,7 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
 
   /* ----- Page 1 Preview ----- */
   function renderPage1Preview() {
-    const selectedRole = ROLES.find((r) => r.id === data.role);
+    const selectedRoles = ROLES.filter((r) => data.roles.includes(r.id));
     const selectedCases = USE_CASES.filter((u) => data.useCases.includes(u.id));
 
     return (
@@ -289,14 +294,25 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
           </div>
         )}
 
-        {selectedRole && (
+        {selectedRoles.length > 0 && (
           <div className="ob-preview-card">
             <div className="ob-preview-role">
-              <div className="ob-preview-role__icon">{selectedRole.icon}</div>
-              <div className="ob-preview-role__label">{selectedRole.label}</div>
-              <div className="ob-preview-role__desc">
-                We&apos;ll tailor your booking page templates and notification defaults for {selectedRole.label.toLowerCase()} workflows.
-              </div>
+              {selectedRoles.length === 1 ? (
+                <>
+                  <div className="ob-preview-role__icon">{selectedRoles[0].icon}</div>
+                  <div className="ob-preview-role__label">{selectedRoles[0].label}</div>
+                  <div className="ob-preview-role__desc">
+                    We&apos;ll tailor your booking page templates and notification defaults for {selectedRoles[0].label.toLowerCase()} workflows.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="ob-preview-role__label">{selectedRoles.map((r) => r.label).join(" + ")}</div>
+                  <div className="ob-preview-role__desc">
+                    We&apos;ll tailor your booking page templates and notification defaults for your workflow.
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
