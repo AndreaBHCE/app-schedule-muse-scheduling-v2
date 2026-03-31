@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 
 /* ================================================================
    TYPES
@@ -78,9 +77,13 @@ function defaultAvailability(): OnboardingData["availability"] {
 /* ================================================================
    COMPONENT
    ================================================================ */
-export default function OnboardingPage() {
-  const router = useRouter();
+interface OnboardingModalProps {
+  onClose: () => void;
+}
+
+export default function OnboardingModal({ onClose }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     usage: null,
     useCases: [],
@@ -92,32 +95,40 @@ export default function OnboardingPage() {
 
   const progress = (step / TOTAL_STEPS) * 100;
 
+  async function persistAndClose(payload: OnboardingData | null) {
+    setSaving(true);
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload ?? {
+          usage: null,
+          useCases: [],
+          role: null,
+          availability: defaultAvailability(),
+          meetingLocation: null,
+          aiSummary: true,
+          skipped: true,
+        }),
+      });
+    } catch {
+      console.error("Failed to save onboarding data");
+    }
+    onClose();
+  }
+
   const goNext = useCallback(async () => {
     if (step < TOTAL_STEPS) {
       setStep((s) => s + 1);
     } else {
-      // Persist onboarding data before navigating to dashboard
-      try {
-        await fetch("/api/onboarding", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      } catch {
-        // Don't block navigation if save fails
-        console.error("Failed to save onboarding data");
-      }
-      router.push("/dashboard");
+      await persistAndClose(data);
     }
-  }, [step, router, data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, data]);
 
   const goBack = useCallback(() => {
     if (step > 1) setStep((s) => s - 1);
   }, [step]);
-
-  const skip = useCallback(() => {
-    router.push("/dashboard");
-  }, [router]);
 
   /* ---------- helpers ---------- */
   function toggleUseCase(id: string) {
@@ -482,7 +493,7 @@ export default function OnboardingPage() {
   }
 
   /* ================================================================
-     RENDER MAP
+     RENDER
      ================================================================ */
   const steps: Record<number, { content: () => React.ReactNode; preview: () => React.ReactNode }> = {
     1: { content: renderPage1, preview: renderPage1Preview },
@@ -490,51 +501,60 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="ob-layout">
-      {/* Top bar */}
-      <header className="ob-topbar">
-        <div className="ob-topbar__logo">
-          <img src="/schedulemuseai-logo-transparent-01.png" alt="ScheduleMuseAI" style={{ height: 40 }} />
-          <span className="ob-topbar__brand">ScheduleMuseAI</span>
-        </div>
-        <div className="ob-topbar__progress-wrap">
-          <div className="ob-topbar__progress-bar">
-            <div
-              className="ob-topbar__progress-fill"
-              style={{ width: `${progress}%` }}
-            />
+    <div className="ob-modal-backdrop">
+      <div className="ob-modal">
+        {/* Modal header: progress bar + skip/close */}
+        <header className="ob-modal__header">
+          <div className="ob-topbar__progress-wrap" style={{ flex: 1 }}>
+            <div className="ob-topbar__progress-bar">
+              <div
+                className="ob-topbar__progress-fill"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-        </div>
-        <button className="ob-topbar__skip" onClick={skip}>
-          Skip for now
-        </button>
-      </header>
+          <button
+            className="ob-modal__skip"
+            onClick={() => persistAndClose(null)}
+            disabled={saving}
+          >
+            Skip for now
+          </button>
+          <button
+            className="ob-modal__close"
+            onClick={() => persistAndClose(null)}
+            disabled={saving}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </header>
 
-      {/* Content */}
-      <div className="ob-content">
-        {/* Left: Form */}
-        <div className="ob-form">
-          <div className="ob-form__inner">
-            {steps[step].content()}
-          </div>
+        {/* Content: form + preview */}
+        <div className="ob-modal__body">
+          <div className="ob-form">
+            <div className="ob-form__inner">
+              {steps[step].content()}
+            </div>
 
-          {/* Nav buttons */}
-          <div className="ob-form__nav">
-            {step > 1 && (
-              <button className="ob-btn ob-btn--back" onClick={goBack}>
-                ‹ Back
+            {/* Nav buttons */}
+            <div className="ob-form__nav">
+              {step > 1 && (
+                <button className="ob-btn ob-btn--back" onClick={goBack}>
+                  ‹ Back
+                </button>
+              )}
+              <div style={{ flex: 1 }} />
+              <button className="ob-btn ob-btn--next" onClick={goNext} disabled={saving}>
+                {saving ? "Saving…" : step === TOTAL_STEPS ? "Get started" : "Next"}
               </button>
-            )}
-            <div style={{ flex: 1 }} />
-            <button className="ob-btn ob-btn--next" onClick={goNext}>
-              {step === TOTAL_STEPS ? "Get started" : "Next"}
-            </button>
+            </div>
           </div>
-        </div>
 
-        {/* Right: Preview */}
-        <div className="ob-preview">
-          {steps[step].preview()}
+          {/* Right: Preview */}
+          <div className="ob-preview">
+            {steps[step].preview()}
+          </div>
         </div>
       </div>
     </div>

@@ -3,12 +3,13 @@ import { d1Query } from "@/lib/cloudflare";
 import { resolveAuth, AuthError } from "@/lib/auth";
 
 interface OnboardingPayload {
-  usage: "solo" | "team" | null;
-  useCases: string[];
-  role: string | null;
-  availability: Record<string, { enabled: boolean; start: string; end: string }>;
-  meetingLocation: string | null;
-  aiSummary: boolean;
+  usage?: "solo" | "team" | null;
+  useCases?: string[];
+  role?: string | null;
+  availability?: Record<string, { enabled: boolean; start: string; end: string }>;
+  meetingLocation?: string | null;
+  aiSummary?: boolean;
+  skipped?: boolean;
 }
 
 /**
@@ -22,13 +23,14 @@ export async function POST(request: Request) {
     const { userId } = await resolveAuth(request);
     const data: OnboardingPayload = await request.json();
 
-    // 1. Store preferences on user record
+    // 1. Store preferences on user record (always mark onboarding complete)
     const preferences = {
-      usage: data.usage,
-      useCases: data.useCases,
-      role: data.role,
-      meetingLocation: data.meetingLocation,
-      aiSummary: data.aiSummary,
+      usage: data.usage ?? null,
+      useCases: data.useCases ?? [],
+      role: data.role ?? null,
+      meetingLocation: data.meetingLocation ?? null,
+      aiSummary: data.aiSummary ?? true,
+      onboardingComplete: true,
       onboardedAt: new Date().toISOString(),
     };
 
@@ -39,24 +41,26 @@ export async function POST(request: Request) {
       [JSON.stringify(preferences), userId],
     );
 
-    // 2. Create (or replace) default availability schedule
-    const scheduleId = `sched-default-${userId}`;
-    const rules = JSON.stringify(data.availability);
+    // 2. Create (or replace) default availability schedule (skip if no data)
+    if (data.availability && !data.skipped) {
+      const scheduleId = `sched-default-${userId}`;
+      const rules = JSON.stringify(data.availability);
 
-    await d1Query(
-      `INSERT INTO availability_schedules (id, user_id, name, timezone, rules, is_default)
-       VALUES (?, ?, 'Default', ?, ?, 1)
-       ON CONFLICT(id) DO UPDATE SET
-         rules = excluded.rules,
-         timezone = excluded.timezone,
-         updated_at = datetime('now')`,
-      [
-        scheduleId,
-        userId,
-        Intl.DateTimeFormat().resolvedOptions().timeZone,
-        rules,
-      ],
-    );
+      await d1Query(
+        `INSERT INTO availability_schedules (id, user_id, name, timezone, rules, is_default)
+         VALUES (?, ?, 'Default', ?, ?, 1)
+         ON CONFLICT(id) DO UPDATE SET
+           rules = excluded.rules,
+           timezone = excluded.timezone,
+           updated_at = datetime('now')`,
+        [
+          scheduleId,
+          userId,
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+          rules,
+        ],
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

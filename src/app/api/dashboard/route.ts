@@ -39,6 +39,7 @@ export async function GET(request: Request) {
       meetings30d,
       noShows7d,
       candidateCount7d,
+      userRow,
     ] = await Promise.all([
       // Booking pages created in last 7 days
       d1Query<{ cnt: number }>(
@@ -80,6 +81,11 @@ export async function GET(request: Request) {
            AND status IN ('confirmed', 'completed', 'no-show', 'canceled')`,
         [userId, iso7],
       ),
+      // User preferences for onboarding state
+      d1Query<{ preferences: string }>(
+        `SELECT preferences FROM users WHERE id = ?`,
+        [userId],
+      ),
     ]);
 
     const noShowCount = noShows7d.results[0]?.cnt || 0;
@@ -88,12 +94,25 @@ export async function GET(request: Request) {
       ? Number(((noShowCount / candidateTotal) * 100).toFixed(1))
       : 0;
 
+    // Parse onboarding status from preferences JSON
+    let onboardingComplete = false;
+    const prefRaw = userRow.results[0]?.preferences;
+    if (prefRaw) {
+      try {
+        const prefs = JSON.parse(prefRaw);
+        onboardingComplete = prefs.onboardingComplete === true;
+      } catch {
+        // Malformed JSON — treat as not onboarded
+      }
+    }
+
     return NextResponse.json({
       bookings7d: bookingPages7d.results[0]?.cnt || 0,
       bookings30d: bookingPages30d.results[0]?.cnt || 0,
       meetingsCompleted7d: meetings7d.results[0]?.cnt || 0,
       meetingsCompleted30d: meetings30d.results[0]?.cnt || 0,
       noShowsPct7d: noShowsPct,
+      onboardingComplete,
     });
   } catch (err) {
     if (err instanceof AuthError)

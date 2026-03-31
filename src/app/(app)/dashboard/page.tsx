@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 
 type Booking = {
   id: string;
@@ -71,12 +72,14 @@ export default function DashboardPage() {
     meetingsCompleted7d: 0, meetingsCompleted30d: 0,
     noShowsPct7d: 0,
   });
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     fetch("/api/dashboard")
       .then((r) => r.json())
       .then((data) => {
         if (data.bookings7d !== undefined) setKpis(data);
+        if (data.onboardingComplete === false) setShowOnboarding(true);
       })
       .catch((err: unknown) => {
         console.warn("Failed to load dashboard KPIs:", err);
@@ -442,6 +445,11 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ── Onboarding Modal ─────── */}
+        {showOnboarding && (
+          <OnboardingModal onClose={() => setShowOnboarding(false)} />
         )}
 
     </>
