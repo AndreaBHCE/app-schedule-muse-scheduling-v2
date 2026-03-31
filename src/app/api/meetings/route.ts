@@ -4,6 +4,7 @@ import { requireScope } from "@/lib/apikey";
 import { d1Query } from "@/lib/cloudflare";
 import { createZoomMeeting } from "@/lib/integrations/zoom";
 import { dispatchWebhooks } from "@/lib/webhooks";
+import { waitUntil } from "@vercel/functions";
 import {
   firstError,
   requiredString,
@@ -214,8 +215,8 @@ export async function POST(request: NextRequest) {
       created: true,
     };
 
-    // Fire-and-forget: dispatch webhook event
-    dispatchWebhooks(userId, "meeting.created", { meeting }).catch(() => {});
+    // Dispatch webhook event (runs after response via waitUntil)
+    waitUntil(dispatchWebhooks(userId, "meeting.created", { meeting }));
 
     return NextResponse.json({ meeting }, { status: 201 });
   } catch (err) {

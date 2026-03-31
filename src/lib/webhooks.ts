@@ -20,8 +20,8 @@ const DELIVERY_TIMEOUT_MS = 10_000;
 /**
  * Dispatch webhook events to all matching active endpoints for a user.
  *
- * Fire-and-forget: call this WITHOUT `await` so it runs in the background
- * and doesn't block the API response.
+ * Called via waitUntil() so delivery runs after the response is sent,
+ * without blocking the API response or risking serverless termination.
  *
  * For each matching webhook:
  *  1. HMAC-SHA256 signs the JSON payload with the webhook's secret

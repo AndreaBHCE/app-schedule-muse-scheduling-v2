@@ -3,6 +3,7 @@ import { d1Query } from "@/lib/cloudflare";
 import { resolveAuth, AuthError } from "@/lib/auth";
 import { requireScope } from "@/lib/apikey";
 import { dispatchWebhooks } from "@/lib/webhooks";
+import { waitUntil } from "@vercel/functions";
 import {
   firstError,
   requiredString,
@@ -172,10 +173,8 @@ export async function POST(request: Request) {
 
     const booking = { id, title: payload.title.trim(), status: "Published" };
 
-    // Fire-and-forget: dispatch webhook event
-    dispatchWebhooks(userId, "booking_page.created", { booking }).catch(
-      () => {},
-    );
+    // Dispatch webhook event (runs after response via waitUntil)
+    waitUntil(dispatchWebhooks(userId, "booking_page.created", { booking }));
 
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {

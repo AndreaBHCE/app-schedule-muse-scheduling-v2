@@ -3,6 +3,7 @@ import { d1Query } from "@/lib/cloudflare";
 import { resolveAuth, AuthError } from "@/lib/auth";
 import { requireScope } from "@/lib/apikey";
 import { dispatchWebhooks } from "@/lib/webhooks";
+import { waitUntil } from "@vercel/functions";
 import { formatContact, type ContactRow, type ContactPayload } from "@/lib/contacts";
 import { firstError, requiredString, optionalString, validEmail, MAX_LONG } from "@/lib/validate";
 
@@ -86,8 +87,8 @@ export async function POST(request: Request) {
 
     const contact = { id, firstName, lastName };
 
-    // Fire-and-forget: dispatch webhook event
-    dispatchWebhooks(userId, "contact.created", { contact }).catch(() => {});
+    // Dispatch webhook event (runs after response via waitUntil)
+    waitUntil(dispatchWebhooks(userId, "contact.created", { contact }));
 
     return NextResponse.json({ contact }, { status: 201 });
   } catch (err) {

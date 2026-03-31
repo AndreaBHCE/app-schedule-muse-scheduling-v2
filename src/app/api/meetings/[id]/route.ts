@@ -3,6 +3,7 @@ import { d1Query } from "@/lib/cloudflare";
 import { resolveAuth, AuthError } from "@/lib/auth";
 import { requireScope } from "@/lib/apikey";
 import { dispatchWebhooks } from "@/lib/webhooks";
+import { waitUntil } from "@vercel/functions";
 
 interface MeetingRow {
   id: string;
@@ -112,11 +113,11 @@ export async function PATCH(
       [status, canceledReason || "", id, userId],
     );
 
-    // Dispatch webhook for cancellation
+    // Dispatch webhook for cancellation (runs after response via waitUntil)
     if (status === "canceled") {
-      dispatchWebhooks(userId, "meeting.canceled", {
+      waitUntil(dispatchWebhooks(userId, "meeting.canceled", {
         meeting: { id, status, canceledReason },
-      }).catch(() => {});
+      }));
     }
 
     return NextResponse.json({ success: true, id, status });
