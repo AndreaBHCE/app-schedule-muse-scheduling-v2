@@ -15,11 +15,6 @@ dist/
 # Vercel deployment
 .vercel
 
-# Cloudflare Workers
-.wrangler/
-functions/
-packages/workers-site/public/
-
 # Environment variables - NEVER commit
 .env
 .env*.local
