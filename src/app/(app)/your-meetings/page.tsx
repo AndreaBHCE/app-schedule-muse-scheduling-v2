@@ -127,6 +127,13 @@ export default function YourMeetingsPage() {
   /* ── Add Meeting submit ── */
   function openAddModal() {
     const defaultCal = calendars.length > 0 ? calendars[0] : null;
+    // Default start time: now + 15 min, rounded up to next 5-min mark
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 15);
+    const rem = now.getMinutes() % 5;
+    if (rem !== 0) now.setMinutes(now.getMinutes() + (5 - rem));
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
     setAddForm({
       calendarId: defaultCal?.id || "",
       firstName: "",
@@ -135,7 +142,7 @@ export default function YourMeetingsPage() {
       phone: "",
       company: "",
       date: new Date().toISOString().split("T")[0],
-      time: "09:00",
+      time: `${hh}:${mm}`,
       location: defaultCal?.locationType || "virtual",
       locationDetails: defaultCal?.locationDetails || "",
       notes: "",
