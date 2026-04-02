@@ -68,6 +68,14 @@ export async function POST() {
       // Column already exists
     }
 
+
+    // Add attendee_email to meetings if missing (schema normalization from older versions)
+    try {
+      await d1Query(`ALTER TABLE meetings ADD COLUMN attendee_email TEXT`);
+    } catch {
+      // Column may already exist or migration not needed
+    }
+
     // Create rate_limits table for middleware-enforced rate limiting (idempotent)
     await d1Query(`CREATE TABLE IF NOT EXISTS rate_limits (
       key        TEXT    NOT NULL,

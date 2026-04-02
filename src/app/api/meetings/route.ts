@@ -80,6 +80,16 @@ function formatMeeting(row: MeetingRow) {
  * - "canceled":  status = 'canceled' or 'no-show'
  * - "all":       no extra filter
  */
+
+async function ensureMeetingsAttendeeEmailColumn(): Promise<void> {
+  const result = await d1Query<{name: string}>(`PRAGMA table_info(meetings)`);
+  const columnExists = result.results.some((row) => row.name === "attendee_email");
+  if (!columnExists) {
+    // Schema migration: add the required column if missing.
+    await d1Query(`ALTER TABLE meetings ADD COLUMN attendee_email TEXT`);
+  }
+}
+
 function statusFilter(tab: string): { clause: string; params: unknown[] } {
   const now = new Date().toISOString();
   switch (tab) {
@@ -108,6 +118,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId, scopes } = await resolveAuth(request);
     requireScope(scopes, "meetings:write");
+    await ensureMeetingsAttendeeEmailColumn();
     const data: MeetingData = await request.json();
 
     // Validate required fields with proper format checks
