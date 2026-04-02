@@ -3,6 +3,7 @@ import { resolveAuth, AuthError } from "@/lib/auth";
 import { requireScope } from "@/lib/apikey";
 import { d1Query } from "@/lib/cloudflare";
 import { createZoomMeeting } from "@/lib/integrations/zoom";
+import { createCalendarEvent, createGoogleMeetLink } from "@/lib/integrations/google-calendar";
 import { dispatchWebhooks } from "@/lib/webhooks";
 import { waitUntil } from "@vercel/functions";
 import {
@@ -176,6 +177,54 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // --- Google Meet: create Meet link via Calendar API ---
+    let googleMeetLink: string | null = null;
+    let calendarEventCreated = false;
+
+    if (!zoomMeeting && data.location === "google_meet") {
+      const meetIntegration = await d1Query(
+        `SELECT id FROM integrations WHERE user_id = ? AND provider = 'google_meet' AND status = 'connected'`,
+        [userId],
+      );
+
+      if (meetIntegration.results && meetIntegration.results.length > 0) {
+        const meetingSummary = `${data.first_name} ${data.last_name} - ${data.meeting_type || "Meeting"}`;
+        googleMeetLink = await createGoogleMeetLink(userId, {
+          summary: meetingSummary,
+          description: data.notes || "",
+          startTime: data.start_time,
+          endTime: data.end_time,
+          attendeeEmail: data.email,
+        });
+
+        if (googleMeetLink) {
+          locationDetails = googleMeetLink;
+          calendarEventCreated = true; // Event was created as part of Meet link
+        }
+      }
+    }
+
+    // --- Google Calendar: sync event if integration connected and not already created ---
+    if (!calendarEventCreated) {
+      const calIntegration = await d1Query(
+        `SELECT id FROM integrations WHERE user_id = ? AND provider = 'google_calendar' AND status = 'connected'`,
+        [userId],
+      );
+
+      if (calIntegration.results && calIntegration.results.length > 0) {
+        const meetingSummary = `${data.first_name} ${data.last_name} - ${data.meeting_type || "Meeting"}`;
+        await createCalendarEvent(userId, {
+          summary: meetingSummary,
+          description: data.notes || "",
+          startTime: data.start_time,
+          endTime: data.end_time,
+          attendeeEmail: data.email,
+          includeMeet: false,
+        });
+        // Non-critical — we don't fail the meeting creation if calendar sync fails
+      }
+    }
+
     // Create meeting record in database
     const meetingId = `meeting-${crypto.randomUUID()}`;
 
@@ -223,6 +272,7 @@ export async function POST(request: NextRequest) {
       location: data.location || "virtual",
       location_details: locationDetails,
       zoom_meeting: zoomMeeting,
+      google_meet_link: googleMeetLink,
       created: true,
     };
 

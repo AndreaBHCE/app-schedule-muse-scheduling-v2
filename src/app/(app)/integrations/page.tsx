@@ -26,7 +26,7 @@ type ProviderInfo = {
 const PROVIDERS: ProviderInfo[] = [
   // Meeting providers
   { key: "zoom",            name: "Zoom",              description: "Create meeting links for bookings.",      icon: "/zoom_icon_1.png",            category: "meeting",  connectionType: "oauth" },
-  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: "/google_meets_icon_1.png",    category: "meeting",  connectionType: "placeholder" },
+  { key: "google_meet",     name: "Google Meet",       description: "Create meeting links for bookings.",      icon: "/google_meets_icon_1.png",    category: "meeting",  connectionType: "oauth" },
   { key: "microsoft_teams", name: "Microsoft Teams",   description: "Create meeting links for bookings.",      icon: "/microsoft_teams_icon_1.png", category: "meeting",  connectionType: "placeholder" },
   { key: "goto",            name: "GoTo Meeting",      description: "Create meeting links for bookings.",      icon: "/goto_meeting_icon_1.png",    category: "meeting",  connectionType: "oauth" },
   // Email providers
@@ -34,7 +34,7 @@ const PROVIDERS: ProviderInfo[] = [
   { key: "outlook_email",   name: "Outlook",           description: "Send booking emails.",                    icon: "/outlook_icon_1.png",         category: "email",    connectionType: "placeholder" },
   { key: "smtp",            name: "Other Email",       description: "Connect any email provider to send booking emails.", icon: "/smtp_email_icon_1.png", category: "email", connectionType: "credentials" },
   // Calendar providers
-  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: "/google_calendar_icon_1.png", category: "calendar", connectionType: "placeholder" },
+  { key: "google_calendar", name: "Google Calendar",   description: "Write events to this calendar.",          icon: "/google_calendar_icon_1.png", category: "calendar", connectionType: "oauth" },
   { key: "outlook_calendar",name: "Outlook Calendar",  description: "Write events to this calendar.",          icon: "/outlook_calendar_icon_1.png",category: "calendar", connectionType: "placeholder" },
 ];
 

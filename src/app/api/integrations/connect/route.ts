@@ -173,6 +173,71 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    /* ── Google Calendar ───────────────────────────────────── */
+    if (provider === "google_calendar") {
+      const clientId = process.env.GMAIL_CLIENT_ID;
+      const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+      const redirectUri = process.env.GMAIL_REDIRECT_URI;
+
+      if (!clientId || !clientSecret || !redirectUri) {
+        return NextResponse.json(
+          { error: "Google Calendar credentials not configured — set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REDIRECT_URI" },
+          { status: 500 },
+        );
+      }
+
+      const state = buildSignedState("gcal-oauth", userId, clientSecret);
+
+      const scope = [
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/userinfo.email",
+      ].join(" ");
+
+      const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+      url.searchParams.set("response_type", "code");
+      url.searchParams.set("client_id", clientId);
+      url.searchParams.set("redirect_uri", redirectUri);
+      url.searchParams.set("scope", scope);
+      url.searchParams.set("state", state);
+      url.searchParams.set("access_type", "offline");
+      url.searchParams.set("prompt", "consent");
+
+      return NextResponse.json({ url: url.toString() });
+    }
+
+    /* ── Google Meet ──────────────────────────────────────── */
+    if (provider === "google_meet") {
+      const clientId = process.env.GMAIL_CLIENT_ID;
+      const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+      const redirectUri = process.env.GMAIL_REDIRECT_URI;
+
+      if (!clientId || !clientSecret || !redirectUri) {
+        return NextResponse.json(
+          { error: "Google Meet credentials not configured — set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REDIRECT_URI" },
+          { status: 500 },
+        );
+      }
+
+      const state = buildSignedState("gmeet-oauth", userId, clientSecret);
+
+      // Meet links require calendar.events scope (Meet is created via Calendar API)
+      const scope = [
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/userinfo.email",
+      ].join(" ");
+
+      const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+      url.searchParams.set("response_type", "code");
+      url.searchParams.set("client_id", clientId);
+      url.searchParams.set("redirect_uri", redirectUri);
+      url.searchParams.set("scope", scope);
+      url.searchParams.set("state", state);
+      url.searchParams.set("access_type", "offline");
+      url.searchParams.set("prompt", "consent");
+
+      return NextResponse.json({ url: url.toString() });
+    }
+
     /* ── GoTo Meeting ──────────────────────────────────────── */
     if (provider === "goto") {
       const clientId = process.env.GOTOMEETING_CLIENT_ID;

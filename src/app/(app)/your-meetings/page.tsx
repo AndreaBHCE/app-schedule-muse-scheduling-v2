@@ -548,13 +548,15 @@ export default function YourMeetingsPage() {
                   style={{ borderColor: "var(--cal-border)", background: "var(--cal-bg-alt)", color: "var(--cal-text)" }}
                 >
                   <option value="virtual">Virtual</option>
+                  <option value="google_meet">Google Meet</option>
+                  <option value="zoom">Zoom</option>
                   <option value="phone">Phone Call</option>
                   <option value="in-person">In Person</option>
                   <option value="other">Other</option>
                 </select>
               </label>
 
-              {addForm.location !== "virtual" && (
+              {addForm.location !== "virtual" && addForm.location !== "google_meet" && addForm.location !== "zoom" && (
                 <label className="block mb-3">
                   <span className="text-xs font-medium mb-1 block" style={{ color: "var(--cal-text)" }}>Location Details</span>
                   <input

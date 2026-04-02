@@ -47,9 +47,11 @@ function verifyState(
 }
 
 /** Detect provider from the state prefix. */
-function detectProvider(state: string): "zoom" | "gmail" | "goto" | null {
+function detectProvider(state: string): "zoom" | "gmail" | "google_calendar" | "google_meet" | "goto" | null {
   if (state.startsWith("zoom-oauth.")) return "zoom";
   if (state.startsWith("gmail-oauth.")) return "gmail";
+  if (state.startsWith("gcal-oauth.")) return "google_calendar";
+  if (state.startsWith("gmeet-oauth.")) return "google_meet";
   if (state.startsWith("goto-oauth.")) return "goto";
   return null;
 }
@@ -197,6 +199,84 @@ async function storeGmailTokens(userId: string, tokenData: Record<string, unknow
   );
 }
 
+/* ── Google Calendar-specific ─────────────────────────────── */
+
+async function exchangeGoogleCalendarCode(code: string) {
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+  const redirectUri = process.env.GMAIL_REDIRECT_URI;
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new Error("Google Calendar credentials not configured — set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REDIRECT_URI");
+  }
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("Google Calendar token exchange failed:", response.status, errorBody);
+    throw new Error(`Google Calendar token exchange failed (${response.status})`);
+  }
+
+  return await response.json();
+}
+
+/** Fetch the user's Google email address using the userinfo endpoint. */
+async function fetchGoogleEmail(accessToken: string): Promise<string> {
+  try {
+    const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (res.ok) {
+      const info = await res.json();
+      return info.email || "";
+    }
+  } catch {
+    // Non-critical — store empty string
+  }
+  return "";
+}
+
+async function storeGoogleCalendarTokens(userId: string, tokenData: Record<string, unknown>, providerKey: "google_calendar" | "google_meet") {
+  const id = `int-${providerKey}-${crypto.randomUUID()}`;
+
+  const encryptedAccess = encryptToken(String(tokenData.access_token));
+  const encryptedRefresh = tokenData.refresh_token
+    ? encryptToken(String(tokenData.refresh_token))
+    : "";
+
+  const googleEmail = await fetchGoogleEmail(String(tokenData.access_token));
+
+  const metadata = JSON.stringify({
+    email: googleEmail,
+    scope: tokenData.scope || "",
+    token_type: tokenData.token_type || "bearer",
+  });
+
+  await d1Query(
+    `INSERT INTO integrations (id, user_id, provider, status, access_token, refresh_token, metadata, connected_at)
+     VALUES (?, ?, ?, 'connected', ?, ?, ?, datetime('now'))
+     ON CONFLICT(user_id, provider) DO UPDATE SET
+       status = 'connected',
+       access_token = excluded.access_token,
+       refresh_token = excluded.refresh_token,
+       metadata = excluded.metadata,
+       connected_at = datetime('now'),
+       updated_at = datetime('now')`,
+    [id, userId, providerKey, encryptedAccess, encryptedRefresh, metadata],
+  );
+}
+
 /* ── GoTo Meeting-specific ────────────────────────────────── */
 
 async function exchangeGoToCode(code: string) {
@@ -310,12 +390,19 @@ export async function GET(request: NextRequest) {
       const secret =
         provider === "zoom"
           ? process.env.ZOOM_CLIENT_SECRET
-          : provider === "gmail"
+          : provider === "gmail" || provider === "google_calendar" || provider === "google_meet"
             ? process.env.GMAIL_CLIENT_SECRET
             : process.env.GOTOMEETING_SECRET;
 
+      const statePrefix =
+        provider === "google_calendar"
+          ? "gcal-oauth"
+          : provider === "google_meet"
+            ? "gmeet-oauth"
+            : `${provider}-oauth`;
+
       if (secret) {
-        userId = verifyState(state, secret, `${provider}-oauth`);
+        userId = verifyState(state, secret, statePrefix);
       }
     }
 
@@ -361,6 +448,32 @@ export async function GET(request: NextRequest) {
       await storeGmailTokens(userId, tokenResponse);
       return NextResponse.redirect(
         new URL("/integrations?success=gmail_connected", request.url),
+      );
+    }
+
+    if (provider === "google_calendar") {
+      const tokenResponse = await exchangeGoogleCalendarCode(code);
+      if (!tokenResponse.access_token) {
+        return NextResponse.redirect(
+          new URL("/integrations?error=token_exchange_failed", request.url),
+        );
+      }
+      await storeGoogleCalendarTokens(userId, tokenResponse, "google_calendar");
+      return NextResponse.redirect(
+        new URL("/integrations?success=google_calendar_connected", request.url),
+      );
+    }
+
+    if (provider === "google_meet") {
+      const tokenResponse = await exchangeGoogleCalendarCode(code);
+      if (!tokenResponse.access_token) {
+        return NextResponse.redirect(
+          new URL("/integrations?error=token_exchange_failed", request.url),
+        );
+      }
+      await storeGoogleCalendarTokens(userId, tokenResponse, "google_meet");
+      return NextResponse.redirect(
+        new URL("/integrations?success=google_meet_connected", request.url),
       );
     }
 
