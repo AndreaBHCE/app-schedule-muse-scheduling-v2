@@ -47,6 +47,7 @@ export default function YourMeetingsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("upcoming");
   const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const limit = 10;
@@ -110,7 +111,7 @@ export default function YourMeetingsPage() {
     }
     load();
     return () => { dead = true; };
-  }, [tab, page]);
+  }, [tab, page, refreshKey]);
 
   async function cancelMeeting() {
     if (!cancelId) return;
@@ -206,6 +207,7 @@ export default function YourMeetingsPage() {
       // Refresh the meetings list
       setPage(1);
       setTab("upcoming");
+      setRefreshKey((k) => k + 1);
     } catch (err) {
       setAddError((err as Error).message);
     } finally {
@@ -233,7 +235,7 @@ export default function YourMeetingsPage() {
             </p>
           </div>
           <div className="app-cta flex gap-2">
-            <button onClick={openAddModal} className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90" style={{ border: "1.5px solid var(--cal-primary)", color: "var(--cal-primary)", background: "transparent" }}>+ Add meeting</button>
+            <button onClick={openAddModal} className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90" style={{ background: "var(--cal-primary)", color: "#FFFFFF" }}>+ Add meeting</button>
             <Link href="/meeting-setup" className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90" style={{ background: "var(--cal-primary)", color: "white" }}>+ New booking page</Link>
           </div>
         </header>

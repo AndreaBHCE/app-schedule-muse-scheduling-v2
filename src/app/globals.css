@@ -12,7 +12,7 @@
   --cal-btn:       #9ECBCB;
   --cal-btn-hover: #8CB7B7;
   --cal-accent:    #7BA3A3;
-  --cal-primary:   #6A8E8E;
+  --cal-primary:   #2A5C5C;
   --cal-mid:       #5A7A7A;
   --cal-text:      #4A6666;
   --cal-heading:   #2E3F3F;
@@ -343,8 +343,8 @@ a {
   border-radius: 999px;
   padding: 0.75rem 1.25rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #6A8E8E, #7BA3A3);
-  color: #1E2A2A;
+  background: var(--cal-primary);
+  color: #FFFFFF;
   box-shadow: 0 18px 42px rgba(106, 142, 142, 0.25);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -361,9 +361,8 @@ a {
   border-radius: 999px;
   padding: 0.75rem 1.25rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(247, 251, 255, 0.9);
+  background: var(--cal-primary);
+  color: #FFFFFF;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
